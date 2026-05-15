@@ -1,6 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 type Schedule = {
   id: string;
@@ -18,12 +22,19 @@ export function ScheduleManager({
 }) {
   const [schedules, setSchedules] = useState<Schedule[]>(initialSchedules);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"info" | "error">("info");
   const [busy, setBusy] = useState(false);
 
   async function loadSchedules() {
     const response = await fetch("/api/integrations/schedules");
-    const body = (await response.json()) as { schedules?: Schedule[]; error?: string };
-    if (body.error) setMessage(body.error);
+    const body = (await response.json()) as {
+      schedules?: Schedule[];
+      error?: string;
+    };
+    if (body.error) {
+      setMessageTone("error");
+      setMessage(body.error);
+    }
     setSchedules(body.schedules ?? []);
   }
 
@@ -47,10 +58,12 @@ export function ScheduleManager({
     const body = (await response.json()) as { error?: string };
     setBusy(false);
     if (body.error) {
+      setMessageTone("error");
       setMessage(body.error);
       return;
     }
     event.currentTarget.reset();
+    setMessageTone("info");
     setMessage("Schedule saved.");
     await loadSchedules();
   }
@@ -65,6 +78,7 @@ export function ScheduleManager({
     const body = (await response.json()) as { error?: string };
     setBusy(false);
     if (body.error) {
+      setMessageTone("error");
       setMessage(body.error);
       return;
     }
@@ -78,107 +92,142 @@ export function ScheduleManager({
     });
     const body = (await response.json()) as { error?: string };
     setBusy(false);
+    setMessageTone(body.error ? "error" : "info");
     setMessage(body.error ?? "Run queued.");
   }
 
   return (
-    <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
-      <form onSubmit={createSchedule} className="border border-[#d9d7cb] bg-white p-6">
-        <h2 className="text-2xl font-semibold text-[#171717]">New schedule</h2>
-        <label className="mt-5 block text-sm font-medium text-[#34342f]">
-          Name
-          <input name="name" required className="mt-2 w-full border border-[#d9d7cb] px-3 py-2" />
-        </label>
-        <label className="mt-4 block text-sm font-medium text-[#34342f]">
-          Workflow
-          <select name="workflowKey" className="mt-2 w-full border border-[#d9d7cb] px-3 py-2">
-            <option value="weekly_funnel_review">Weekly funnel review</option>
-            <option value="daily_notes_digest">Daily notes digest</option>
-            <option value="learning_prompt">Learning prompt</option>
-          </select>
-        </label>
-        <label className="mt-4 block text-sm font-medium text-[#34342f]">
-          Cadence
-          <select name="cadence" className="mt-2 w-full border border-[#d9d7cb] px-3 py-2">
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="custom">Custom</option>
-          </select>
-        </label>
-        <label className="mt-4 block text-sm font-medium text-[#34342f]">
-          Timezone
-          <input
-            name="timezone"
-            defaultValue="America/New_York"
-            className="mt-2 w-full border border-[#d9d7cb] px-3 py-2"
-          />
-        </label>
-        <fieldset className="mt-4 grid gap-2 text-sm text-[#34342f]">
-          <legend className="font-medium">Targets</legend>
-          <label className="flex gap-2">
-            <input type="checkbox" name="targetProviders" value="slack" /> Slack
-          </label>
-          <label className="flex gap-2">
-            <input type="checkbox" name="targetProviders" value="telegram" /> Telegram
-          </label>
-        </fieldset>
-        <label className="mt-4 block text-sm font-medium text-[#34342f]">
-          Message
-          <textarea
-            name="messageTemplate"
-            rows={4}
-            className="mt-2 w-full border border-[#d9d7cb] px-3 py-2"
-          />
-        </label>
-        <button
-          disabled={busy}
-          className="mt-5 bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          Save schedule
-        </button>
-        {message ? <p className="mt-4 text-sm text-[#5d5d55]">{message}</p> : null}
-      </form>
+    <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+      <Card>
+        <CardHeader
+          eyebrow="New"
+          title="Create a schedule"
+          description="Automate digests and prompts on a cadence."
+        />
+        <CardBody>
+          <form onSubmit={createSchedule} className="space-y-4">
+            <Field label="Name" required>
+              <Input name="name" required placeholder="Weekly review" />
+            </Field>
+            <Field label="Workflow">
+              <Select name="workflowKey">
+                <option value="weekly_funnel_review">Weekly funnel review</option>
+                <option value="daily_notes_digest">Daily notes digest</option>
+                <option value="learning_prompt">Learning prompt</option>
+              </Select>
+            </Field>
+            <Field label="Cadence">
+              <Select name="cadence">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="custom">Custom</option>
+              </Select>
+            </Field>
+            <Field label="Timezone">
+              <Input name="timezone" defaultValue="America/New_York" />
+            </Field>
+            <fieldset className="grid gap-2">
+              <legend className="text-[13px] font-medium text-[color:var(--color-ink-700)]">
+                Targets
+              </legend>
+              <label className="flex items-center gap-2 text-[13px] text-[color:var(--color-ink-700)]">
+                <input
+                  type="checkbox"
+                  name="targetProviders"
+                  value="slack"
+                  className="h-4 w-4 rounded border-[color:var(--color-border-strong)] text-[color:var(--color-brand-600)] focus:ring-[color:var(--color-ring)]"
+                />
+                Slack
+              </label>
+              <label className="flex items-center gap-2 text-[13px] text-[color:var(--color-ink-700)]">
+                <input
+                  type="checkbox"
+                  name="targetProviders"
+                  value="telegram"
+                  className="h-4 w-4 rounded border-[color:var(--color-border-strong)] text-[color:var(--color-brand-600)] focus:ring-[color:var(--color-ring)]"
+                />
+                Telegram
+              </label>
+            </fieldset>
+            <Field label="Message">
+              <Textarea name="messageTemplate" rows={4} placeholder="Optional message template" />
+            </Field>
 
-      <section className="border border-[#d9d7cb] bg-white p-6">
-        <h2 className="text-2xl font-semibold text-[#171717]">Schedules</h2>
-        <div className="mt-5 grid gap-3">
+            <Button type="submit" loading={busy} fullWidth>
+              Save schedule
+            </Button>
+
+            {message ? (
+              <div
+                className={`rounded-lg border px-3.5 py-2.5 text-[13px] ${
+                  messageTone === "error"
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {message}
+              </div>
+            ) : null}
+          </form>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          eyebrow="Active"
+          title="Schedules"
+          description={`${schedules.length} active schedule${schedules.length === 1 ? "" : "s"}.`}
+        />
+        <CardBody>
           {schedules.length ? (
-            schedules.map((schedule) => (
-              <div key={schedule.id} className="border border-[#ebe3d8] p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-2">
+              {schedules.map((schedule) => (
+                <div
+                  key={schedule.id}
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-3"
+                >
                   <div>
-                    <p className="font-semibold text-[#171717]">{schedule.name}</p>
-                    <p className="mt-1 text-sm text-[#5d5d55]">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[13px] font-semibold text-[color:var(--color-ink-900)]">
+                        {schedule.name}
+                      </p>
+                      <Badge tone={schedule.enabled ? "success" : "neutral"}>
+                        {schedule.enabled ? "Active" : "Paused"}
+                      </Badge>
+                    </div>
+                    <p className="mt-0.5 text-[12px] capitalize text-[color:var(--color-ink-500)]">
                       {schedule.cadence} · {schedule.timezone}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
+                      variant="secondary"
                       disabled={busy}
                       onClick={() => runNow(schedule.id)}
-                      className="border border-[#0f766e] px-3 py-2 text-sm font-semibold text-[#0f766e]"
                     >
                       Run now
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       disabled={busy}
                       onClick={() => updateSchedule(schedule.id, !schedule.enabled)}
-                      className="border border-[#d9d7cb] px-3 py-2 text-sm font-semibold text-[#34342f]"
                     >
                       {schedule.enabled ? "Pause" : "Enable"}
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <p className="text-sm text-[#5d5d55]">No schedules yet.</p>
+            <p className="text-[13px] text-[color:var(--color-ink-500)]">
+              No schedules yet.
+            </p>
           )}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </div>
   );
 }

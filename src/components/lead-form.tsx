@@ -3,6 +3,9 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Field, Input } from "@/components/ui/input";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -62,78 +65,74 @@ export function LeadForm({ organizationName }: { organizationName: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="border border-[#d9d7cb] bg-white p-4 text-sm text-[#4a4a43] shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <span>Workspace: {organizationName}</span>
-          <div className="flex items-center gap-3">
-            <Link className="text-[#0f766e]" href="/settings/team">
-              Settings
-            </Link>
-            <button className="text-[#0f766e]" type="button" onClick={signOut}>
-              Sign out
-            </button>
-          </div>
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 py-3 text-[13px] shadow-[var(--shadow-card)]">
+        <span className="text-[color:var(--color-ink-500)]">
+          Workspace: <span className="font-medium text-[color:var(--color-ink-900)]">{organizationName}</span>
+        </span>
+        <div className="flex items-center gap-4">
+          <Link className="font-medium text-[color:var(--color-brand-600)] hover:underline" href="/settings/team">
+            Settings
+          </Link>
+          <button
+            className="font-medium text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)]"
+            type="button"
+            onClick={signOut}
+          >
+            Sign out
+          </button>
         </div>
       </div>
 
-      <form onSubmit={submitLead} className="border border-[#d9d7cb] bg-white p-6 shadow-sm">
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold text-[#171717]">Add a lead</h2>
-          <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-            Add prospects and keep your list organized.
-          </p>
-        </div>
+      <Card>
+        <CardHeader
+          eyebrow="Leads"
+          title="Add a lead"
+          description="Capture prospects and keep your list organized."
+        />
+        <CardBody>
+          <form onSubmit={submitLead} className="space-y-4">
+            <Field label="Name">
+              <Input name="name" autoComplete="name" placeholder="Matt" />
+            </Field>
+            <Field label="Email" required>
+              <Input
+                required
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@company.com"
+              />
+            </Field>
 
-        <label className="mb-4 block">
-          <span className="mb-2 block text-sm font-medium text-[#34342f]">Name</span>
-          <input
-            name="name"
-            autoComplete="name"
-            className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
-            placeholder="Matt"
-          />
-        </label>
+            <Button type="submit" loading={status === "loading"} fullWidth>
+              {status === "loading" ? "Saving" : "Save lead"}
+            </Button>
 
-        <label className="mb-5 block">
-          <span className="mb-2 block text-sm font-medium text-[#34342f]">Email</span>
-          <input
-            required
-            name="email"
-            type="email"
-            autoComplete="email"
-            className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
-            placeholder="matt@1000xleads.com"
-          />
-        </label>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={startCheckout}
+              disabled={status === "loading"}
+              fullWidth
+            >
+              Start billing checkout
+            </Button>
 
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          className="w-full bg-[#0f766e] px-5 py-3 font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {status === "loading" ? "Saving..." : "Save lead"}
-        </button>
-
-        <button
-          type="button"
-          onClick={startCheckout}
-          disabled={status === "loading"}
-          className="mt-3 w-full border border-[#0f766e] px-5 py-3 font-semibold text-[#0f766e] transition hover:bg-[#eef7f5] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          Start billing checkout
-        </button>
-
-        {message ? (
-          <p
-            className={`mt-4 text-sm ${
-              status === "error" ? "text-red-700" : "text-[#0f766e]"
-            }`}
-            role="status"
-          >
-            {message}
-          </p>
-        ) : null}
-      </form>
+            {message ? (
+              <div
+                className={`rounded-lg border px-3.5 py-2.5 text-[13px] ${
+                  status === "error"
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+                role="status"
+              >
+                {message}
+              </div>
+            ) : null}
+          </form>
+        </CardBody>
+      </Card>
     </div>
   );
 }

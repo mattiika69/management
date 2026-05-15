@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import { AppChrome } from "@/components/app-chrome";
 import { isAuthBypassEnabled } from "@/lib/supabase/auth-bypass";
 import "./globals.css";
 
-const montserrat = Montserrat({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-montserrat",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -22,8 +22,8 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={montserrat.variable}>
-      <body className={montserrat.className}>
+    <html lang="en" className={inter.variable}>
+      <body className={inter.className}>
         <AppChrome authBypassEnabled={isAuthBypassEnabled()}>
           {children}
         </AppChrome>

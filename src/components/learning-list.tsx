@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import type { FunnelType } from "@/lib/hyperoptimal/data";
 import type { LearningItemRow } from "@/lib/hyperoptimal/server";
+import { Button } from "@/components/ui/button";
+import { Field, Input, Select, Textarea } from "@/components/ui/input";
 
 type Status = Record<string, "idle" | "saving" | "saved" | "error">;
 
@@ -15,6 +17,7 @@ export function LearningList({
 }) {
   const [status, setStatus] = useState<Status>({});
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"info" | "error">("info");
 
   async function saveItem(event: FormEvent<HTMLFormElement>, itemId: string) {
     event.preventDefault();
@@ -38,79 +41,78 @@ export function LearningList({
 
     if (!response.ok) {
       setStatus((current) => ({ ...current, [itemId]: "error" }));
+      setMessageTone("error");
       setMessage(body.error ?? "Learning item did not save.");
       return;
     }
 
     setStatus((current) => ({ ...current, [itemId]: "saved" }));
+    setMessageTone("info");
     setMessage("Learning item saved.");
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {message ? (
-        <p className="rounded-lg border border-[#b7d7cf] bg-[#eef7f5] px-4 py-3 text-sm text-[#0f766e]" role="status">
+        <div
+          className={`rounded-xl border px-4 py-3 text-[13px] ${
+            messageTone === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+          role="status"
+        >
           {message}
-        </p>
+        </div>
       ) : null}
 
-      {items.map((item) => (
+      {items.map((item, index) => (
         <form
           key={item.id}
           onSubmit={(event) => saveItem(event, item.id)}
-          className="rounded-lg border border-[#e8ded2] bg-white p-5"
+          className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-5 shadow-[var(--shadow-card)]"
         >
-          <div className="grid gap-4 lg:grid-cols-[1fr_160px_160px_auto]">
-            <label>
-              <span className="mb-2 block text-sm font-medium text-[#4b4038]">Title</span>
-              <input
-                name="title"
-                defaultValue={item.title}
-                className="w-full rounded-md border border-[#d9d0c3] bg-[#fffdf8] px-3 py-2 text-sm outline-none focus:border-[#e85b3c]"
-              />
-            </label>
-            <label>
-              <span className="mb-2 block text-sm font-medium text-[#4b4038]">Section</span>
-              <select
-                name="section"
-                defaultValue={item.section}
-                className="w-full rounded-md border border-[#d9d0c3] bg-[#fffdf8] px-3 py-2 text-sm outline-none focus:border-[#e85b3c]"
-              >
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--color-brand-50)] text-[12px] font-semibold text-[color:var(--color-brand-700)] ring-1 ring-[color:var(--color-brand-100)]">
+              {index + 1}
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-ink-400)]">
+              {item.section === "training" ? "Training" : "Learning"} item
+            </span>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_160px_160px]">
+            <Field label="Title">
+              <Input name="title" defaultValue={item.title} />
+            </Field>
+            <Field label="Section">
+              <Select name="section" defaultValue={item.section}>
                 <option value="learning">Learning</option>
                 <option value="training">Training</option>
-              </select>
-            </label>
-            <label>
-              <span className="mb-2 block text-sm font-medium text-[#4b4038]">Type</span>
-              <select
-                name="itemType"
-                defaultValue={item.item_type}
-                className="w-full rounded-md border border-[#d9d0c3] bg-[#fffdf8] px-3 py-2 text-sm outline-none focus:border-[#e85b3c]"
-              >
+              </Select>
+            </Field>
+            <Field label="Type">
+              <Select name="itemType" defaultValue={item.item_type}>
                 <option value="learning">Learning</option>
                 <option value="training">Training</option>
                 <option value="assignment">Assignment</option>
-              </select>
-            </label>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={status[item.id] === "saving"}
-                className="rounded-md bg-[#e85b3c] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {status[item.id] === "saving" ? "Saving..." : "Save"}
-              </button>
-            </div>
+              </Select>
+            </Field>
           </div>
-          <label className="mt-4 block">
-            <span className="mb-2 block text-sm font-medium text-[#4b4038]">Body</span>
-            <textarea
-              name="body"
-              defaultValue={item.body}
-              rows={4}
-              className="w-full resize-y rounded-md border border-[#d9d0c3] bg-[#fffdf8] px-3 py-2 text-sm leading-6 outline-none focus:border-[#e85b3c]"
-            />
-          </label>
+
+          <Field label="Body" className="mt-4">
+            <Textarea name="body" defaultValue={item.body} rows={4} />
+          </Field>
+
+          <div className="mt-4 flex justify-end">
+            <Button
+              type="submit"
+              loading={status[item.id] === "saving"}
+              size="sm"
+            >
+              {status[item.id] === "saving" ? "Saving" : "Save"}
+            </Button>
+          </div>
         </form>
       ))}
     </div>

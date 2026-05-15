@@ -4,6 +4,8 @@ import { TelegramLinkPanel } from "@/components/telegram-link-panel";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default async function TelegramSettingsPage() {
   const supabase = await createClient();
@@ -23,47 +25,71 @@ export default async function TelegramSettingsPage() {
     .eq("provider", "telegram")
     .is("revoked_at", null)
     .order("created_at", { ascending: false });
-  const envReady = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_WEBHOOK_SECRET);
+  const envReady = Boolean(
+    process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_WEBHOOK_SECRET,
+  );
 
   return (
     <AppShell
       active="/settings/telegram"
-      title="Telegram"
-      subtitle="Connect Telegram to work with funnel updates from your workspace."
+      title="Settings"
+      subtitle="Telegram"
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl">
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
-          {envReady ? (
-            <TelegramLinkPanel />
-          ) : (
-            <section className="rounded-lg border border-[#eadfd3] bg-white p-6">
-              <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Connect Telegram</h2>
-              <p className="mt-2 text-sm leading-6 text-[#8a5a2d]">
-                Telegram is not available yet.
+      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
+        {envReady ? (
+          <TelegramLinkPanel />
+        ) : (
+          <Card>
+            <CardHeader
+              eyebrow="Connection"
+              title="Connect Telegram"
+              description="Telegram is not configured yet."
+              actions={<Badge tone="warning">Not configured</Badge>}
+            />
+            <CardBody>
+              <p className="text-[13px] text-[color:var(--color-ink-500)]">
+                Set <code className="rounded bg-[color:var(--color-surface-muted)] px-1.5 py-0.5 font-mono text-[12px]">TELEGRAM_BOT_TOKEN</code> and{" "}
+                <code className="rounded bg-[color:var(--color-surface-muted)] px-1.5 py-0.5 font-mono text-[12px]">TELEGRAM_WEBHOOK_SECRET</code> to enable Telegram.
               </p>
-            </section>
-          )}
+            </CardBody>
+          </Card>
+        )}
 
-          <section className="rounded-lg border border-[#d9d7cb] bg-white p-6">
-            <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Connections</h2>
-            <div className="mt-4 space-y-3 text-sm">
-              {connections?.length ? (
-                connections.map((connection) => (
-                  <div key={connection.id} className="rounded-md border border-[#ebe3d8] p-4">
-                    <p className="font-semibold text-[#171717]">{connection.display_name ?? "Telegram chat"}</p>
-                    <p className="mt-1 text-[#5d5d55]">
-                      Connected {new Date(connection.created_at).toLocaleDateString()}
-                    </p>
+        <Card>
+          <CardHeader
+            eyebrow="Active"
+            title="Connections"
+            description="Chats currently linked to this workspace."
+          />
+          <CardBody>
+            {connections?.length ? (
+              <div className="space-y-2">
+                {connections.map((connection) => (
+                  <div
+                    key={connection.id}
+                    className="flex items-center justify-between rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-[13px] font-semibold text-[color:var(--color-ink-900)]">
+                        {connection.display_name ?? "Telegram chat"}
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-[color:var(--color-ink-500)]">
+                        Connected {new Date(connection.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge tone="success">Active</Badge>
                   </div>
-                ))
-              ) : (
-                <p className="text-[#5d5d55]">No Telegram chat connected yet.</p>
-              )}
-            </div>
-          </section>
-        </div>
-      </section>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-[color:var(--color-ink-500)]">
+                No Telegram chat connected yet.
+              </p>
+            )}
+          </CardBody>
+        </Card>
+      </div>
     </AppShell>
   );
 }

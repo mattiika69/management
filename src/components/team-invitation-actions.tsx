@@ -31,17 +31,17 @@ export function TeamInvitationActions({ invitationId }: { invitationId: string }
   }
 
   return (
-    <div>
+    <div className="flex flex-col items-end gap-1">
       <button
         type="button"
         onClick={cancelInvite}
         disabled={status === "loading"}
-        className="text-sm font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+        className="inline-flex h-8 items-center rounded-lg border border-red-200 bg-red-50 px-3 text-[12px] font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {status === "loading" ? "Cancelling..." : "Cancel"}
+        {status === "loading" ? "Cancelling…" : "Cancel"}
       </button>
       {message ? (
-        <p className="mt-2 text-sm text-red-700" role="status">
+        <p className="text-[11px] text-red-700" role="status">
           {message}
         </p>
       ) : null}

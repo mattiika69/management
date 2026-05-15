@@ -2,6 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Field, Input, Select } from "@/components/ui/input";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -40,59 +43,53 @@ export function TeamInviteForm() {
   }
 
   return (
-    <form onSubmit={inviteMember} className="border border-[#d9d7cb] bg-white p-6">
-      <div className="mb-5">
-        <h2 className="text-2xl font-semibold text-[#171717]">Invite member</h2>
-        <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-          Send a secure invitation link to add someone to this workspace.
-        </p>
-      </div>
+    <Card>
+      <CardHeader
+        eyebrow="Invitations"
+        title="Invite a member"
+        description="Send a secure link to add a teammate."
+      />
+      <CardBody>
+        <form onSubmit={inviteMember} className="space-y-4">
+          <Field label="Email" required>
+            <Input
+              required
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="teammate@example.com"
+            />
+          </Field>
+          <Field label="Role">
+            <Select name="role" defaultValue="member">
+              <option value="member">Member</option>
+              <option value="viewer">Viewer</option>
+              <option value="admin">Admin</option>
+            </Select>
+          </Field>
 
-      <div className="grid gap-4 md:grid-cols-[1fr_180px]">
-        <label>
-          <span className="mb-2 block text-sm font-medium text-[#34342f]">Email</span>
-          <input
-            required
-            name="email"
-            type="email"
-            autoComplete="email"
-            className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
-            placeholder="teammate@example.com"
-          />
-        </label>
-
-        <label>
-          <span className="mb-2 block text-sm font-medium text-[#34342f]">Role</span>
-          <select
-            name="role"
-            defaultValue="member"
-            className="w-full border border-[#c9c6b8] bg-white px-4 py-3 outline-none focus:border-[#0f766e]"
+          <Button
+            type="submit"
+            loading={status === "loading"}
+            fullWidth
           >
-            <option value="member">Member</option>
-            <option value="viewer">Viewer</option>
-            <option value="admin">Admin</option>
-          </select>
-        </label>
-      </div>
+            {status === "loading" ? "Sending invite" : "Send invite"}
+          </Button>
 
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="mt-5 bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {status === "loading" ? "Sending..." : "Send invite"}
-      </button>
-
-      {message ? (
-        <p
-          className={`mt-4 text-sm ${
-            status === "error" ? "text-red-700" : "text-[#0f766e]"
-          }`}
-          role="status"
-        >
-          {message}
-        </p>
-      ) : null}
-    </form>
+          {message ? (
+            <div
+              role="status"
+              className={`rounded-lg border px-3.5 py-2.5 text-[13px] ${
+                status === "error"
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              }`}
+            >
+              {message}
+            </div>
+          ) : null}
+        </form>
+      </CardBody>
+    </Card>
   );
 }

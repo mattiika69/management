@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 type Status = "idle" | "loading" | "error";
 
@@ -32,17 +33,12 @@ export function AcceptInviteButton({ token }: { token: string }) {
   }
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={acceptInvite}
-        disabled={status === "loading"}
-        className="bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {status === "loading" ? "Accepting..." : "Accept invitation"}
-      </button>
+    <div className="space-y-2">
+      <Button onClick={acceptInvite} loading={status === "loading"} fullWidth size="lg">
+        {status === "loading" ? "Accepting" : "Accept invitation"}
+      </Button>
       {message ? (
-        <p className="mt-3 text-sm text-red-700" role="status">
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-[13px] text-red-700" role="status">
           {message}
         </p>
       ) : null}

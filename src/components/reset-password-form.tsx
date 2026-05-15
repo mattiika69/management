@@ -3,9 +3,12 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Field, Input } from "@/components/ui/input";
 
 export function ResetPasswordForm() {
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"info" | "error">("info");
   const [loading, setLoading] = useState(false);
 
   async function resetPassword(event: FormEvent<HTMLFormElement>) {
@@ -23,57 +26,58 @@ export function ResetPasswordForm() {
     });
 
     setLoading(false);
+    setMessageTone(error ? "error" : "info");
     setMessage(error ? error.message : "Check your email for a reset link.");
   }
 
   return (
     <form
       onSubmit={resetPassword}
-      className="w-full max-w-[448px] rounded-[14px] bg-white px-8 py-9 shadow-[0_18px_42px_rgba(31,54,94,0.14)] sm:px-8"
+      className="w-full max-w-[448px] rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-[var(--shadow-card)] sm:p-8"
     >
-      <div className="mb-9 text-center">
-        <h1 className="text-[26px] font-bold leading-tight text-[#111827]">
-          HyperOptimal
-        </h1>
-        <p className="mt-2 text-[16px] leading-6 text-[#727c91]">
+      <div className="mb-7">
+        <h1 className="text-[24px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
           Reset your password
+        </h1>
+        <p className="mt-1.5 text-[14px] leading-6 text-[color:var(--color-ink-500)]">
+          Enter your email and we&apos;ll send you a secure reset link.
         </p>
       </div>
 
-      <p className="mb-7 text-[15px] leading-6 text-[#475569]">
-        Enter your email address and we&apos;ll send you a link to reset your password.
-      </p>
-
-      <label className="mb-5 block">
-        <span className="mb-2 block text-[15px] font-medium text-[#334155]">Email</span>
-        <input
+      <Field label="Email" required>
+        <Input
           required
           name="email"
           type="email"
           autoComplete="email"
-          className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-white px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
-          placeholder="you@example.com"
+          placeholder="you@company.com"
         />
-      </label>
+      </Field>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="h-12 w-full rounded-[7px] bg-[#1f5bff] px-5 text-[17px] font-medium text-white transition hover:bg-[#164ce5] disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {loading ? "Sending..." : "Send reset link"}
-      </button>
+      <Button type="submit" loading={loading} fullWidth size="lg" className="mt-6">
+        {loading ? "Sending link" : "Send reset link"}
+      </Button>
 
       {message ? (
-        <p className="mt-4 text-center text-sm text-[#2563ff]" role="status">
+        <div
+          role="status"
+          className={`mt-4 rounded-lg border px-3.5 py-2.5 text-[13px] ${
+            messageTone === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-[color:var(--color-brand-100)] bg-[color:var(--color-brand-50)] text-[color:var(--color-brand-700)]"
+          }`}
+        >
           {message}
-        </p>
+        </div>
       ) : null}
 
-      <p className="mt-6 text-center text-[15px] text-[#727c91]">
+      <p className="mt-6 text-center text-[13px] text-[color:var(--color-ink-500)]">
         Remember your password?{" "}
-        <Link className="font-medium text-[#2563ff]" href="/login">
-          Sign in
+        <Link
+          className="font-medium text-[color:var(--color-ink-900)] hover:underline"
+          href="/login"
+        >
+          Log in
         </Link>
       </p>
     </form>

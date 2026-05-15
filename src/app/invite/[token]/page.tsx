@@ -4,6 +4,7 @@ import { AcceptInviteButton } from "@/components/accept-invite-button";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { hashInvitationToken } from "@/lib/team/invitations";
+import { Badge } from "@/components/ui/badge";
 
 type RouteProps = {
   params: Promise<{
@@ -29,18 +30,30 @@ function authHref(path: string, token: string) {
   return `${path}?next=${encodeURIComponent(`/invite/${token}`)}`;
 }
 
-function InviteShell({ children }: { children: ReactNode }) {
+function InviteShell({
+  children,
+  eyebrow = "Invitation",
+}: {
+  children: ReactNode;
+  eyebrow?: string;
+}) {
   return (
-    <main className="min-h-screen bg-[#f7f7f2] px-6 py-10">
-      <section className="mx-auto max-w-xl border border-[#d9d7cb] bg-white p-8 shadow-sm">
+    <main className="min-h-screen bg-[color:var(--color-bg)]">
+      <div className="mx-auto flex min-h-screen max-w-xl flex-col items-stretch justify-center px-6 py-12">
         <Link
           href="/"
-          className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]"
+          className="mb-6 inline-flex items-center gap-2 self-start text-[12px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)]"
         >
-          HyperOptimal Funnel
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[color:var(--color-ink-900)]">
+            <span className="text-[10px] font-bold text-white">H</span>
+          </div>
+          HyperOptimal
         </Link>
-        {children}
-      </section>
+        <section className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-8 shadow-[var(--shadow-card)]">
+          <Badge tone="brand">{eyebrow}</Badge>
+          {children}
+        </section>
+      </div>
     </main>
   );
 }
@@ -57,9 +70,11 @@ export default async function InvitePage({ params }: RouteProps) {
 
   if (!invitation) {
     return (
-      <InviteShell>
-        <h1 className="mt-5 text-3xl font-bold text-[#171717]">Invite not found</h1>
-        <p className="mt-3 text-sm leading-6 text-[#5d5d55]">
+      <InviteShell eyebrow="Not found">
+        <h1 className="mt-4 text-[28px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
+          Invite not found
+        </h1>
+        <p className="mt-2 text-[14px] leading-6 text-[color:var(--color-ink-500)]">
           This invitation link is invalid or has been replaced.
         </p>
       </InviteShell>
@@ -76,11 +91,11 @@ export default async function InvitePage({ params }: RouteProps) {
 
   if (invitation.accepted_at || invitation.revoked_at) {
     return (
-      <InviteShell>
-        <h1 className="mt-5 text-3xl font-bold text-[#171717]">
+      <InviteShell eyebrow="Inactive">
+        <h1 className="mt-4 text-[28px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
           Invite no longer active
         </h1>
-        <p className="mt-3 text-sm leading-6 text-[#5d5d55]">
+        <p className="mt-2 text-[14px] leading-6 text-[color:var(--color-ink-500)]">
           Ask a workspace admin to send a new invitation.
         </p>
       </InviteShell>
@@ -95,23 +110,26 @@ export default async function InvitePage({ params }: RouteProps) {
   if (!user) {
     return (
       <InviteShell>
-        <h1 className="mt-5 text-3xl font-bold text-[#171717]">
+        <h1 className="mt-4 text-[28px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
           Join {organizationName}
         </h1>
-        <p className="mt-3 text-sm leading-6 text-[#5d5d55]">
-          This invitation was sent to {invitation.email}. Log in or create an
-          account with that email to accept it.
+        <p className="mt-2 text-[14px] leading-6 text-[color:var(--color-ink-500)]">
+          This invitation was sent to{" "}
+          <span className="font-medium text-[color:var(--color-ink-900)]">
+            {invitation.email}
+          </span>
+          . Log in or create an account with that email to accept it.
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-wrap gap-2">
           <Link
             href={authHref("/login", token)}
-            className="bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
+            className="inline-flex h-10 items-center rounded-lg bg-[color:var(--color-ink-900)] px-5 text-[13px] font-medium text-white transition-colors hover:bg-[color:var(--color-ink-700)]"
           >
             Log in
           </Link>
           <Link
             href={authHref("/signup", token)}
-            className="border border-[#0f766e] px-5 py-3 text-sm font-semibold text-[#0f766e]"
+            className="inline-flex h-10 items-center rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 text-[13px] font-medium text-[color:var(--color-ink-900)] transition-colors hover:bg-[color:var(--color-surface-muted)]"
           >
             Create account
           </Link>
@@ -122,17 +140,24 @@ export default async function InvitePage({ params }: RouteProps) {
 
   if (user.email?.toLowerCase() !== invitation.email.toLowerCase()) {
     return (
-      <InviteShell>
-        <h1 className="mt-5 text-3xl font-bold text-[#171717]">
-          Wrong account
+      <InviteShell eyebrow="Wrong account">
+        <h1 className="mt-4 text-[28px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
+          Account mismatch
         </h1>
-        <p className="mt-3 text-sm leading-6 text-[#5d5d55]">
-          This invitation was sent to {invitation.email}. You are signed in as{" "}
-          {user.email}.
+        <p className="mt-2 text-[14px] leading-6 text-[color:var(--color-ink-500)]">
+          This invitation was sent to{" "}
+          <span className="font-medium text-[color:var(--color-ink-900)]">
+            {invitation.email}
+          </span>
+          . You&apos;re signed in as{" "}
+          <span className="font-medium text-[color:var(--color-ink-900)]">
+            {user.email}
+          </span>
+          .
         </p>
         <Link
           href={authHref("/login", token)}
-          className="mt-6 inline-block border border-[#0f766e] px-5 py-3 text-sm font-semibold text-[#0f766e]"
+          className="mt-6 inline-flex h-10 items-center rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-5 text-[13px] font-medium text-[color:var(--color-ink-900)] transition-colors hover:bg-[color:var(--color-surface-muted)]"
         >
           Use another account
         </Link>
@@ -142,11 +167,15 @@ export default async function InvitePage({ params }: RouteProps) {
 
   return (
     <InviteShell>
-      <h1 className="mt-5 text-3xl font-bold text-[#171717]">
+      <h1 className="mt-4 text-[28px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
         Join {organizationName}
       </h1>
-      <p className="mt-3 text-sm leading-6 text-[#5d5d55]">
-        Accept this invitation to join the workspace as {invitation.role}.
+      <p className="mt-2 text-[14px] leading-6 text-[color:var(--color-ink-500)]">
+        Accept this invitation to join the workspace as{" "}
+        <span className="font-medium capitalize text-[color:var(--color-ink-900)]">
+          {invitation.role}
+        </span>
+        .
       </p>
       <div className="mt-6">
         <AcceptInviteButton token={token} />

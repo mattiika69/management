@@ -174,7 +174,7 @@ function FlowDiagram({ funnelType }: { funnelType: FunnelType }) {
   const nodeMap = new Map(nodes.map((node) => [node.id, node]));
 
   return (
-    <div className="overflow-x-auto rounded-md border border-[#d8dee9] bg-white">
+    <div className="overflow-x-auto rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] p-3">
       <svg viewBox="0 0 1210 410" className="h-[410px] min-w-[1040px]">
         <defs>
           <marker id="flowArrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
@@ -371,22 +371,36 @@ export function FunnelTracker({
     setMessage("Prompt copied.");
   }
 
+  const progress = rows.length ? (completeCount / rows.length) * 100 : 0;
+
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-[#d8dee9] bg-white px-5 py-4 shadow-sm">
+      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-6 py-5 shadow-[var(--shadow-card)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-[240px] flex-1 items-center gap-4">
-            <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-sm font-semibold text-[#4f46e5]">
-              Funnel Progress
-            </span>
-            <span className="text-sm font-semibold text-[#111827]">
-              {completeCount}/{rows.length} complete
-            </span>
-            <div className="h-2 w-40 rounded-full bg-[#e5e7eb]">
-              <div
-                className="h-2 rounded-full bg-[#6d5dfc]"
-                style={{ width: `${rows.length ? (completeCount / rows.length) * 100 : 0}%` }}
-              />
+          <div className="flex min-w-[260px] flex-1 items-center gap-4">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-ink-400)]">
+                Funnel progress
+              </div>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="text-[22px] font-semibold tabular-nums tracking-tight text-[color:var(--color-ink-900)]">
+                  {completeCount}
+                </span>
+                <span className="text-[14px] text-[color:var(--color-ink-400)]">
+                  / {rows.length} steps complete
+                </span>
+              </div>
+            </div>
+            <div className="ml-2 flex flex-1 flex-col gap-1 min-w-[180px] max-w-xs">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--color-surface-muted)]">
+                <div
+                  className="h-full rounded-full bg-[color:var(--color-brand-500)] transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="text-right text-[11px] font-medium tabular-nums text-[color:var(--color-ink-400)]">
+                {Math.round(progress)}%
+              </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -394,55 +408,75 @@ export function FunnelTracker({
               type="button"
               onClick={saveAll}
               disabled={!dirtyCount}
-              className="rounded-md border border-[#d8dee9] bg-[#f8fafc] px-4 py-2 text-sm font-semibold text-[#647084] disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex h-9 items-center rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 text-[13px] font-medium text-[color:var(--color-ink-900)] transition-colors hover:border-[color:var(--color-border-strong)] hover:bg-[color:var(--color-surface-muted)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {dirtyCount ? `Save ${dirtyCount} change${dirtyCount === 1 ? "" : "s"}` : "Saved"}
+              {dirtyCount ? `Save ${dirtyCount} change${dirtyCount === 1 ? "" : "s"}` : "All saved"}
             </button>
             <button
               type="button"
               onClick={copyPrompt}
-              className="rounded-md border border-[#86efac] bg-[#ecfdf5] px-4 py-2 text-sm font-semibold text-[#047857]"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[color:var(--color-ink-900)] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[color:var(--color-ink-700)]"
             >
-              Copy Prompt
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copy prompt
             </button>
           </div>
         </div>
       </section>
 
       {message ? (
-        <p className="rounded-md border border-[#b7d7cf] bg-[#eef7f5] px-4 py-3 text-sm text-[#0f766e]" role="status">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700" role="status">
           {message}
-        </p>
+        </div>
       ) : null}
 
-      <section className="rounded-lg border border-[#d8dee9] bg-white p-5 shadow-sm">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-[#111827]">{funnel.name} Flow</h2>
-            <p className="mt-1 text-sm text-[#647084]">{definition.subtitle}</p>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--color-ink-400)]">
+              Flow diagram
+            </div>
+            <h2 className="mt-1 text-[18px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
+              {funnel.name}
+            </h2>
+            <p className="mt-1 text-[13px] text-[color:var(--color-ink-500)]">{definition.subtitle}</p>
           </div>
         </div>
         <FlowDiagram funnelType={funnelType} />
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-[#d8dee9] bg-white shadow-sm">
+      <section className="overflow-hidden rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-[var(--shadow-card)]">
+        <div className="border-b border-[color:var(--color-border)] px-6 py-4">
+          <h2 className="text-[15px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
+            Step checklist
+          </h2>
+          <p className="mt-0.5 text-[12px] text-[color:var(--color-ink-500)]">
+            Manage every funnel step, owner, tech stack, and AI agent in one table.
+          </p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="min-w-[1180px] w-full border-collapse text-sm">
+          <table className="min-w-[1180px] w-full border-collapse text-[13px]">
             <thead>
-              <tr className="bg-[#2f80ed] text-left text-[11px] font-bold uppercase tracking-[0.04em] text-white">
-                <th className="w-16 px-4 py-3">Done</th>
-                <th className="w-[220px] px-4 py-3">Step</th>
-                <th className="w-[230px] px-4 py-3">URL</th>
-                <th className="w-[210px] px-4 py-3">Tech Stack Name</th>
-                <th className="w-[230px] px-4 py-3">Tech Stack URL</th>
-                <th className="w-[120px] px-4 py-3">Example</th>
-                <th className="w-[230px] px-4 py-3">Direct DRI</th>
-                <th className="w-[160px] px-4 py-3">Pre-Made AI</th>
+              <tr className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-[color:var(--color-ink-500)]">
+                <th className="w-14 px-4 py-3 font-semibold">Done</th>
+                <th className="w-[220px] px-4 py-3 font-semibold">Step</th>
+                <th className="w-[230px] px-4 py-3 font-semibold">URL</th>
+                <th className="w-[200px] px-4 py-3 font-semibold">Tech stack</th>
+                <th className="w-[220px] px-4 py-3 font-semibold">Stack URL</th>
+                <th className="w-[160px] px-4 py-3 font-semibold">Example</th>
+                <th className="w-[200px] px-4 py-3 font-semibold">Owner</th>
+                <th className="w-[140px] px-4 py-3 font-semibold">AI agent</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((step) => (
-                <tr key={step.id} className="border-b border-[#e5eaf2] last:border-b-0">
+                <tr
+                  key={step.id}
+                  className="border-b border-[color:var(--color-border)] transition-colors last:border-b-0 hover:bg-[color:var(--color-surface-muted)]/40"
+                >
                   <td className="px-4 py-3 align-top">
                     <input
                       type="checkbox"
@@ -452,41 +486,43 @@ export function FunnelTracker({
                           status: event.currentTarget.checked ? "done" : "not_started",
                         })
                       }
-                      className="h-4 w-4 rounded border-[#b8c2d2]"
+                      className="h-4 w-4 rounded border-[color:var(--color-border-strong)] text-[color:var(--color-brand-600)] focus:ring-[color:var(--color-ring)]"
                     />
                   </td>
                   <td className="px-4 py-3 align-top">
-                    <p className="font-medium text-[#111827]">{step.title}</p>
+                    <p className="font-medium text-[color:var(--color-ink-900)]">{step.title}</p>
                     {step.metadata.generatedNoteUrl ? (
                       <a
                         href={step.metadata.generatedNoteUrl}
-                        className="mt-1 inline-flex text-xs font-semibold text-[#1d4ed8] hover:underline"
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[color:var(--color-brand-600)] hover:underline"
                       >
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14 2 14 8 20 8" />
+                        </svg>
                         Generated note
                       </a>
                     ) : null}
-                    <p className="mt-1 text-xs text-[#9aa7bb]">
-                      {saveState[step.id] === "saving"
-                        ? "Saving..."
-                        : saveState[step.id] === "saved"
-                          ? "Saved"
-                          : ""}
-                    </p>
+                    {saveState[step.id] === "saving" || saveState[step.id] === "saved" ? (
+                      <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-ink-400)]">
+                        {saveState[step.id] === "saving" ? "Saving…" : "Saved"}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3 align-top">
                     <div className="flex gap-2">
                       <input
                         value={step.url}
                         onChange={(event) => updateRow(step.id, { url: event.currentTarget.value })}
-                        placeholder="https://..."
-                        className="h-9 min-w-0 flex-1 rounded-md border border-[#cfd8e6] px-3 text-sm outline-none focus:border-[#2f80ed]"
+                        placeholder="https://…"
+                        className="h-9 min-w-0 flex-1 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 text-[13px] outline-none placeholder:text-[color:var(--color-ink-300)] focus:border-[color:var(--color-brand-500)] focus:ring-4 focus:ring-[color:var(--color-ring)]"
                       />
                       {step.url ? (
                         <a
                           href={step.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-3 py-2 text-xs font-semibold text-[#1d4ed8]"
+                          className="inline-flex h-9 items-center rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-2.5 text-[11px] font-semibold text-[color:var(--color-ink-700)] transition-colors hover:bg-[color:var(--color-surface-muted)]"
                         >
                           Open
                         </a>
@@ -497,16 +533,16 @@ export function FunnelTracker({
                     <input
                       value={step.metadata.techStackName ?? ""}
                       onChange={(event) => updateMetadata(step.id, "techStackName", event.currentTarget.value)}
-                      placeholder="Platform name..."
-                      className="h-9 w-full rounded-md border border-[#cfd8e6] px-3 text-sm outline-none focus:border-[#2f80ed]"
+                      placeholder="Platform name…"
+                      className="h-9 w-full rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 text-[13px] outline-none focus:border-[color:var(--color-brand-500)] focus:ring-4 focus:ring-[color:var(--color-ring)]"
                     />
                   </td>
                   <td className="px-4 py-3 align-top">
                     <input
                       value={step.metadata.techStackUrl ?? ""}
                       onChange={(event) => updateMetadata(step.id, "techStackUrl", event.currentTarget.value)}
-                      placeholder="https://..."
-                      className="h-9 w-full rounded-md border border-[#cfd8e6] px-3 text-sm outline-none focus:border-[#2f80ed]"
+                      placeholder="https://…"
+                      className="h-9 w-full rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 text-[13px] outline-none focus:border-[color:var(--color-brand-500)] focus:ring-4 focus:ring-[color:var(--color-ring)]"
                     />
                   </td>
                   <td className="px-4 py-3 align-top">
@@ -514,16 +550,17 @@ export function FunnelTracker({
                       value={step.metadata.exampleUrl ?? ""}
                       onChange={(event) => updateMetadata(step.id, "exampleUrl", event.currentTarget.value)}
                       placeholder="Example URL"
-                      className="h-9 w-full rounded-md border border-[#fde68a] px-3 text-sm outline-none focus:border-[#f59e0b]"
+                      className="h-9 w-full rounded-lg border border-amber-200 bg-amber-50/40 px-3 text-[13px] outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-100"
                     />
                   </td>
                   <td className="px-4 py-3 align-top">
                     <select
                       value={step.assigned_to || ""}
                       onChange={(event) => updateRow(step.id, { assigned_to: event.currentTarget.value })}
-                      className="h-9 w-full rounded-md border border-[#cfd8e6] bg-white px-3 text-sm outline-none focus:border-[#2f80ed]"
+                      className="h-9 w-full appearance-none rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-3 pr-8 text-[13px] outline-none focus:border-[color:var(--color-brand-500)] focus:ring-4 focus:ring-[color:var(--color-ring)]"
+                      style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M3 4.5L6 7.5L9 4.5' stroke='%235f5f5a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.6rem center" }}
                     >
-                      <option value="">Assign DRI</option>
+                      <option value="">Assign owner</option>
                       {directDriOptions.map((option) => (
                         <option key={option} value={option}>
                           {option}
@@ -537,12 +574,15 @@ export function FunnelTracker({
                         type="button"
                         onClick={() => runAI(step)}
                         disabled={saveState[step.id] === "saving"}
-                        className="rounded-md border border-[#b9c8ff] bg-[#eef2ff] px-4 py-2 text-sm font-semibold text-[#4f46e5] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[color:var(--color-brand-100)] bg-[color:var(--color-brand-50)] px-3 text-[12px] font-semibold text-[color:var(--color-brand-700)] transition-colors hover:bg-[color:var(--color-brand-100)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
+                        <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
                         Launch
                       </button>
                     ) : (
-                      <span className="text-xs text-[#9aa7bb]">Not in AI</span>
+                      <span className="text-[11px] text-[color:var(--color-ink-400)]">—</span>
                     )}
                   </td>
                 </tr>
