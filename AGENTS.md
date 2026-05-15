@@ -1,0 +1,27 @@
+# Repository Rules
+
+- Treat this file as the authoritative repo-specific contract.
+- Treat `INFRASTRUCTURE.md` as the source of truth for project wiring, API status, and organization/user/RLS architecture. New features must follow that architecture before implementation is considered complete.
+- The utmost priority is data persistence and cloud-backed saving. Avoid data loss above all else: user/business data must be written durably to the connected cloud systems, destructive or lossy changes require explicit intent and a recovery path, and features must fail safely rather than silently dropping or overwriting data.
+- No product, customer, workspace, funnel, note, integration, billing, team, lead, AI output, training, learning, email, or SMS data may be saved, created, cached, or treated as authoritative in local-only storage. Do not use local files, browser localStorage/sessionStorage/IndexedDB, in-memory-only stores, static JSON, or mock local persistence for real app data. All real app data must be created and read through the database-backed cloud persistence layer with tenant scope and RLS.
+- All commits and cloud-visible authorship that is under our control must use the author name `Matika 6ix9ine`.
+- Keep changes small, focused, and in scope.
+- Before claiming work is complete, sync completed work to the cloud:
+  - commit task-scoped code/docs changes,
+  - push `main` to GitHub,
+  - deploy or update cloud services when the task changes runtime behavior or configuration.
+- Do not leave completed work local-only.
+- Local files may be used only as an implementation workspace for source code and migrations. Runtime/product data must be database-backed from the first implementation and represented in connected cloud systems whenever credentials and permissions allow it.
+- If a cloud sync is blocked by account permissions, authentication, billing, or provider policy, state the exact blocker and the specific action needed to unblock it.
+- Every user-facing feature must support authenticated users from day one.
+- Every database-backed feature must have row-level security enabled with explicit policies.
+- Every persistent business record must be tenant-scoped to an organization/workspace unless there is a documented reason it is globally shared.
+- Billing-related work must be designed for Stripe from day one, including tenant-scoped customer/subscription records and environment variables for Stripe keys, webhooks, and price IDs.
+- Communication-related work must be designed for Slack and Telegram from day one, including tenant-scoped integration connections, verified inbound webhooks, outbound response capability, and durable message/audit storage.
+- Email-related work must be designed for Resend from day one, including server-only API keys, tenant-scoped send logs, authenticated send endpoints, and RLS-protected audit records.
+- SMS-related work must be designed for Roezan from day one, including server-only API keys, tenant-scoped send logs, authenticated send endpoints, Roezan rate-limit awareness, and RLS-protected audit records.
+- The product name is HyperOptimal Funnel. Use that name for product-facing titles, docs, metadata, and future naming unless the user explicitly asks for a different name.
+- Never put internal notes on client-facing pages again. Internal implementation notes, planning notes, setup notes, data/auth/RLS explanations, temporary status labels, or developer-facing commentary belong in repo docs or admin-only surfaces, not in the product UI.
+- Public account/legal/admin surface must exist for signup, login, password reset/update, privacy policy, terms of service, and authenticated workspace administration.
+- Treat HyperOptimal Funnel as primarily a desktop app. New screens and features should be desktop-first while still being as mobile-optimized as practical, with responsive layouts that avoid overflow, clipping, or incoherent overlap on small screens.
+- Do not overwrite unrelated user changes.

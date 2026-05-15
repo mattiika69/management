@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --p-100: #d0dffe;
+  --p-200: #a1befe;
+  --p-300: #739efd;
+  --p-400: #447dfd;
+  --p-500: #155dfc;
+  --p-600: #114aca;
+  --p-700: #0d3897;
+  --p-800: #082565;
+  --p-900: #041332;
+  --n-100: #f6f6f6;
+  --n-200: #e6e6e6;
+  --n-300: #bfbfbf;
+  --n-400: #a5a5a5;
+  --n-500: #808080;
+  --n-600: #646464;
+  --n-700: #232323;
+  --n-800: #131313;
+  --n-900: #041332;
+  --accent: var(--p-500);
+  --accent-strong: var(--p-600);
+  --max-width-page: 1900px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f9fafb;
+  color: var(--foreground);
+  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-serif,
+.font-sans,
+.font-mono {
+  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif !important;
+}
+
+@utility page-shell {
+  @apply min-h-screen bg-gray-50 p-[3%];
+}
+
+@utility page-shell-gradient {
+  @apply min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-[3%];
+}
+
+@utility page-inner {
+  @apply mx-auto max-w-[1900px];
+}
+
+@utility sm-tab {
+  @apply inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-lg border px-3 text-xs font-medium leading-none transition-colors;
+}
+
+@utility sm-tab-active {
+  @apply sm-tab border-gray-900 bg-gray-900 text-white shadow-sm;
+}
+
+@utility sm-tab-inactive {
+  @apply sm-tab border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900;
+}
