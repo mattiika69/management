@@ -1,6 +1,10 @@
 # HyperOptimal Funnel Infrastructure
 
-Author: Matika 6ix9ine
+Author: mattiika69
+
+`ARCHITECTURE.md` is the authoritative HyperOptimal SaaS standard. This file
+tracks the current HyperOptimal Funnel implementation state against that
+standard.
 
 ## Hard Rules
 
@@ -15,23 +19,23 @@ Author: Matika 6ix9ine
 
 | Service | Status | Project |
 | --- | --- | --- |
-| GitHub | Connected | `https://github.com/mattiika69/funnel.git`, branch `main` |
+| GitHub | Connected | `https://github.com/mattiika69/management.git`, branch `main` |
 | Supabase | Connected | Project ref `oxsopkedpalgdlcmbxzs` |
 | Vercel | Connected | Project `funnel`, project id `prj_g1tKXY8pXxiO4j4yNpcvAYsjn0CC`, production URL `https://funnel-mattiika69.vercel.app` |
 
-Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Do not use manual `vercel deploy` for normal production updates because that creates deployment rows from the token user instead of the GitHub author.
+Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Manual `vercel deploy` is fallback-only.
 
 ## Current Platform Capabilities
 
 - Auth: Supabase auth pages and callback routes exist for signup, login, reset password, and update password.
-- Temporary auth bypass: `AUTH_BYPASS_ENABLED` is configured for the current build path. Remove this before real customer launch.
-- Multi-tenancy: organizations and organization memberships are present; persistent app tables are organization-scoped.
+- Temporary auth bypass: `DISABLE_LOGIN_AUTH` can be configured for development-only login bypass. Remove or disable this before real customer launch.
+- Multi-tenancy: canonical tenant tables are present and synced with compatibility organization tables; persistent app tables are tenant-scoped with organization compatibility columns where legacy product code still uses them.
 - RLS: migrations enable row-level security and member policies on app data tables.
 - Team members: Settings > Team supports member listing and invitations.
 - Stripe billing: database tables and checkout route exist.
 - V1 credit billing: Book-a-Call launch assets spend credits per generated asset; Stripe credit checkout and webhook ledger writes exist.
 - Data persistence: company document, funnels, funnel steps, training, learning, AI outputs, notes, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
-- Page shell: app pages use the Scaling Metrics-style shell/sidebar and only show built HyperOptimal Funnel pages.
+- Page shell: app pages use the shared sidebar and Settings tabs, with Account, Team, Billing, Integrations, Scheduling, Slack, and Telegram under Settings.
 
 ## Organization, User, And RLS Architecture Source Of Truth
 
@@ -46,10 +50,11 @@ This section is the required architecture for all future product work.
 
 ### Tenancy
 
-- `organizations` is the tenant root table.
-- `organization_memberships` connects users to organizations.
-- Valid membership roles are `owner`, `admin`, and `member`.
-- Every persistent product/business table must include `organization_id uuid not null references public.organizations(id) on delete cascade`, unless the table is a documented global catalog such as funnel templates or pre-made AI definitions.
+- `tenants` is the canonical tenant root table.
+- `tenant_memberships` connects users to tenants.
+- `organizations` and `organization_memberships` remain compatibility tables for existing Funnel code and are synced to canonical tenant tables.
+- Valid membership roles are `owner`, `admin`, `member`, and `viewer`.
+- Every persistent product/business table must include `tenant_id uuid not null references public.tenants(id) on delete cascade`, unless the table is a documented global catalog. Existing tables may also include `organization_id` while legacy code is being migrated.
 - Every query for tenant data must filter by the active organization.
 - Every write must set or validate `organization_id` from server-side membership context, not from untrusted client input.
 
@@ -146,10 +151,10 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 
 ## Environment Variables Present In Vercel
 
-- Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - Site URL: `NEXT_PUBLIC_SITE_URL`
-- Auth bypass: `AUTH_BYPASS_ENABLED`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_NAME`
-- Claude: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`
+- Auth bypass: `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, `AUTH_BYPASS_USER_ID`
+- Claude: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`
 - Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
 - Roezan: `ROEZAN_API_KEY`
 
@@ -159,7 +164,7 @@ Stripe billing is implemented but blocked until these are added in Vercel:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PRICE_ID`
+- `STRIPE_ONBOARDING_PRICE_ID`
 - `STRIPE_CREDIT_PACK_STARTER_PRICE_ID`
 - `STRIPE_CREDIT_PACK_GROWTH_PRICE_ID`
 
@@ -178,7 +183,7 @@ Telegram is implemented but blocked until these are added in Vercel:
 
 Production auth must be restored before customer launch:
 
-- Set `AUTH_BYPASS_ENABLED=false` or remove it from Production.
+- Set `DISABLE_LOGIN_AUTH=false` or remove it from Production.
 
 ## APIs We Have
 

@@ -14,7 +14,13 @@ function readBypassEmail() {
 
 export function isAuthBypassEnabled() {
   return TRUTHY_VALUES.has(
-    (process.env.AUTH_BYPASS_ENABLED ?? "").trim().toLowerCase(),
+    (
+      process.env.DISABLE_LOGIN_AUTH ??
+      process.env.AUTH_BYPASS_ENABLED ??
+      ""
+    )
+      .trim()
+      .toLowerCase(),
   );
 }
 
@@ -40,6 +46,13 @@ async function findUserByEmail(supabase: SupabaseClient, email: string) {
 }
 
 async function getOrCreateBypassUser(supabase: SupabaseClient) {
+  const bypassUserId = process.env.AUTH_BYPASS_USER_ID?.trim();
+  if (bypassUserId) {
+    const { data, error } = await supabase.auth.admin.getUserById(bypassUserId);
+    if (error) throw new Error(error.message);
+    if (data.user) return data.user;
+  }
+
   const email = readBypassEmail();
   const existing = await findUserByEmail(supabase, email);
   if (existing) return existing;

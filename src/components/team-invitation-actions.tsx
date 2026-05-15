@@ -14,8 +14,10 @@ export function TeamInvitationActions({ invitationId }: { invitationId: string }
     setStatus("loading");
     setMessage("");
 
-    const response = await fetch(`/api/settings/team/invitations/${invitationId}`, {
+    const response = await fetch("/api/team/invitations", {
       method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: invitationId }),
     });
     const body = (await response.json()) as { error?: string };
 

@@ -57,7 +57,10 @@ async function generateWithClaude(prompt: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-5",
+      model:
+        process.env.CLAUDE_MODEL?.trim() ||
+        process.env.ANTHROPIC_MODEL?.trim() ||
+        "claude-sonnet-4-5",
       max_tokens: anthropicMaxTokens(),
       system:
         "You are generating production-ready funnel assets for HyperOptimal Funnel. Use only the provided company context, funnel step, and training criteria. Return concise, directly usable copy.",
@@ -173,7 +176,10 @@ export async function POST(request: Request) {
       metadata: {
         funnelType,
         provider: "anthropic",
-        model: process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-5",
+        model:
+          process.env.CLAUDE_MODEL?.trim() ||
+          process.env.ANTHROPIC_MODEL?.trim() ||
+          "claude-sonnet-4-5",
         liveProviderConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
       },
     })

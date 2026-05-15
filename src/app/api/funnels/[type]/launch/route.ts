@@ -80,7 +80,10 @@ async function generateWithClaude(prompt: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-5",
+      model:
+        process.env.CLAUDE_MODEL?.trim() ||
+        process.env.ANTHROPIC_MODEL?.trim() ||
+        "claude-sonnet-4-5",
       max_tokens: anthropicMaxTokens(),
       system:
         "You generate production-ready Book-a-Call funnel assets for HyperOptimal Funnel. Return polished assets, builder prompts, labels, and implementation details. Do not include internal notes.",
@@ -359,7 +362,10 @@ export async function POST(request: Request, { params }: RouteContext) {
             source: "launch",
             builderProjectUrl,
             liveProviderConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
-            model: process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-5",
+            model:
+              process.env.CLAUDE_MODEL?.trim() ||
+              process.env.ANTHROPIC_MODEL?.trim() ||
+              "claude-sonnet-4-5",
           },
         })
         .select("id")

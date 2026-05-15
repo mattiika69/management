@@ -13,12 +13,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
   }
 
-  const priceId = process.env.STRIPE_PRICE_ID;
+  const priceId =
+    process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
   const appUrl = siteUrl.replace(/\/$/, "");
 
   if (!priceId) {
-    return NextResponse.json({ error: "STRIPE_PRICE_ID is not configured." }, { status: 500 });
+    return NextResponse.json(
+      { error: "STRIPE_ONBOARDING_PRICE_ID is not configured." },
+      { status: 500 },
+    );
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);

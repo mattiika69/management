@@ -93,6 +93,21 @@ export async function POST(request: Request) {
     }
   }
 
+  const { error: tenantMembershipError } = await admin
+    .from("tenant_memberships")
+    .upsert(
+      {
+        tenant_id: invitation.organization_id,
+        user_id: user.id,
+        role: invitation.role,
+      },
+      { onConflict: "tenant_id,user_id" },
+    );
+
+  if (tenantMembershipError) {
+    return NextResponse.json({ error: tenantMembershipError.message }, { status: 400 });
+  }
+
   const { error: invitationUpdateError } = await admin
     .from("organization_invitations")
     .update({
@@ -104,6 +119,20 @@ export async function POST(request: Request) {
   if (invitationUpdateError) {
     return NextResponse.json({ error: invitationUpdateError.message }, { status: 400 });
   }
+
+  await admin.from("tenant_invitations").update({
+    accepted_at: new Date().toISOString(),
+    accepted_by_user_id: user.id,
+  }).eq("id", invitation.id);
+
+  await admin.from("admin_audit_log").insert({
+    tenant_id: invitation.organization_id,
+    actor_user_id: user.id,
+    action: "team.invitation.accepted",
+    target_table: "tenant_invitations",
+    target_id: invitation.id,
+    metadata: { email: invitation.email, role: invitation.role },
+  });
 
   return NextResponse.json({ ok: true });
 }

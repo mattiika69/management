@@ -1,10 +1,10 @@
 # Repository Rules
 
 - Treat this file as the authoritative repo-specific contract.
-- Treat `INFRASTRUCTURE.md` as the source of truth for project wiring, API status, and organization/user/RLS architecture. New features must follow that architecture before implementation is considered complete.
+- Treat `ARCHITECTURE.md` as the authoritative HyperOptimal SaaS standard and `INFRASTRUCTURE.md` as the source of truth for this app's current cloud wiring, API status, and migration state. New features must follow both before implementation is considered complete.
 - The utmost priority is data persistence and cloud-backed saving. Avoid data loss above all else: user/business data must be written durably to the connected cloud systems, destructive or lossy changes require explicit intent and a recovery path, and features must fail safely rather than silently dropping or overwriting data.
 - No product, customer, workspace, funnel, note, integration, billing, team, lead, AI output, training, learning, email, or SMS data may be saved, created, cached, or treated as authoritative in local-only storage. Do not use local files, browser localStorage/sessionStorage/IndexedDB, in-memory-only stores, static JSON, or mock local persistence for real app data. All real app data must be created and read through the database-backed cloud persistence layer with tenant scope and RLS.
-- All commits and cloud-visible authorship that is under our control must use the author name `Matika 6ix9ine`.
+- All commits and cloud-visible authorship that is under our control must use `mattiika69 <matt@1000xleads.com>`.
 - Keep changes small, focused, and in scope.
 - Before claiming work is complete, sync completed work to the cloud:
   - commit task-scoped code/docs changes,

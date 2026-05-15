@@ -29,7 +29,10 @@ export async function sendRoezanMessage(input: RoezanMessageInput) {
     throw new Error("ROEZAN_API_KEY is not configured.");
   }
 
-  const response = await fetch("https://app.roezan.com/api/integrations/message/send", {
+  const baseUrl = (
+    process.env.ROEZAN_API_BASE_URL ?? "https://app.roezan.com"
+  ).replace(/\/$/, "");
+  const response = await fetch(`${baseUrl}/api/integrations/message/send`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

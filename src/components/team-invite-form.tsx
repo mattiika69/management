@@ -17,7 +17,7 @@ export function TeamInviteForm() {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const response = await fetch("/api/settings/team/invitations", {
+    const response = await fetch("/api/team/invitations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -69,6 +69,7 @@ export function TeamInviteForm() {
             className="w-full border border-[#c9c6b8] bg-white px-4 py-3 outline-none focus:border-[#0f766e]"
           >
             <option value="member">Member</option>
+            <option value="viewer">Viewer</option>
             <option value="admin">Admin</option>
           </select>
         </label>

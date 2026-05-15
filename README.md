@@ -2,10 +2,16 @@
 
 A minimal Next.js lead capture app backed by Supabase and ready for Vercel.
 
+## Architecture
+
+`ARCHITECTURE.md` is the authoritative HyperOptimal SaaS app standard for this
+repo. `INFRASTRUCTURE.md` tracks this app's current cloud wiring and migration
+state.
+
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 3. Install dependencies with `npm install`.
 4. Run `npm run dev`.
 
@@ -49,12 +55,17 @@ supabase config push
 Set these environment variables in Vercel:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PRICE_ID`
+- `STRIPE_ONBOARDING_PRICE_ID`
+- `RESEND_FROM_NAME`
+- `ROEZAN_API_BASE_URL`
+- `CLAUDE_MODEL`
+- `INTEGRATION_SECRET_KEY`
+- `SCHEDULE_WORKER_SECRET`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SLACK_BOT_TOKEN`
 - `SLACK_SIGNING_SECRET`

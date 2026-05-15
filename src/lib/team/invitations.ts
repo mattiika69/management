@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from "crypto";
 
-export type TeamRole = "admin" | "member";
+export type TeamRole = "admin" | "member" | "viewer";
 
 export function isTeamRole(role: string): role is TeamRole {
-  return role === "admin" || role === "member";
+  return role === "admin" || role === "member" || role === "viewer";
 }
 
 export function createInvitationToken() {

@@ -19,6 +19,24 @@ export async function getOrCreateDefaultOrganization(
   supabase: SupabaseClient,
   user: User,
 ) {
+  const bypassTenantId = process.env.AUTH_BYPASS_TENANT_ID?.trim();
+
+  if (bypassTenantId) {
+    const { data: bypassOrganization, error: bypassError } = await supabase
+      .from("organizations")
+      .select("id,name,slug,owner_id")
+      .eq("id", bypassTenantId)
+      .maybeSingle<Organization>();
+
+    if (bypassError) {
+      throw new Error(bypassError.message);
+    }
+
+    if (bypassOrganization) {
+      return bypassOrganization;
+    }
+  }
+
   const { data: ownedOrganization, error: ownedSelectError } = await supabase
     .from("organizations")
     .select("id,name,slug,owner_id")
