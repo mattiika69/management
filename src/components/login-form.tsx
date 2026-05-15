@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,7 +12,7 @@ function safeNextPath(next: string) {
 export function LoginForm({ next = "/" }: { next?: string }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const nextPath = safeNextPath(next);
 
@@ -39,107 +39,85 @@ export function LoginForm({ next = "/" }: { next?: string }) {
     router.refresh();
   }
 
-  async function signInWithLink() {
-    if (!formRef.current) {
-      return;
-    }
-
-    setLoading(true);
-    setMessage("");
-
-    const formData = new FormData(formRef.current);
-    const email = String(formData.get("email") ?? "").trim().toLowerCase();
-    const supabase = createClient();
-    const origin = window.location.origin;
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
-      },
-    });
-
-    setLoading(false);
-    setMessage(error ? error.message : "Check your email for a sign-in link.");
-  }
-
   return (
     <form
-      ref={formRef}
       onSubmit={signInWithPassword}
-      className="border border-[#d9d7cb] bg-white p-6 shadow-sm"
+      className="w-full max-w-[448px] rounded-[14px] bg-white px-8 py-9 shadow-[0_18px_42px_rgba(31,54,94,0.14)] sm:px-8"
     >
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-[#171717]">Log in</h2>
-        <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-          Log in to continue to your workspace.
+      <div className="mb-9 text-center">
+        <h1 className="text-[26px] font-bold leading-tight text-[#111827]">
+          HyperOptimal
+        </h1>
+        <p className="mt-2 text-[16px] leading-6 text-[#727c91]">
+          Sign in to your account
         </p>
       </div>
 
       <label className="mb-5 block">
-        <span className="mb-2 block text-sm font-medium text-[#34342f]">Email</span>
+        <span className="mb-2 block text-[15px] font-medium text-[#334155]">Email</span>
         <input
           required
           name="email"
           type="email"
           autoComplete="email"
-          className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
-          placeholder="matt@1000xleads.com"
+          className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-[#eaf2ff] px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
+          placeholder="team@hyperoptimal.com"
         />
       </label>
 
       <label className="mb-5 block">
-        <span className="mb-2 block text-sm font-medium text-[#34342f]">Password</span>
-        <input
-          required
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
-          placeholder="Your password"
-        />
+        <span className="mb-2 flex items-center justify-between text-[15px] font-medium text-[#334155]">
+          Password
+          <Link className="text-[15px] font-medium text-[#2563ff]" href="/reset-password">
+            Forgot password?
+          </Link>
+        </span>
+        <span className="relative block">
+          <input
+            required
+            name="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-[#eaf2ff] px-4 pr-11 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
+            placeholder="Password"
+          />
+          <button
+            type="button"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            onClick={() => setShowPassword((visible) => !visible)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b]"
+          >
+            <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none">
+              <path d="M2.75 12s3.4-6.25 9.25-6.25S21.25 12 21.25 12s-3.4 6.25-9.25 6.25S2.75 12 2.75 12Z" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M12 14.75A2.75 2.75 0 1 0 12 9.25a2.75 2.75 0 0 0 0 5.5Z" stroke="currentColor" strokeWidth="1.7" />
+            </svg>
+          </button>
+        </span>
       </label>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#0f766e] px-5 py-3 font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70"
+        className="mt-1 h-12 w-full rounded-[7px] bg-[#1f5bff] px-5 text-[17px] font-medium text-white transition hover:bg-[#164ce5] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {loading ? "Signing in..." : "Log in"}
-      </button>
-
-      <button
-        type="button"
-        disabled={loading}
-        onClick={signInWithLink}
-        className="mt-3 w-full border border-[#0f766e] px-5 py-3 font-semibold text-[#0f766e] transition hover:bg-[#eef7f5] disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        Email sign-in link
+        {loading ? "Signing in..." : "Sign in"}
       </button>
 
       {message ? (
-        <p className="mt-4 text-sm text-[#0f766e]" role="status">
+        <p className="mt-4 text-center text-sm text-[#2563ff]" role="status">
           {message}
         </p>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap gap-3 text-sm text-[#5d5d55]">
+      <p className="mt-6 text-center text-[15px] text-[#727c91]">
+        Don&apos;t have an account?{" "}
         <Link
-          className="text-[#0f766e]"
+          className="font-medium text-[#2563ff]"
           href={`/signup?next=${encodeURIComponent(nextPath)}`}
         >
-          Create account
+          Sign up
         </Link>
-        <Link className="text-[#0f766e]" href="/reset-password">
-          Reset password
-        </Link>
-        <Link className="text-[#0f766e]" href="/privacy">
-          Privacy
-        </Link>
-        <Link className="text-[#0f766e]" href="/terms">
-          Terms
-        </Link>
-      </div>
+      </p>
     </form>
   );
 }

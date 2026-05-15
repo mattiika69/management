@@ -29,45 +29,51 @@ export function ResetPasswordForm() {
   return (
     <form
       onSubmit={resetPassword}
-      className="border border-[#d9d7cb] bg-white p-6 shadow-sm"
+      className="w-full max-w-[448px] rounded-[14px] bg-white px-8 py-9 shadow-[0_18px_42px_rgba(31,54,94,0.14)] sm:px-8"
     >
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-[#171717]">Reset password</h1>
-        <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-          We will email a secure link to update your password.
+      <div className="mb-9 text-center">
+        <h1 className="text-[26px] font-bold leading-tight text-[#111827]">
+          HyperOptimal
+        </h1>
+        <p className="mt-2 text-[16px] leading-6 text-[#727c91]">
+          Reset your password
         </p>
       </div>
 
+      <p className="mb-7 text-[15px] leading-6 text-[#475569]">
+        Enter your email address and we&apos;ll send you a link to reset your password.
+      </p>
+
       <label className="mb-5 block">
-        <span className="mb-2 block text-sm font-medium text-[#34342f]">Email</span>
+        <span className="mb-2 block text-[15px] font-medium text-[#334155]">Email</span>
         <input
           required
           name="email"
           type="email"
           autoComplete="email"
-          className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
-          placeholder="matt@1000xleads.com"
+          className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-white px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
+          placeholder="you@example.com"
         />
       </label>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-[#0f766e] px-5 py-3 font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70"
+        className="h-12 w-full rounded-[7px] bg-[#1f5bff] px-5 text-[17px] font-medium text-white transition hover:bg-[#164ce5] disabled:cursor-not-allowed disabled:opacity-70"
       >
         {loading ? "Sending..." : "Send reset link"}
       </button>
 
       {message ? (
-        <p className="mt-4 text-sm text-[#0f766e]" role="status">
+        <p className="mt-4 text-center text-sm text-[#2563ff]" role="status">
           {message}
         </p>
       ) : null}
 
-      <p className="mt-6 text-sm text-[#5d5d55]">
-        Remembered it?{" "}
-        <Link className="text-[#0f766e]" href="/login">
-          Log in
+      <p className="mt-6 text-center text-[15px] text-[#727c91]">
+        Remember your password?{" "}
+        <Link className="font-medium text-[#2563ff]" href="/login">
+          Sign in
         </Link>
       </p>
     </form>
