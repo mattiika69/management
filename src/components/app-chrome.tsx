@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, type CSSProperties, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 
@@ -40,10 +40,7 @@ export function AppChrome({
       >
         <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />
       </Suspense>
-      <main
-        className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
-        style={{ zoom: 0.9 } as CSSProperties}
-      >
+      <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
         {children}
       </main>
     </div>
