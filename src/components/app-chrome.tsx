@@ -5,11 +5,9 @@ import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 
 const APP_ROUTE_PREFIXES = [
-  "/ai-company-document",
   "/management",
   "/meetings",
   "/inspiration",
-  "/notes",
   "/settings",
 ];
 

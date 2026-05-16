@@ -29,7 +29,7 @@ export function ContextWorkspace({
       setMessage(body.error ?? "Context was not created.");
       return;
     }
-    window.location.href = `/ai-company-document?context=${body.context.id}`;
+    window.location.href = `/settings/ai-context-docs?context=${body.context.id}`;
   }
 
   async function archiveContext() {
@@ -51,7 +51,7 @@ export function ContextWorkspace({
       return;
     }
     const next = contexts.find((context) => context.id !== activeContext.id);
-    window.location.href = next ? `/ai-company-document?context=${next.id}` : "/ai-company-document";
+    window.location.href = next ? `/settings/ai-context-docs?context=${next.id}` : "/settings/ai-context-docs";
   }
 
   return (
@@ -72,7 +72,7 @@ export function ContextWorkspace({
           {contexts.map((context) => (
             <Link
               key={context.id}
-              href={`/ai-company-document?context=${context.id}`}
+              href={`/settings/ai-context-docs?context=${context.id}`}
               className={`block rounded-md border px-3 py-2 text-sm transition ${
                 context.id === activeContext.id
                   ? "border-blue-400/70 bg-blue-50 text-blue-900"

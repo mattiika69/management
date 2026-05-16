@@ -259,18 +259,20 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
         <div>
           {groups.map((group) => (
             <section key={group.id}>
-              <GroupHeader
-                group={group}
-                isOpen={openGroups[group.id] ?? true}
-                onToggle={() =>
-                  setOpenGroups((current) => ({
-                    ...current,
-                    [group.id]: !(current[group.id] ?? true),
-                  }))
-                }
-              />
+              {group.label ? (
+                <GroupHeader
+                  group={group}
+                  isOpen={openGroups[group.id] ?? true}
+                  onToggle={() =>
+                    setOpenGroups((current) => ({
+                      ...current,
+                      [group.id]: !(current[group.id] ?? true),
+                    }))
+                  }
+                />
+              ) : null}
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-0.5 px-2 py-1">
+                <div className="space-y-0.5 px-2 pb-1">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}

@@ -59,7 +59,7 @@ type Payload = {
   trainingItems?: TrainingInput[];
 };
 
-const meetingTypes = new Set(["team", "training", "one_on_one", "client", "planning"]);
+const meetingTypes = new Set(["team", "training", "one_on_one", "client"]);
 
 function cleanDate(value: unknown) {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;

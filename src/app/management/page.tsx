@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ManagementWorkspace } from "@/components/management-workspace";
-import { OperationsHeaderActions } from "@/components/operations-ui";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { getManagementData } from "@/lib/operations/management";
 import { createClient } from "@/lib/supabase/server";
@@ -48,7 +47,6 @@ export default async function ManagementPage({
       active="/management"
       title="Management"
       subtitle="Management"
-      headerActions={<OperationsHeaderActions />}
     >
       <ManagementWorkspace
         data={data}

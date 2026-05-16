@@ -2,7 +2,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Organization } from "@/lib/hyperoptimal/server";
 import { listWorkspacePeople, type WorkspacePerson } from "@/lib/operations/people";
 
-export type MeetingType = "team" | "training" | "one_on_one" | "client" | "planning";
+export type MeetingType = "team" | "training" | "one_on_one" | "client";
 
 export type Meeting = {
   id: string;

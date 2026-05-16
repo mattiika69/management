@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { MeetingsWorkspace } from "@/components/meetings-workspace";
-import { OperationsHeaderActions } from "@/components/operations-ui";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { getMeetingsData } from "@/lib/operations/meetings";
 import { createClient } from "@/lib/supabase/server";
 
 type SearchParams = Promise<{ view?: string | string[] }>;
 
-const views = new Set(["team", "training", "one_on_one", "client", "planning"]);
+const views = new Set(["team", "training", "one_on_one", "client"]);
 
 function readParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
@@ -38,7 +37,6 @@ export default async function MeetingsPage({
       active="/meetings"
       title="Meetings"
       subtitle="Meetings"
-      headerActions={<OperationsHeaderActions />}
     >
       <MeetingsWorkspace
         data={data}

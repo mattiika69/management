@@ -16,7 +16,7 @@ import {
 } from "@/lib/operations/meetings";
 import type { WorkspacePerson } from "@/lib/operations/people";
 
-type MeetingView = "team" | "training" | "one_on_one" | "client" | "planning";
+type MeetingView = "team" | "training" | "one_on_one" | "client";
 
 type Draft = {
   id?: string;
@@ -46,7 +46,6 @@ const meetingTabs: Array<{ id: MeetingView; label: string; href: string }> = [
   { id: "training", label: "Training Meetings", href: "/meetings?view=training" },
   { id: "one_on_one", label: "1 on 1 Meetings", href: "/meetings?view=one_on_one" },
   { id: "client", label: "Client Meetings", href: "/meetings?view=client" },
-  { id: "planning", label: "Planning Meetings", href: "/meetings?view=planning" },
 ];
 
 function SectionCard({
@@ -112,9 +111,7 @@ function initialDraft(type: MeetingType, people: WorkspacePerson[]): Draft {
           ? "New Training Meeting"
           : type === "one_on_one"
             ? "New 1:1"
-            : type === "client"
-              ? "New Client Meeting"
-              : "New Planning Meeting",
+            : "New Client Meeting",
     ownerUserId: second,
     employeeUserId: first,
     clientName: "",
@@ -344,9 +341,6 @@ export function MeetingsWorkspace({
         ) : null}
         {activeView === "client" ? (
           <ClientMeetingEditor people={data.people} draft={draft} saving={saving} onSave={save} updateDraft={updateDraft} updateAction={updateAction} />
-        ) : null}
-        {activeView === "planning" ? (
-          <PlanningMeetingEditor people={data.people} draft={draft} saving={saving} onSave={save} updateDraft={updateDraft} updateAction={updateAction} />
         ) : null}
       </div>
     </div>
@@ -729,8 +723,4 @@ function ClientMeetingEditor({
       </div>
     </SectionCard>
   );
-}
-
-function PlanningMeetingEditor(props: Parameters<typeof ClientMeetingEditor>[0]) {
-  return <ClientMeetingEditor {...props} />;
 }
