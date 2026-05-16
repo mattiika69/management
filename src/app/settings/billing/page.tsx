@@ -6,8 +6,6 @@ import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { getCreditAccount } from "@/lib/hyperoptimal/server";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export default async function BillingSettingsPage() {
   const supabase = await createClient();
@@ -20,14 +18,10 @@ export default async function BillingSettingsPage() {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const creditAccount = await getCreditAccount(supabase, organization).catch(
-    () => null,
-  );
+  const creditAccount = await getCreditAccount(supabase, organization).catch(() => null);
   const { data: subscriptions } = await supabase
     .from("subscriptions")
-    .select(
-      "status,price_id,current_period_end,cancel_at_period_end,created_at",
-    )
+    .select("status,price_id,current_period_end,cancel_at_period_end,created_at")
     .eq("organization_id", organization.id)
     .order("created_at", { ascending: false })
     .limit(5);
@@ -35,113 +29,53 @@ export default async function BillingSettingsPage() {
   return (
     <AppShell
       active="/settings/billing"
-      title="Settings"
-      subtitle={`Billing · ${organization.name}`}
+      title="Billing"
+      subtitle={`Manage billing for ${organization.name}.`}
       tabs={settingsTabs}
     >
-      <div className="space-y-6">
-        <Card className="overflow-hidden">
-          <div className="grid gap-0 md:grid-cols-[1fr_auto] md:items-stretch">
-            <div className="p-6">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-ink-400)]">
-                Launch credits
-              </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-[44px] font-semibold tabular-nums leading-none tracking-tight text-[color:var(--color-ink-900)]">
-                  {creditAccount?.balance_credits ?? 0}
-                </span>
-                <span className="text-[14px] text-[color:var(--color-ink-500)]">
-                  credits available
-                </span>
-              </div>
-              <p className="mt-3 max-w-md text-[13px] text-[color:var(--color-ink-500)]">
-                Credits are spent per generated funnel asset. Top up to keep your
-                team launching without interruption.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <CreditCheckoutButton pack="starter" />
-                <CreditCheckoutButton pack="growth" />
-              </div>
-            </div>
-            <div className="hidden border-l border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] p-6 md:block">
-              <div className="flex h-full flex-col justify-between">
-                <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-ink-400)]">
-                    Tip
-                  </div>
-                  <p className="mt-2 max-w-[200px] text-[13px] text-[color:var(--color-ink-700)]">
-                    Auto-recharge keeps your workspace topped up without manual checkouts.
+      <section className="mx-auto max-w-6xl">
+        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
+          <h2 className="text-2xl font-bold text-[#111827]">Launch Credits</h2>
+          <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
+            Credits are spent per generated funnel asset.
+          </p>
+          <div className="mt-4 rounded-md border border-[#d8dee9] bg-[#f8fafc] px-4 py-3 text-sm">
+            <span className="font-semibold text-[#111827]">{creditAccount?.balance_credits ?? 0}</span> credits available
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <CreditCheckoutButton pack="starter" />
+            <CreditCheckoutButton pack="growth" />
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
+          <h2 className="text-2xl font-bold text-[#111827]">Subscription</h2>
+          <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
+            Choose a plan or update the current subscription.
+          </p>
+          <div className="mt-5">
+            <BillingCheckoutButton />
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
+          <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Subscriptions</h2>
+          <div className="mt-4 space-y-3 text-sm">
+            {subscriptions?.length ? (
+              subscriptions.map((subscription) => (
+                <div key={`${subscription.status}-${subscription.created_at}`} className="rounded-md border border-[#ebe3d8] p-4">
+                  <p className="font-semibold text-[#171717]">{subscription.status}</p>
+                  <p className="mt-1 text-[#5d5d55]">
+                    {subscription.cancel_at_period_end ? "Cancels at period end" : "Renews automatically"}
                   </p>
                 </div>
-                <div className="text-[11px] text-[color:var(--color-ink-400)]">
-                  Need a custom pack? Contact us.
-                </div>
-              </div>
-            </div>
+              ))
+            ) : (
+              <p className="text-[#5d5d55]">No subscription records yet.</p>
+            )}
           </div>
-        </Card>
-
-        <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card>
-            <CardHeader
-              eyebrow="Subscription"
-              title="Plan"
-              description="Choose a plan or update the current subscription."
-            />
-            <CardBody>
-              <BillingCheckoutButton />
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader
-              eyebrow="History"
-              title="Subscription records"
-              description="Most recent subscription activity."
-            />
-            <CardBody>
-              {subscriptions?.length ? (
-                <div className="space-y-2">
-                  {subscriptions.map((subscription) => (
-                    <div
-                      key={`${subscription.status}-${subscription.created_at}`}
-                      className="flex items-center justify-between rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-4 py-3"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            tone={
-                              subscription.status === "active"
-                                ? "success"
-                                : subscription.status === "trialing"
-                                  ? "brand"
-                                  : "neutral"
-                            }
-                          >
-                            {subscription.status}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 text-[12px] text-[color:var(--color-ink-500)]">
-                          {subscription.cancel_at_period_end
-                            ? "Cancels at period end"
-                            : "Renews automatically"}
-                        </p>
-                      </div>
-                      <span className="text-[11px] text-[color:var(--color-ink-400)]">
-                        {new Date(subscription.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[13px] text-[color:var(--color-ink-500)]">
-                  No subscription records yet.
-                </p>
-              )}
-            </CardBody>
-          </Card>
-        </div>
-      </div>
+        </section>
+      </section>
     </AppShell>
   );
 }

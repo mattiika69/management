@@ -33,11 +33,13 @@ export default async function SchedulingSettingsPage() {
   return (
     <AppShell
       active="/settings/scheduling"
-      title="Settings"
-      subtitle="Scheduling"
+      title="Scheduling"
+      subtitle="Manage recurring workspace workflows."
       tabs={settingsTabs}
     >
-      <ScheduleManager initialSchedules={schedules ?? []} />
+      <section className="mx-auto max-w-6xl">
+        <ScheduleManager initialSchedules={schedules ?? []} />
+      </section>
     </AppShell>
   );
 }

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { BillingCheckoutButton } from "@/components/billing-checkout-button";
 import { createClient } from "@/lib/supabase/server";
-import { Badge } from "@/components/ui/badge";
 
 type SearchParams = Promise<{
   billing?: string | string[];
@@ -43,182 +42,131 @@ export default async function GetStartedPage({
     billingStatus === "success" ||
     ["active", "trialing"].includes(subscription?.status ?? "");
 
-  type Step = {
-    number: number;
-    title: string;
-    body: string;
-    status: "complete" | "required" | "optional";
-  };
-
-  const steps: Step[] = [
+  const steps = [
     {
-      number: 1,
+      eyebrow: "Step 1",
       title: "Workspace ready",
       body: organization.name,
-      status: "complete",
+      status: "Complete",
     },
     {
-      number: 2,
+      eyebrow: "Step 2",
       title: "Billing",
-      body: billingComplete ? "Billing is complete." : "Choose a plan to continue.",
-      status: billingComplete ? "complete" : "required",
+      body: billingComplete
+        ? "Billing is complete."
+        : "Choose a plan to continue.",
+      status: billingComplete ? "Complete" : "Required",
     },
     {
-      number: 3,
+      eyebrow: "Step 3",
       title: "Business profile",
       body: "Add the details that guide your funnel setup.",
-      status: "optional",
+      status: "Optional",
     },
   ];
 
-  const completedCount = steps.filter((step) => step.status === "complete").length;
-  const progress = (completedCount / steps.length) * 100;
-
   return (
-    <main className="min-h-screen bg-[color:var(--color-bg)]">
-      <div className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
-        <header className="mb-10">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)]"
-          >
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[color:var(--color-ink-900)]">
-              <span className="text-[10px] font-bold text-white">H</span>
-            </div>
-            HyperOptimal
-          </Link>
-          <h1 className="mt-6 text-[36px] font-semibold leading-tight tracking-tight text-[color:var(--color-ink-900)]">
-            Welcome — let&apos;s set things up.
-          </h1>
-          <p className="mt-2 max-w-xl text-[15px] leading-7 text-[color:var(--color-ink-500)]">
-            A few quick steps to finish your workspace for {organization.name}.
-          </p>
-
-          <div className="mt-6 flex items-center gap-3">
-            <div className="h-1.5 flex-1 max-w-xs overflow-hidden rounded-full bg-[color:var(--color-surface-muted)] ring-1 ring-[color:var(--color-border)]">
-              <div
-                className="h-full rounded-full bg-[color:var(--color-brand-500)] transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <span className="text-[12px] font-medium tabular-nums text-[color:var(--color-ink-500)]">
-              {completedCount} of {steps.length} complete
-            </span>
+    <main className="min-h-screen bg-[#f7f7f2] px-6 py-8">
+      <section className="mx-auto max-w-5xl">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Link
+              href="/"
+              className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]"
+            >
+              HyperOptimal Funnel
+            </Link>
+            <h1 className="mt-4 text-4xl font-bold text-[#171717]">
+              Get started
+            </h1>
+            <p className="mt-2 max-w-2xl text-[#5d5d55]">
+              Finish your workspace setup for {organization.name}.
+            </p>
           </div>
-        </header>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/settings/team"
+              className="border border-[#0f766e] px-4 py-2 text-sm font-semibold text-[#0f766e]"
+            >
+              Settings
+            </Link>
+          </div>
+        </div>
 
         {billingStatus === "success" ? (
-          <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[13px] text-emerald-700">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+          <div className="mb-6 border border-[#b7d7cf] bg-[#eef7f5] px-5 py-4 text-sm text-[#0f766e]">
             Billing completed.
           </div>
         ) : null}
 
         {billingStatus === "cancelled" ? (
-          <div className="mb-6 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
+          <div className="mb-6 border border-[#eadfd3] bg-white px-5 py-4 text-sm text-[#8a5a2d]">
             Checkout was cancelled. You can continue when ready.
           </div>
         ) : null}
 
-        <ol className="space-y-3">
+        <div className="grid gap-4">
           {steps.map((step) => (
-            <li
-              key={step.title}
-              className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-[var(--shadow-card)]"
-            >
+            <section key={step.title} className="border border-[#d9d7cb] bg-white p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold ${
-                      step.status === "complete"
-                        ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                        : step.status === "required"
-                          ? "bg-[color:var(--color-brand-50)] text-[color:var(--color-brand-700)] ring-1 ring-[color:var(--color-brand-100)]"
-                          : "bg-[color:var(--color-surface-muted)] text-[color:var(--color-ink-500)] ring-1 ring-[color:var(--color-border)]"
-                    }`}
-                  >
-                    {step.status === "complete" ? (
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      step.number
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-[18px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
-                      {step.title}
-                    </h2>
-                    <p className="mt-1 max-w-md text-[14px] leading-6 text-[color:var(--color-ink-500)]">
-                      {step.body}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a7f73]">
+                    {step.eyebrow}
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-[#171717]">
+                    {step.title}
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5d5d55]">
+                    {step.body}
+                  </p>
                 </div>
-                <Badge
-                  tone={
-                    step.status === "complete"
-                      ? "success"
-                      : step.status === "required"
-                        ? "brand"
-                        : "neutral"
-                  }
-                >
-                  {step.status === "complete"
-                    ? "Complete"
-                    : step.status === "required"
-                      ? "Required"
-                      : "Optional"}
-                </Badge>
+                <span className="border border-[#d9d7cb] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#5d5d55]">
+                  {step.status}
+                </span>
               </div>
 
               {step.title === "Billing" && !billingComplete ? (
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-5 flex flex-wrap gap-3">
                   <BillingCheckoutButton />
                   <Link
                     href="/"
-                    className="inline-flex h-10 items-center rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-4 text-[13px] font-medium text-[color:var(--color-ink-700)] transition-colors hover:bg-[color:var(--color-surface-muted)]"
+                    className="border border-[#d9d7cb] px-5 py-3 text-sm font-semibold text-[#0f766e] transition hover:bg-[#f8f4ee]"
                   >
-                    Skip for now
+                    Skip
                   </Link>
                 </div>
               ) : null}
-            </li>
+            </section>
           ))}
-        </ol>
+        </div>
 
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/"
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[color:var(--color-ink-900)] px-5 text-[13px] font-medium text-white transition-colors hover:bg-[color:var(--color-ink-700)]"
+            className="bg-[#171717] px-5 py-3 text-sm font-semibold text-white"
           >
-            Enter workspace
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
+            Skip
           </Link>
           <Link
             href="/settings/team"
-            className="text-[13px] font-medium text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)]"
+            className="border border-[#d9d7cb] px-5 py-3 text-sm font-semibold text-[#0f766e]"
           >
             Settings
           </Link>
           <Link
             href="/privacy"
-            className="text-[13px] font-medium text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)]"
+            className="border border-[#d9d7cb] px-5 py-3 text-sm font-semibold text-[#0f766e]"
           >
             Privacy
           </Link>
           <Link
             href="/terms"
-            className="text-[13px] font-medium text-[color:var(--color-ink-500)] hover:text-[color:var(--color-ink-900)]"
+            className="border border-[#d9d7cb] px-5 py-3 text-sm font-semibold text-[#0f766e]"
           >
             Terms
           </Link>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

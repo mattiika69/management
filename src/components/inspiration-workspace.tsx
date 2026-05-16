@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { INSPIRATION_CATEGORIES } from "@/lib/hyperoptimal/data";
 import type { CompanyContextRow, FunnelRow } from "@/lib/hyperoptimal/server";
-import { Button } from "@/components/ui/button";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
 
 export function InspirationWorkspace({
   contexts,
@@ -19,7 +17,6 @@ export function InspirationWorkspace({
   const [contextId, setContextId] = useState("");
   const [funnelId, setFunnelId] = useState("");
   const [message, setMessage] = useState("");
-  const [messageTone, setMessageTone] = useState<"info" | "error">("info");
   const [saving, setSaving] = useState(false);
 
   async function saveInspiration() {
@@ -36,111 +33,98 @@ export function InspirationWorkspace({
         funnelId: funnelId || null,
       }),
     });
-    const result = (await response.json().catch(() => ({}))) as {
-      error?: string;
-    };
+    const result = (await response.json().catch(() => ({}))) as { error?: string };
     setSaving(false);
     if (!response.ok) {
-      setMessageTone("error");
       setMessage(result.error ?? "Inspiration was not saved.");
       return;
     }
     setTitle("");
     setBody("");
-    setMessageTone("info");
     setMessage("Inspiration saved to Notes.");
   }
 
   return (
-    <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-[16px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
-            Capture inspiration
-          </h2>
-          <p className="mt-0.5 text-[13px] text-[color:var(--color-ink-500)]">
-            Save examples, hooks, and ad copy that spark ideas — they sync to Notes automatically.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[200px_minmax(0,1fr)_220px_220px]">
-        <Field label="Category">
-          <Select
+    <section className="rounded-lg border border-[#d8dee9] bg-white p-5 shadow-sm">
+      <div className="grid gap-4 xl:grid-cols-[180px_minmax(0,1fr)_220px_220px]">
+        <label>
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
+            Category
+          </span>
+          <select
             value={category}
             onChange={(event) => setCategory(event.currentTarget.value)}
+            className="h-10 w-full rounded-md border border-[#cfd8e6] bg-white px-3 text-sm outline-none focus:border-[#2f80ed]"
           >
             {INSPIRATION_CATEGORIES.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
+              <option key={item} value={item}>{item}</option>
             ))}
-          </Select>
-        </Field>
-        <Field label="Title">
-          <Input
+          </select>
+        </label>
+        <label>
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
+            Title
+          </span>
+          <input
             value={title}
             onChange={(event) => setTitle(event.currentTarget.value)}
-            placeholder="Email inspiration, ad angle, VSL hook…"
+            placeholder="Email inspiration, ad angle, VSL hook..."
+            className="h-10 w-full rounded-md border border-[#cfd8e6] px-3 text-sm outline-none focus:border-[#2f80ed]"
           />
-        </Field>
-        <Field label="Context">
-          <Select
+        </label>
+        <label>
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
+            Context
+          </span>
+          <select
             value={contextId}
             onChange={(event) => setContextId(event.currentTarget.value)}
+            className="h-10 w-full rounded-md border border-[#cfd8e6] bg-white px-3 text-sm outline-none focus:border-[#2f80ed]"
           >
             <option value="">None</option>
             {contexts.map((context) => (
-              <option key={context.id} value={context.id}>
-                {context.title}
-              </option>
+              <option key={context.id} value={context.id}>{context.title}</option>
             ))}
-          </Select>
-        </Field>
-        <Field label="Funnel">
-          <Select
+          </select>
+        </label>
+        <label>
+          <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
+            Funnel
+          </span>
+          <select
             value={funnelId}
             onChange={(event) => setFunnelId(event.currentTarget.value)}
+            className="h-10 w-full rounded-md border border-[#cfd8e6] bg-white px-3 text-sm outline-none focus:border-[#2f80ed]"
           >
             <option value="">None</option>
             {funnels.map((funnel) => (
-              <option key={funnel.id} value={funnel.id}>
-                {funnel.name}
-              </option>
+              <option key={funnel.id} value={funnel.id}>{funnel.name}</option>
             ))}
-          </Select>
-        </Field>
+          </select>
+        </label>
       </div>
-
-      <Field label="Inspiration" className="mt-4">
-        <Textarea
+      <label className="mt-4 block">
+        <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
+          Inspiration
+        </span>
+        <textarea
           value={body}
           onChange={(event) => setBody(event.currentTarget.value)}
           rows={14}
           placeholder="Paste the example, hook, email, page copy, ad, or idea here."
+          className="w-full resize-y rounded-md border border-[#cfd8e6] px-3 py-3 text-sm leading-6 outline-none focus:border-[#2f80ed]"
         />
-      </Field>
-
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Button
+      </label>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
           onClick={saveInspiration}
           disabled={saving || !body.trim()}
-          loading={saving}
+          className="rounded-md bg-[#111827] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {saving ? "Saving" : "Save to Notes"}
-        </Button>
-        {message ? (
-          <div
-            className={`rounded-lg border px-3 py-1.5 text-[13px] ${
-              messageTone === "error"
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
-            }`}
-            role="status"
-          >
-            {message}
-          </div>
-        ) : null}
+          {saving ? "Saving..." : "Save to Notes"}
+        </button>
+        {message ? <p className="text-sm text-[#111827]" role="status">{message}</p> : null}
       </div>
     </section>
   );

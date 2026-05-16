@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 
@@ -32,9 +32,12 @@ export function AppChrome({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[color:var(--color-bg)] text-[color:var(--color-ink-900)]">
+    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900">
       <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />
-      <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+      <main
+        className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
+        style={{ zoom: 0.9 } as CSSProperties}
+      >
         {children}
       </main>
     </div>

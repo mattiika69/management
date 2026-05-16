@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 type Status = "idle" | "loading" | "error";
 
@@ -26,21 +25,17 @@ export function BillingCheckoutButton() {
   }
 
   return (
-    <div className="space-y-2">
-      <Button
+    <div>
+      <button
+        type="button"
         onClick={startCheckout}
-        loading={status === "loading"}
-        rightIcon={
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </svg>
-        }
+        disabled={status === "loading"}
+        className="w-full bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
-        {status === "loading" ? "Opening checkout" : "Continue to checkout"}
-      </Button>
+        {status === "loading" ? "Opening checkout..." : "Continue to checkout"}
+      </button>
       {message ? (
-        <p className="text-[12px] text-red-700" role="status">
+        <p className="mt-3 text-sm text-red-700" role="status">
           {message}
         </p>
       ) : null}
