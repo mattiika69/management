@@ -38,17 +38,27 @@ export default async function TelegramSettingsPage() {
   return (
     <AppShell active="/settings/telegram" title="Telegram" subtitle="Manage Telegram access." tabs={settingsTabs}>
       <section className="settings-page space-y-5">
-        {telegramReady ? (
-          <TelegramLinkPanel />
-        ) : (
-          <section className="settings-card-pad">
-            <h2 className="text-[17px] font-bold text-[#101828]">Telegram</h2>
-            <p className="mt-2 text-[13px] leading-6 text-[#667085]">
-              Connect Telegram so workspace updates can be sent and received from approved chats.
-            </p>
-            <span className="settings-button-outline mt-5 inline-flex">Connect with an owner</span>
-          </section>
-        )}
+        <section className="settings-card-pad">
+          <div className="flex gap-4">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] bg-[#f2f4f7] text-[20px] font-bold text-[#344054]">
+              T
+            </div>
+            <div>
+              <h2 className="text-[18px] font-bold text-[#101828]">Telegram</h2>
+              <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
+                Connect Telegram so workspace updates can be sent and received from approved chats.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            {telegramReady ? (
+              <TelegramLinkPanel compact />
+            ) : (
+              <span className="settings-button-outline inline-flex">Connect with an owner</span>
+            )}
+          </div>
+        </section>
 
         <section className="settings-card overflow-hidden">
           <div className="settings-card-header">
@@ -56,11 +66,11 @@ export default async function TelegramSettingsPage() {
           </div>
           {data?.length ? (
             data.map((connection) => (
-              <div key={connection.id} className="flex items-center justify-between gap-4 border-b border-[#edf0f5] px-4 py-3 last:border-b-0">
+              <div key={connection.id} className="flex items-center justify-between gap-4 border-b border-[#e4e7ec] px-4 py-4 last:border-b-0">
                 <span className="text-[13px] font-bold text-[#101828]">
                   {connection.display_name ?? connection.external_channel_id ?? "Telegram chat"}
                 </span>
-                <span className="text-[12px] font-semibold text-emerald-700">Connected</span>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">Connected</span>
               </div>
             ))
           ) : (

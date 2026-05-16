@@ -30,9 +30,9 @@ export function BillingCheckoutButton() {
         type="button"
         onClick={startCheckout}
         disabled={status === "loading"}
-        className="w-full bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        className="settings-button-teal w-full"
       >
-        {status === "loading" ? "Opening checkout..." : "Continue to checkout"}
+        {status === "loading" ? "Opening Checkout..." : "Continue to Checkout"}
       </button>
       {message ? (
         <p className="mt-3 text-sm text-red-700" role="status">

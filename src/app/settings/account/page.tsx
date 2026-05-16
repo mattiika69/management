@@ -1,9 +1,29 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { SignOutButton } from "@/components/sign-out-button";
+import { ProfileSettingsForm } from "@/components/profile-settings-form";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+type ProfileRow = {
+  display_name: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+function metadataString(metadata: Record<string, unknown> | null, key: string) {
+  const value = metadata?.[key];
+  return typeof value === "string" ? value : "";
+}
+
+function formatDate(value: string | undefined) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
 
 export default async function AccountSettingsPage() {
   const supabase = await createClient();
@@ -16,43 +36,61 @@ export default async function AccountSettingsPage() {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("display_name,metadata,created_at")
+    .eq("user_id", user.id)
+    .maybeSingle<ProfileRow>();
+
+  const displayName =
+    profile?.display_name ||
+    (typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "") ||
+    user.email?.split("@")[0] ||
+    organization.name;
 
   return (
     <AppShell
       active="/settings/account"
       title="Account"
-      subtitle="Manage account access."
+      subtitle="Manage your account."
       tabs={settingsTabs}
     >
-      <section className="settings-page">
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-          <section className="settings-card-pad">
-            <h2 className="text-2xl font-semibold text-[#171717]">Profile</h2>
-            <dl className="mt-5 grid gap-4 text-sm">
-              <div>
-                <dt className="font-semibold text-[#34342f]">Email</dt>
-                <dd className="mt-1 text-[#5d5d55]">{user.email}</dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-[#34342f]">Workspace</dt>
-                <dd className="mt-1 text-[#5d5d55]">{organization.name}</dd>
-              </div>
-            </dl>
-          </section>
+      <section className="settings-page space-y-5">
+        <section className="settings-card-pad">
+          <div>
+            <h2 className="text-[18px] font-bold text-[#101828]">Profile Settings</h2>
+            <p className="mt-1 text-[13px] font-medium text-[#667085]">
+              Manage your personal information
+            </p>
+          </div>
 
-          <section className="settings-card-pad">
-            <h2 className="text-2xl font-semibold text-[#171717]">Access</h2>
-            <div className="mt-5 grid gap-3">
-              <a
-                href="/update-password"
-                className="settings-button-outline"
-              >
-                Update password
-              </a>
-              <SignOutButton className="inline-flex h-10 items-center justify-center border border-red-200 bg-white px-4 text-[13px] font-bold text-red-700 transition hover:bg-red-50" />
-            </div>
-          </section>
-        </div>
+          <div className="mt-6">
+            <ProfileSettingsForm
+              initialValues={{
+                displayName,
+                email: user.email ?? "",
+                phoneNumber: metadataString(profile?.metadata ?? null, "phoneNumber"),
+                timezone: metadataString(profile?.metadata ?? null, "timezone") || "America/New_York",
+                jobTitle: metadataString(profile?.metadata ?? null, "jobTitle"),
+                department: metadataString(profile?.metadata ?? null, "department"),
+              }}
+            />
+          </div>
+
+          <div className="mt-6 rounded-[8px] bg-[#f8fafc] px-4 py-4">
+            <h3 className="text-[13px] font-bold text-[#344054]">Account Information</h3>
+            <dl className="mt-3 grid gap-2 text-[12px] sm:grid-cols-[160px_1fr]">
+              <dt className="font-medium text-[#667085]">User ID</dt>
+              <dd className="truncate text-right font-semibold text-[#344054] sm:text-left">
+                {user.id.slice(0, 8)}...
+              </dd>
+              <dt className="font-medium text-[#667085]">Account Created</dt>
+              <dd className="text-right font-semibold text-[#344054] sm:text-left">
+                {formatDate(profile?.created_at ?? user.created_at)}
+              </dd>
+            </dl>
+          </div>
+        </section>
       </section>
     </AppShell>
   );

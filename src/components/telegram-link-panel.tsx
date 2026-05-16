@@ -10,7 +10,7 @@ type LinkCode = {
   error?: string;
 };
 
-export function TelegramLinkPanel() {
+export function TelegramLinkPanel({ compact = false }: { compact?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [linkCode, setLinkCode] = useState<LinkCode | null>(null);
 
@@ -23,16 +23,20 @@ export function TelegramLinkPanel() {
   }
 
   return (
-    <div className="settings-card-pad">
-      <h2 className="text-[15px] font-bold text-gray-950">Connect Telegram</h2>
-      <p className="mt-2 text-[13px] leading-6 text-gray-600">
-        Generate a one-time code, then send it to the HyperOptimal Management Telegram bot.
-      </p>
+    <div className={compact ? "" : "settings-card-pad"}>
+      {!compact ? (
+        <>
+          <h2 className="text-[15px] font-bold text-gray-950">Connect Telegram</h2>
+          <p className="mt-2 text-[13px] leading-6 text-gray-600">
+            Generate a one-time code, then send it to the HyperOptimal Management Telegram bot.
+          </p>
+        </>
+      ) : null}
       <button
         type="button"
         onClick={createCode}
         disabled={loading}
-        className="settings-button-dark mt-5"
+        className={`settings-button-dark ${compact ? "" : "mt-5"}`}
       >
         {loading ? "Generating..." : "Generate Telegram code"}
       </button>
@@ -44,7 +48,7 @@ export function TelegramLinkPanel() {
       ) : null}
 
       {linkCode?.code ? (
-        <div className="mt-4 border border-[#ebe3d8] bg-[#fbfaf7] p-4 text-[13px]">
+        <div className="mt-4 rounded-[8px] border border-[#d9e1ee] bg-[#f8fafc] p-4 text-[13px]">
           <p className="text-gray-600">Code</p>
           <p className="mt-1 font-mono text-xl font-semibold text-gray-950">{linkCode.code}</p>
           {linkCode.deepLink ? (

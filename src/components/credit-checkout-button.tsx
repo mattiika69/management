@@ -29,7 +29,7 @@ export function CreditCheckoutButton({ pack = "starter" }: { pack?: "starter" | 
         type="button"
         onClick={checkout}
         disabled={loading}
-        className="rounded-md bg-[#111827] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="settings-button-dark h-9 px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Opening..." : pack === "growth" ? "Buy 500 Credits" : "Buy 100 Credits"}
       </button>

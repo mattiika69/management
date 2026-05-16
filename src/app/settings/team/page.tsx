@@ -111,26 +111,26 @@ export default async function TeamSettingsPage({
     >
       <section className="settings-page">
         {inviteStatus === "accepted" ? (
-          <div className="mt-6 border border-[#b7d7cf] bg-[#eef7f5] px-5 py-4 text-sm text-[#0f766e]">
+          <div className="mb-5 rounded-[8px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
             Invitation accepted. You now have access to this workspace.
           </div>
         ) : null}
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_324px]">
           <section className="settings-card-pad">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-semibold text-[#171717]">Team</h2>
-                <p className="mt-2 text-sm text-[#5d5d55]">
+                <h2 className="text-[22px] font-bold text-[#101828]">Team</h2>
+                <p className="mt-2 text-[13px] font-medium text-[#667085]">
                   Manage who can access this workspace.
                 </p>
               </div>
-              <span className="border border-[#d9d7cb] px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-[#5d5d55]">
+              <span className="rounded-[5px] border border-[#d9e1ee] bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#667085]">
                 Your role: {membershipRole}
               </span>
             </div>
 
-            <div className="mt-6 overflow-hidden border border-[#ebe3d8]">
+            <div className="mt-6 overflow-hidden rounded-[6px] border border-[#d9e1ee]">
               <div className="settings-table-head hidden grid-cols-[1fr_140px_140px] gap-3 px-4 py-3 md:grid">
                 <span>Email</span>
                 <span>Role</span>
@@ -139,16 +139,16 @@ export default async function TeamSettingsPage({
               {(memberships ?? []).map((membership) => (
                 <div
                   key={membership.user_id}
-                  className="grid gap-2 border-t border-[#ebe3d8] px-4 py-4 text-sm md:grid-cols-[1fr_140px_140px] md:gap-3"
+                  className="grid gap-2 border-t border-[#e4e7ec] px-4 py-4 text-[13px] md:grid-cols-[1fr_140px_140px] md:gap-3"
                 >
                   <span className="min-w-0 truncate text-[#171717]">
                     {memberEmails.get(membership.user_id)}
                   </span>
-                  <span className="capitalize text-[#5d5d55]">
+                  <span className="capitalize text-[#667085]">
                     <span className="md:hidden">Role: </span>
                     {membership.role}
                   </span>
-                  <span className="text-[#5d5d55]">
+                  <span className="text-[#667085]">
                     <span className="md:hidden">Joined: </span>
                     {formatDate(membership.created_at)}
                   </span>
@@ -161,8 +161,8 @@ export default async function TeamSettingsPage({
             <TeamInviteForm />
           ) : (
             <section className="settings-card-pad">
-              <h2 className="text-2xl font-semibold text-[#171717]">Invite member</h2>
-              <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
+              <h2 className="text-[22px] font-bold text-[#101828]">Invite member</h2>
+              <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
                 Ask a workspace owner or admin to invite new team members.
               </p>
             </section>
@@ -171,17 +171,17 @@ export default async function TeamSettingsPage({
 
         {canManage ? (
           <section className="settings-card-pad mt-6">
-            <h2 className="text-2xl font-semibold text-[#171717]">Pending invites</h2>
+            <h2 className="text-[22px] font-bold text-[#101828]">Pending invites</h2>
             <div className="mt-5 space-y-3">
               {(invitations ?? []).length ? (
                 invitations?.map((invitation) => (
                   <div
                     key={invitation.id}
-                    className="flex flex-wrap items-center justify-between gap-4 border border-[#ebe3d8] px-4 py-3 text-sm"
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-[7px] border border-[#d9e1ee] px-4 py-3 text-[13px]"
                   >
                     <div>
                       <p className="font-medium text-[#171717]">{invitation.email}</p>
-                      <p className="mt-1 text-[#5d5d55]">
+                      <p className="mt-1 text-[#667085]">
                         {invitation.role} invite expires {formatDate(invitation.expires_at)}
                       </p>
                     </div>
@@ -189,7 +189,7 @@ export default async function TeamSettingsPage({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-[#5d5d55]">No pending invitations.</p>
+                <p className="text-[13px] font-medium text-[#667085]">No pending invitations.</p>
               )}
             </div>
           </section>

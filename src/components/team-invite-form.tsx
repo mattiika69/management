@@ -42,15 +42,15 @@ export function TeamInviteForm() {
   return (
     <form onSubmit={inviteMember} className="settings-card-pad">
       <div className="mb-5">
-        <h2 className="text-2xl font-semibold text-[#171717]">Invite member</h2>
-        <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
+        <h2 className="text-[22px] font-bold text-[#101828]">Invite member</h2>
+        <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
           Send a secure invitation link to add someone to this workspace.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-[1fr_180px]">
         <label>
-          <span className="mb-2 block text-sm font-medium text-[#34342f]">Email</span>
+          <span className="mb-2 block text-[13px] font-semibold text-[#344054]">Email</span>
           <input
             required
             name="email"
@@ -62,7 +62,7 @@ export function TeamInviteForm() {
         </label>
 
         <label>
-          <span className="mb-2 block text-sm font-medium text-[#34342f]">Role</span>
+          <span className="mb-2 block text-[13px] font-semibold text-[#344054]">Role</span>
           <select
             name="role"
             defaultValue="member"
@@ -78,7 +78,7 @@ export function TeamInviteForm() {
       <button
         type="submit"
         disabled={status === "loading"}
-        className="settings-button-teal mt-5"
+        className="settings-button-dark mt-5"
       >
         {status === "loading" ? "Sending..." : "Send invite"}
       </button>
