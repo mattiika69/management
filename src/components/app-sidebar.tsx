@@ -71,10 +71,10 @@ function DragHandle() {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-35 transition-opacity group-hover:opacity-55 group-focus-visible:opacity-65"
+      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-30 transition-opacity group-hover:opacity-50 group-focus-visible:opacity-60"
     >
       {Array.from({ length: 6 }).map((_, index) => (
-        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#9eabbf]" />
+        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#9aa8bb]" />
       ))}
     </span>
   );
@@ -90,7 +90,7 @@ function GroupHeader({
   onToggle: () => void;
 }) {
   const className =
-    "flex h-[27px] w-full items-center gap-1.5 px-2 text-left text-[10px] font-bold uppercase leading-none tracking-[0.11em] text-[#8190a6] transition-colors hover:text-[#a8b5c8]";
+    "flex h-[29px] w-full items-center gap-[7px] px-2 text-left text-[10px] font-medium uppercase leading-none tracking-[0.11em] text-[#8290a4] transition-colors hover:text-[#a8b5c8]";
 
   if (group.href) {
     return (
@@ -160,13 +160,13 @@ function SidebarNavItem({
         onDragEnd={() => onDragStart("")}
         className={`group flex h-[30px] w-full cursor-default items-center justify-between gap-2 rounded-[5px] border px-2 text-left transition-all ${
           active
-            ? "border-[#4a8cff] bg-[#223f68] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(74,140,255,0.18)]"
-            : "border-transparent text-[#aeb9c8] hover:bg-[#243752] hover:text-[#f2f6fb]"
+            ? "border-[#4b8cff] bg-[#223f68] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(74,140,255,0.18)]"
+            : "border-transparent text-[#a9b5c5] hover:bg-[#243752] hover:text-[#f2f6fb]"
         } ${dragging ? "opacity-55" : ""}`}
       >
         <span
           className={`min-w-0 truncate text-[12px] font-medium leading-none tracking-normal transition-colors ${
-            active ? "text-[#f8fafc]" : "text-[#aeb9c8] group-hover:text-[#f2f6fb]"
+            active ? "text-[#f8fafc]" : "text-[#a9b5c5] group-hover:text-[#f2f6fb]"
           }`}
         >
           {item.label}
@@ -232,7 +232,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
 
   if (isSidebarCollapsed) {
     return (
-      <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#334158] bg-[#1d2c42] text-left text-white">
+      <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#314056] bg-[#1c2b40] text-left text-white">
         <div className="px-1.5 py-2">
           <button
             type="button"
@@ -251,9 +251,9 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[219px] shrink-0 flex-col border-r border-[#334158] bg-[#1d2c42] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
-      <div className="border-b border-[#334158] px-2.5 py-3">
-        <div className="flex items-center justify-between gap-2">
+    <aside className="sticky top-0 flex h-screen w-[219px] shrink-0 flex-col border-r border-[#314056] bg-[#1c2b40] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
+      <div className="h-[66px] border-b border-[#314056] px-2.5">
+        <div className="flex h-full items-center justify-between gap-2">
           <Link href="/" className="flex min-w-0 items-center gap-2">
             <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-[#2f7bff] shadow-sm ring-1 ring-white/15">
               <span className="text-xs font-bold text-white">H</span>
@@ -274,12 +274,12 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-0 py-2">
-        <div className="space-y-[5px]">
+      <nav className="flex-1 overflow-y-auto px-0 py-0">
+        <div>
           {groups.map((group) => (
-            <section key={group.id} className="px-2">
+            <section key={group.id} className="mx-2 border-b border-[#314056] py-[5px]">
               {group.label ? (
-                <div className="group">
+                <div>
                   <GroupHeader
                     group={group}
                     isOpen={openGroups[group.id] ?? true}
@@ -293,7 +293,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 </div>
               ) : null}
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-[2px] pb-1 pt-[2px]">
+                <div className="space-y-[2px] pb-[2px] pt-[2px]">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}
@@ -309,7 +309,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
           ))}
         </div>
         {!authBypassEnabled ? (
-          <div className="mx-3 mt-3 border-t border-[#334158] pt-3">
+          <div className="mx-3 mt-3 border-t border-[#314056] pt-3">
             <SignOutButton className="block w-full rounded-[8px] px-2.5 py-2 text-left text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200" />
           </div>
         ) : null}
