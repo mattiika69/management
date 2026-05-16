@@ -8,35 +8,9 @@ export type WorkspacePerson = {
   initials: string;
 };
 
-export const DEFAULT_OPERATIONS_PEOPLE: WorkspacePerson[] = [
-  { key: "carla-bm", userId: null, name: "Carla BM", role: "Team Member", initials: "C" },
-  { key: "kamal-testing", userId: null, name: "Kamal Testing", role: "Team Member", initials: "K" },
-  { key: "m-s", userId: null, name: "M S", role: "Owner", initials: "M" },
-  { key: "matas-j", userId: null, name: "Matas J", role: "Team Member", initials: "M" },
-  { key: "matthew-larsen", userId: null, name: "Matthew Larsen", role: "Owner", initials: "M" },
-  { key: "sauliusl-tvar", userId: null, name: "Sauliusl Tvar", role: "Team Member", initials: "S" },
-  { key: "team", userId: null, name: "team", role: "Owner", initials: "T" },
-];
+export const CHECKLIST_PERSON_ORDER: string[] = [];
 
-export const CHECKLIST_PERSON_ORDER = [
-  "carla-bm",
-  "kamal-testing",
-  "m-s",
-  "matas-j",
-  "matthew-larsen",
-  "sauliusl-tvar",
-  "team",
-];
-
-export const RATING_PERSON_ORDER = [
-  "sauliusl-tvar",
-  "kamal-testing",
-  "matthew-larsen",
-  "m-s",
-  "matas-j",
-  "carla-bm",
-  "team",
-];
+export const RATING_PERSON_ORDER: string[] = [];
 
 function slugify(value: string) {
   return value
@@ -116,12 +90,6 @@ export async function listWorkspacePeople(
       role: employee.role_title || "Team Member",
       initials: initialsFor(employee.full_name),
     });
-  }
-
-  if (!people.size) {
-    for (const person of DEFAULT_OPERATIONS_PEOPLE) {
-      people.set(person.key, person);
-    }
   }
 
   const { data: memberships } = await supabase

@@ -92,10 +92,10 @@ function GroupHeader({
   active: boolean;
   onToggle: () => void;
 }) {
-  const className = `flex h-[30px] w-full items-center gap-1.5 rounded-[7px] border px-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors ${
+  const className = `flex h-[24px] w-full items-center gap-1.5 rounded-[5px] border px-2 text-left text-[10px] font-bold uppercase tracking-[0.08em] transition-colors ${
     active
-      ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]"
-      : "border-transparent text-[#7f8fa7] hover:bg-[#21314a] hover:text-[#d1d9e6]"
+      ? "border-transparent bg-[#1f314d] text-[#dbe7f7]"
+      : "border-transparent text-[#7f8fa7] hover:bg-[#1b2a42] hover:text-[#d1d9e6]"
   }`;
 
   if (group.href) {
@@ -140,7 +140,7 @@ function GroupHeader({
             onToggle();
           }
         }}
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-[5px] text-[#8fa0b7] transition hover:bg-[#2a3d5a] hover:text-white"
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] text-[#708097] transition hover:bg-[#2a3d5a] hover:text-white"
       >
         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
@@ -168,7 +168,7 @@ function SidebarNavItem({
   const active = isActiveItem(pathname, search, item.href);
 
   return (
-    <div className="py-[2px]">
+    <div className="py-[1px]">
       <Link
         href={item.href}
         prefetch
@@ -187,9 +187,9 @@ function SidebarNavItem({
           onDrop(item.id);
         }}
         onDragEnd={() => onDragStart("")}
-        className={`group flex h-[29px] w-full cursor-default items-center justify-between gap-2 rounded-[6px] border px-2.5 text-left transition-all ${
+        className={`group flex h-[26px] w-full cursor-default items-center justify-between gap-2 rounded-[5px] border px-2.5 text-left transition-all ${
           active
-            ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.24),0_8px_18px_rgba(0,0,0,0.12)]"
+            ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.24)]"
             : "border-transparent text-[#a4b0c2] hover:border-[#33445e] hover:bg-[#21314a] hover:text-[#eef4ff]"
         } ${dragging ? "opacity-55" : ""}`}
       >
@@ -214,7 +214,6 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
-  const [organizationName, setOrganizationName] = useState("Hyper Optimal Team");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(SIDEBAR_GROUPS.map((group) => [group.id, true])),
   );
@@ -231,10 +230,9 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
     let mounted = true;
     fetch("/api/settings/sidebar-order")
       .then((response) => response.json())
-      .then((body: { order?: string[]; organizationName?: string }) => {
+      .then((body: { order?: string[] }) => {
         if (!mounted) return;
         setItemOrder(normalizeSidebarOrder(body.order));
-        if (body.organizationName) setOrganizationName(body.organizationName);
       })
       .catch(() => {});
     return () => {
@@ -302,24 +300,10 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
             </svg>
           </button>
         </div>
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className="shrink-0 text-[10px] font-medium text-[#7f8fa7]">Org:</span>
-          <button
-            type="button"
-            className="flex h-6 min-w-0 flex-1 items-center justify-between rounded-[5px] border border-[#2b3a51] bg-[#202e46] px-2 text-left text-[10px] font-medium text-[#aeb9ca]"
-            title={organizationName}
-          >
-            <span className="truncate">{organizationName}</span>
-            <svg className="h-3 w-3 shrink-0 text-[#7f8fa7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-        </div>
       </div>
-      <div aria-hidden="true" className="mx-2.5 h-px bg-[#2b3a51]" />
 
-      <nav className="flex-1 overflow-y-auto px-0 py-3">
-        <div className="space-y-1">
+      <nav className="flex-1 overflow-y-auto px-0 py-2">
+        <div className="space-y-0.5">
           {groups.map((group) => (
             <section key={group.id} className="px-2">
               {group.label ? (
@@ -336,7 +320,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 />
               ) : null}
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-0.5 pb-1 pl-2.5 pt-1">
+                <div className="space-y-0.5 pb-1 pl-2 pt-0.5">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}

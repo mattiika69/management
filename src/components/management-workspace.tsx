@@ -113,7 +113,7 @@ export function ManagementWorkspace({
   const [items, setItems] = useState(data.startStopKeepItems);
   const [diamondEntries, setDiamondEntries] = useState(data.diamondEntries);
   const [ratings, setRatings] = useState(data.teamRatings);
-  const [selectedPersonKey, setSelectedPersonKey] = useState("carla-bm");
+  const [selectedPersonKey, setSelectedPersonKey] = useState(data.people[0]?.key ?? "");
   const [pending, setPending] = useState("");
   const [error, setError] = useState("");
 
@@ -179,6 +179,24 @@ export function ManagementWorkspace({
     }
   }
 
+  async function archiveStartStopKeepItem(item: StartStopKeepItem) {
+    if (!selectedPerson) return;
+    setPending(`archive:${item.id}`);
+    setError("");
+    try {
+      await postManagement<{ ok: boolean }>({
+        action: "archiveStartStopKeepItem",
+        ...personSubject(selectedPerson, data.weekStart),
+        itemId: item.id,
+      });
+      setItems((current) => current.filter((candidate) => candidate.id !== item.id));
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Save failed.");
+    } finally {
+      setPending("");
+    }
+  }
+
   async function saveRating(person: WorkspacePerson, input: Partial<ManagementTeamRating>) {
     setPending(`rating:${person.key}`);
     setError("");
@@ -234,6 +252,14 @@ export function ManagementWorkspace({
   return (
     <div className="text-[12px] text-[#475467]">
       <OperationsTabs tabs={managementTabs} active={activeView} />
+      {!people.length ? (
+        <SectionCard className="p-5">
+          <h2 className="text-[15px] font-bold text-[#101828]">No team members yet</h2>
+          <p className="mt-2 text-[13px] leading-6 text-[#667085]">
+            Add employees or invite team members in Settings to start using Management.
+          </p>
+        </SectionCard>
+      ) : null}
       {error ? (
         <div className="mb-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700">
           {error}
@@ -258,6 +284,7 @@ export function ManagementWorkspace({
           pending={pending}
           onPersonChange={setSelectedPersonKey}
           onAdd={addStartStopKeepItem}
+          onArchive={archiveStartStopKeepItem}
         />
       ) : null}
       {activeView === "progress" && selectedPerson ? (
@@ -374,6 +401,7 @@ function StartStopKeepView({
   pending,
   onPersonChange,
   onAdd,
+  onArchive,
 }: {
   people: WorkspacePerson[];
   selectedPerson: WorkspacePerson;
@@ -383,12 +411,13 @@ function StartStopKeepView({
   pending: string;
   onPersonChange: (key: string) => void;
   onAdd: (category: "start" | "stop" | "keep", itemText: string) => void;
+  onArchive: (item: StartStopKeepItem) => void;
 }) {
   const [drafts, setDrafts] = useState({ start: "", stop: "", keep: "" });
-  const counts = {
-    start: items.filter((item) => item.subject_key === selectedPerson.key && item.category === "start").length,
-    stop: items.filter((item) => item.subject_key === selectedPerson.key && item.category === "stop").length,
-    keep: items.filter((item) => item.subject_key === selectedPerson.key && item.category === "keep").length,
+  const itemsByCategory = {
+    start: items.filter((item) => item.subject_key === selectedPerson.key && item.category === "start"),
+    stop: items.filter((item) => item.subject_key === selectedPerson.key && item.category === "stop"),
+    keep: items.filter((item) => item.subject_key === selectedPerson.key && item.category === "keep"),
   };
 
   function submit(category: "start" | "stop" | "keep") {
@@ -424,11 +453,36 @@ function StartStopKeepView({
                 </span>
                 <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#101828]">{category}</span>
               </div>
-              <span className="rounded-full border border-[#d9e1ee] bg-[#f8fafc] px-2.5 py-1 text-[12px] font-bold text-[#667085]">{counts[category]}</span>
+              <span className="rounded-full border border-[#d9e1ee] bg-[#f8fafc] px-2.5 py-1 text-[12px] font-bold text-[#667085]">{itemsByCategory[category].length}</span>
             </div>
             <p className="mb-3 text-[12px] leading-5 text-[#667085]">
               What should {selectedPerson.name} {category} doing?
             </p>
+            <div className="mb-3 min-h-[42px] space-y-2">
+              {itemsByCategory[category].length ? (
+                itemsByCategory[category].map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-3 border border-[#e4e7ec] bg-[#fbfcfe] px-3 py-2 text-[12px] font-semibold text-[#101828]"
+                  >
+                    <span className="min-w-0 truncate">{item.item_text}</span>
+                    <button
+                      type="button"
+                      onClick={() => onArchive(item)}
+                      disabled={pending === `archive:${item.id}`}
+                      className="shrink-0 text-[11px] font-bold text-[#98a2b3] transition hover:text-red-600 disabled:opacity-50"
+                      aria-label={`Remove ${item.item_text}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="grid h-[42px] place-items-center border border-dashed border-[#d9e1ee] bg-[#fbfcfe] px-3 text-center text-[11px] font-medium text-[#98a2b3]">
+                  No {category} items yet.
+                </div>
+              )}
+            </div>
             <div className="flex gap-2">
               <input
                 value={drafts[category]}
@@ -810,11 +864,11 @@ function TeamRatingsView({
                   <td className="px-3 text-[#667085]">{rating?.work_quantity_score ?? "-"}</td>
                   <td className="px-3 text-[#667085]">{rating?.work_quality_score ?? "-"}</td>
                   <td className="px-3 text-[#667085]">{rating?.improvement_score ?? "-"}</td>
-                  <td className="px-3 font-semibold text-[#475467]">{rating?.trend ?? (person.key === "sauliusl-tvar" ? "+2.0" : "--")}</td>
+                  <td className="px-3 font-semibold text-[#475467]">{rating?.trend ?? "--"}</td>
                   <td className="px-3">
                     <button
                       type="button"
-                      onClick={() => onSaveRating(person, { trend: person.key === "sauliusl-tvar" ? 2 : null })}
+                      onClick={() => onSaveRating(person, { trend: rating?.trend ?? null })}
                       disabled={pending === `rating:${person.key}`}
                       className="h-8 rounded-[7px] bg-[#101828] px-3 text-[12px] font-bold text-white shadow-sm disabled:opacity-50"
                     >

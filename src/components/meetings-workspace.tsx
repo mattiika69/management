@@ -607,6 +607,16 @@ function OneOnOneEditor({
   updateDraft: (patch: Partial<Draft>) => void;
   updateAction: (index: number, patch: Partial<Draft["actionItems"][number]>) => void;
 }) {
+  const diamondPerson =
+    people.find((person) => person.userId === draft.employeeUserId) ??
+    people[0] ?? {
+      key: "team-member",
+      userId: null,
+      name: "Team Member",
+      role: "Team Member",
+      initials: "T",
+    };
+
   return (
     <SectionCard className="overflow-hidden">
       <div className="flex h-[36px] items-center justify-between border-b border-gray-200 px-2">
@@ -634,8 +644,8 @@ function OneOnOneEditor({
           <OneOnOneSection title="3. Management Diamond">
             <div className="h-[190px] rounded-[5px] border border-gray-200 bg-white p-2">
               <div className="mb-2 flex items-center gap-2">
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-gray-700 text-white">S</span>
-                <span><b>Sauliusl Tvar</b><br /><span className="text-gray-500">Team Member</span></span>
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-gray-700 text-white">{diamondPerson.initials}</span>
+                <span><b>{diamondPerson.name}</b><br /><span className="text-gray-500">{diamondPerson.role}</span></span>
               </div>
               <div className="grid h-[135px] grid-cols-[27%_13%_10%_15%_16%_19%] border border-gray-200 text-[10px]">
                 {["DAY", "TASK", "TIME", "FINISHED", "WHY NOT", "HOW TO FIX"].map((heading) => <div key={heading} className="border-r border-gray-100 bg-gray-50 p-2 font-bold">{heading}</div>)}

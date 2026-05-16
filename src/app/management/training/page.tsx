@@ -7,7 +7,7 @@ import {
   type TrainingProgram,
 } from "@/components/training-screening-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
-import { DEFAULT_OPERATIONS_PEOPLE, initialsFor } from "@/lib/operations/people";
+import { initialsFor, listWorkspacePeople } from "@/lib/operations/people";
 import { createClient } from "@/lib/supabase/server";
 
 type TrainingProgramRow = TrainingProgram;
@@ -62,6 +62,7 @@ export default async function ManagementTrainingPage() {
   if (itemsResult.error) throw new Error(itemsResult.error.message);
   if (employeesResult.error) throw new Error(employeesResult.error.message);
 
+  const workspacePeople = await listWorkspacePeople(supabase, organization.id, user);
   const people: TrainingPerson[] = employeesResult.data?.length
     ? employeesResult.data.map((employee) => ({
         key: employee.id,
@@ -70,7 +71,7 @@ export default async function ManagementTrainingPage() {
         role: employee.role_title || "Team Member",
         initials: initialsFor(employee.full_name),
       }))
-    : DEFAULT_OPERATIONS_PEOPLE.map((person) => ({
+    : workspacePeople.map((person) => ({
         key: person.key,
         employeeId: null,
         name: person.name,

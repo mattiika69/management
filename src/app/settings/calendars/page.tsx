@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
-import { DEFAULT_OPERATIONS_PEOPLE } from "@/lib/operations/people";
 import { createClient } from "@/lib/supabase/server";
 
 type EmployeeRow = {
@@ -68,15 +67,7 @@ export default async function CalendarSettingsPage() {
   const calendarsByEmail = new Map(
     (calendarsResult.data ?? []).map((calendar) => [calendar.account_email.toLowerCase(), calendar]),
   );
-  const employees = employeesResult.data?.length
-    ? employeesResult.data
-    : DEFAULT_OPERATIONS_PEOPLE.map((person) => ({
-        id: person.key,
-        full_name: person.name,
-        email: fallbackEmail(person.name),
-        role_title: person.role,
-        calendar_email: null,
-      }));
+  const employees = employeesResult.data ?? [];
 
   return (
     <AppShell

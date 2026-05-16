@@ -18,6 +18,14 @@ const views = new Set([
   "team-ratings",
 ]);
 
+const managementTabs = [
+  { href: "/management", label: "Overview" },
+  { href: "/management/job-descriptions", label: "Job Descriptions" },
+  { href: "/management/hiring", label: "Screening" },
+  { href: "/management/training", label: "Training" },
+  { href: "/meetings", label: "Meetings" },
+];
+
 function readParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -47,6 +55,7 @@ export default async function ManagementPage({
       active="/management"
       title="Management"
       subtitle="Management"
+      tabs={managementTabs}
     >
       <ManagementWorkspace
         data={data}
