@@ -29,6 +29,10 @@ function isActiveItem(pathname: string, search: string, href: string) {
     return pathname === "/settings" || pathname === target.pathname;
   }
 
+  if (target.pathname === "/settings/help") {
+    return pathname === target.pathname;
+  }
+
   if (target.pathname === "/settings") {
     return pathname === "/settings" || pathname.startsWith("/settings/");
   }
@@ -295,14 +299,14 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                       onDrop={handleDrop}
                     />
                   ))}
+                  {group.id === "settings" && !authBypassEnabled ? (
+                    <SignOutButton className="ho-sidebar-sub-link ho-sidebar-sign-out" />
+                  ) : null}
                 </div>
               ) : null}
             </section>
           ))}
         </div>
-        {!authBypassEnabled ? (
-          <SignOutButton className="ho-sidebar-logout block w-full rounded-[4px] px-2 py-2 text-left transition-colors hover:bg-red-500/10" />
-        ) : null}
       </nav>
     </aside>
   );

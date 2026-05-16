@@ -18,7 +18,7 @@ export function SignOutButton({
       onClick={signOut}
       className={className}
     >
-      Sign out
+      Log Out
     </button>
   );
 }

@@ -1,5 +1,13 @@
 export const storageTabs = [];
 
+export const managementTabs = [
+  { href: "/management", label: "Overview" },
+  { href: "/management/job-descriptions", label: "Job Descriptions" },
+  { href: "/management/hiring", label: "Screening" },
+  { href: "/management/training", label: "Training" },
+  { href: "/meetings", label: "Meetings" },
+];
+
 export const settingsTabs = [
   { href: "/settings/account", label: "Account" },
   { href: "/settings/ai-context-docs", label: "AI Context" },

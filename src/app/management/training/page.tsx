@@ -7,6 +7,7 @@ import {
   type TrainingProgram,
 } from "@/components/training-screening-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { managementTabs } from "@/lib/hyperoptimal/navigation";
 import { initialsFor, listWorkspacePeople } from "@/lib/operations/people";
 import { createClient } from "@/lib/supabase/server";
 
@@ -84,6 +85,7 @@ export default async function ManagementTrainingPage() {
       active="/management/training"
       title="Training"
       subtitle="Training plans that support hiring, meetings, and role success."
+      tabs={managementTabs}
     >
       <TrainingScreeningWorkspace
         initialPrograms={programsResult.data ?? []}

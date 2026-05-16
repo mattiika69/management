@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ManagementWorkspace } from "@/components/management-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { managementTabs } from "@/lib/hyperoptimal/navigation";
 import { getManagementData } from "@/lib/operations/management";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,14 +18,6 @@ const views = new Set([
   "management-diamond",
   "team-ratings",
 ]);
-
-const managementTabs = [
-  { href: "/management", label: "Overview" },
-  { href: "/management/job-descriptions", label: "Job Descriptions" },
-  { href: "/management/hiring", label: "Screening" },
-  { href: "/management/training", label: "Training" },
-  { href: "/meetings", label: "Meetings" },
-];
 
 function readParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;

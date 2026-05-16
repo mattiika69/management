@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ManagementEcosystemWorkspace } from "@/components/management-ecosystem-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { managementTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 type CandidateRow = {
@@ -34,7 +35,12 @@ export default async function HiringPage() {
   if (error) throw new Error(error.message);
 
   return (
-    <AppShell active="/management/hiring" title="Screening" subtitle="Candidates tied to the management ecosystem.">
+    <AppShell
+      active="/management/hiring"
+      title="Screening"
+      subtitle="Candidates tied to the management ecosystem."
+      tabs={managementTabs}
+    >
       <ManagementEcosystemWorkspace
         title="New Candidate"
         description="Track candidates from role definition through hiring."
