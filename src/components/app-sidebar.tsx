@@ -44,10 +44,10 @@ function DragHandle() {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-75 transition-opacity group-hover:opacity-100"
+      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-85 transition-opacity group-hover:opacity-100"
     >
       {Array.from({ length: 6 }).map((_, index) => (
-        <span key={index} className="h-[2px] w-[2px] rounded-full bg-slate-400" />
+        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#7b8798]" />
       ))}
     </span>
   );
@@ -66,7 +66,7 @@ function GroupHeader({
     <button
       type="button"
       onClick={onToggle}
-      className="mb-1 flex h-[22px] w-full items-center gap-1 rounded-md bg-slate-700/55 px-2 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+      className="mb-1 flex h-7 w-full items-center gap-1 px-2 text-left text-[10px] font-medium uppercase tracking-[0.08em] text-[#7f8fa7] transition-colors hover:text-[#d1d9e6]"
       aria-expanded={isOpen}
     >
       <svg
@@ -121,13 +121,13 @@ function SidebarNavItem({
         onDragEnd={() => onDragStart("")}
         className={`group flex h-[28px] w-full cursor-move items-center justify-between gap-2 rounded-[4px] border px-2 text-left transition-colors ${
           active
-            ? "border-blue-400 bg-slate-900/35 text-blue-100 shadow-[0_0_0_1px_rgba(59,130,246,0.45)]"
-            : "border-transparent text-slate-400 hover:bg-slate-700/35 hover:text-slate-200"
+            ? "border-[#3b82f6] bg-[#223654] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.32)]"
+            : "border-transparent text-[#9aa6b8] hover:border-slate-600/50 hover:bg-slate-700/35 hover:text-[#d1d9e6]"
         } ${dragging ? "opacity-55" : ""}`}
       >
         <span
-          className={`min-w-0 truncate text-[11px] font-medium tracking-normal transition-colors ${
-            active ? "text-blue-100" : "text-slate-400 group-hover:text-slate-200"
+          className={`min-w-0 truncate text-[11px] font-normal tracking-normal transition-colors ${
+            active ? "text-[#f8fafc]" : "text-[#9aa6b8] group-hover:text-[#d1d9e6]"
           }`}
         >
           {item.label}
@@ -187,12 +187,12 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
 
   if (isSidebarCollapsed) {
     return (
-      <aside className="sticky top-0 flex h-screen w-9 shrink-0 flex-col border-r border-slate-700/70 bg-gradient-to-b from-slate-800 via-slate-800 to-slate-900 text-left text-white">
+      <aside className="sticky top-0 flex h-screen w-9 shrink-0 flex-col border-r border-slate-700/80 bg-gradient-to-b from-[#1d293a] via-[#1d293a] to-[#121b2c] text-left text-white">
         <div className="px-1.5 py-2">
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(false)}
-            className="mx-auto flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/70 bg-slate-700/50 text-slate-300 shadow-sm transition-colors hover:bg-slate-700 hover:text-white"
+            className="mx-auto flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/90 bg-slate-800/70 text-slate-300 shadow-sm transition-colors hover:bg-slate-700 hover:text-white"
             aria-label="Expand sidebar"
             title="Expand sidebar"
           >
@@ -206,11 +206,11 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col border-r border-slate-700/70 bg-gradient-to-b from-slate-800 via-slate-800 to-slate-900 text-left text-white">
-      <div className="border-b border-gray-700 px-2.5 py-2">
+    <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col border-r border-slate-700/80 bg-gradient-to-b from-[#1d293a] via-[#1d293a] to-[#121b2c] text-left text-white">
+      <div className="border-b border-slate-700/90 px-2 py-2">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="flex min-w-0 items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-blue-500 shadow-sm ring-1 ring-blue-300/40">
+            <div className="flex h-[22px] w-[22px] items-center justify-center rounded-[5px] bg-blue-500 shadow-sm ring-1 ring-blue-300/40">
               <span className="text-xs font-bold text-white">H</span>
             </div>
             <span className="truncate text-xs font-semibold">HyperOptimal Funnel</span>
@@ -218,7 +218,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(true)}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-600/70 bg-slate-700/50 text-slate-300 shadow-sm transition-colors hover:bg-slate-700 hover:text-white"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-600/90 bg-slate-800/70 text-slate-300 shadow-sm transition-colors hover:bg-slate-700 hover:text-white"
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >
@@ -230,7 +230,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-2">
-        <div className="space-y-2">
+        <div className="space-y-[7px]">
           {groups.map((group) => (
             <section key={group.id}>
               <GroupHeader

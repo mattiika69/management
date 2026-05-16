@@ -9,6 +9,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     ".claude/**",
     ".management-push-work/**",
+    ".planning-push-work/**",
     "out/**",
     "node_modules/**",
   ]),
