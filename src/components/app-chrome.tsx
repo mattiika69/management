@@ -31,10 +31,10 @@ export function AppChrome({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900">
+    <div className="flex h-screen overflow-hidden bg-[#f5f7fb] text-[#101828]">
       <Suspense
         fallback={
-          <aside className="sticky top-0 h-screen w-[211px] shrink-0 border-r border-[#2f3f56] bg-[#1b283b]" />
+          <aside className="sticky top-0 h-screen w-[220px] shrink-0 border-r border-[#26354c] bg-[#162234]" />
         }
       >
         <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />

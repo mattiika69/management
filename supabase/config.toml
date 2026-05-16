@@ -1,4 +1,4 @@
-project_id = "funnel"
+project_id = "management"
 
 [api]
 enabled = true

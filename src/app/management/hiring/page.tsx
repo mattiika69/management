@@ -34,7 +34,7 @@ export default async function HiringPage() {
   if (error) throw new Error(error.message);
 
   return (
-    <AppShell active="/management/hiring" title="Hiring" subtitle="Candidates tied to the management ecosystem.">
+    <AppShell active="/management/hiring" title="Screening" subtitle="Candidates tied to the management ecosystem.">
       <ManagementEcosystemWorkspace
         title="New Candidate"
         description="Track candidates from role definition through hiring."

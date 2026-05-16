@@ -53,17 +53,17 @@ function Checkbox({
       type="checkbox"
       checked={checked}
       onChange={(event) => onChange?.(event.target.checked)}
-      className="h-[14px] w-[14px] rounded-[2px] border-gray-400 accent-gray-950"
+      className="h-4 w-4 rounded-[4px] border-[#b8c2d0] accent-[#155dfc]"
     />
   );
 }
 
 function WeekButton({ weekStart }: { weekStart: string }) {
   return (
-    <div className="inline-flex h-[35px] items-center gap-5 rounded-[6px] border border-gray-300 bg-white px-3 text-[11px] font-medium text-gray-700 shadow-sm">
-      <span className="text-base leading-none text-gray-500">‹</span>
+    <div className="inline-flex h-10 items-center gap-5 rounded-[8px] border border-[#d9e1ee] bg-white px-3.5 text-[12px] font-bold text-[#475467] shadow-sm">
+      <span className="text-base leading-none text-[#98a2b3]">‹</span>
       <span>{formatWeekRange(weekStart)}</span>
-      <span className="text-base leading-none text-gray-500">›</span>
+      <span className="text-base leading-none text-[#98a2b3]">›</span>
     </div>
   );
 }
@@ -76,7 +76,7 @@ function SectionCard({
   className?: string;
 }) {
   return (
-    <div className={`rounded-[7px] border border-gray-300 bg-white shadow-sm ${className}`}>
+    <div className={`app-card ${className}`}>
       {children}
     </div>
   );
@@ -232,10 +232,10 @@ export function ManagementWorkspace({
   }
 
   return (
-    <div className="text-[11px] text-gray-700">
+    <div className="text-[12px] text-[#475467]">
       <OperationsTabs tabs={managementTabs} active={activeView} />
       {error ? (
-        <div className="mb-3 rounded-[6px] border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+        <div className="mb-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700">
           {error}
         </div>
       ) : null}
@@ -310,16 +310,16 @@ function ChecklistView({
       <div className="mb-3">
         <WeekButton weekStart={weekStart} />
       </div>
-      <SectionCard className="mb-2 p-4">
-        <p className="mb-2 text-[11px] font-bold uppercase text-gray-700">Management Checklist</p>
-        <p className="text-[11px] text-gray-500">
+      <SectionCard className="mb-3 p-5">
+        <p className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#475467]">Management Checklist</p>
+        <p className="text-[13px] leading-6 text-[#667085]">
           Check off the workflows you reviewed for each employee for {formatWeekRange(weekStart)}.
         </p>
       </SectionCard>
       <SectionCard className="overflow-hidden">
-        <table className="w-full border-collapse text-left text-[11px]">
-          <thead className="bg-gray-50 text-[10px] uppercase tracking-[0.04em] text-gray-600">
-            <tr className="border-b border-gray-200">
+        <table className="w-full border-collapse text-left text-[12px]">
+          <thead className="app-table-head">
+            <tr className="border-b border-[#e4e7ec]">
               <th className="w-[27%] px-3 py-3 font-bold">Employee</th>
               <th className="px-3 py-3 text-center font-bold">Start/Stop/Keep</th>
               <th className="px-3 py-3 text-center font-bold">Progress</th>
@@ -329,8 +329,8 @@ function ChecklistView({
           </thead>
           <tbody>
             {people.map((person) => (
-              <tr key={person.key} className="h-[38px] border-b border-gray-100 last:border-b-0">
-                <td className="px-3 font-medium text-gray-800">{person.name}</td>
+              <tr key={person.key} className="h-12 border-b border-[#edf0f5] last:border-b-0 hover:bg-[#f8fafc]">
+                <td className="px-3 font-semibold text-[#101828]">{person.name}</td>
                 <td className="px-3 text-center">
                   <Checkbox
                     checked={reviewValue(person, reviewFields.startStopKeep)}
@@ -400,11 +400,11 @@ function StartStopKeepView({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-[11px] text-gray-500">Feedback for</span>
+        <span className="text-[12px] font-semibold text-[#667085]">Feedback for</span>
         <select
           value={selectedPersonKey}
           onChange={(event) => onPersonChange(event.target.value)}
-          className="h-[32px] min-w-[140px] rounded-[5px] border border-gray-300 bg-white px-3 text-[11px] text-gray-700"
+          className="app-field min-w-[160px]"
         >
           {people.map((person) => (
             <option key={person.key} value={person.key}>
@@ -414,22 +414,22 @@ function StartStopKeepView({
         </select>
         <WeekButton weekStart={weekStart} />
       </div>
-      <div className="mb-3 grid gap-3 xl:grid-cols-3">
+      <div className="mb-4 grid gap-4 xl:grid-cols-3">
         {(["start", "stop", "keep"] as const).map((category) => (
-          <SectionCard key={category} className="p-2">
-            <div className="mb-2 flex items-center justify-between">
+          <SectionCard key={category} className="p-4">
+            <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-gray-950 text-[13px] font-bold text-white">
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-[#101828] text-[14px] font-bold text-white">
                   {category === "start" ? "+" : category === "stop" ? "-" : "✓"}
                 </span>
-                <span className="text-[11px] font-bold uppercase text-gray-800">{category}</span>
+                <span className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#101828]">{category}</span>
               </div>
-              <span className="text-[11px] text-gray-500">{counts[category]}</span>
+              <span className="rounded-full border border-[#d9e1ee] bg-[#f8fafc] px-2.5 py-1 text-[12px] font-bold text-[#667085]">{counts[category]}</span>
             </div>
-            <p className="mb-2 text-[11px] text-gray-600">
+            <p className="mb-3 text-[12px] leading-5 text-[#667085]">
               What should {selectedPerson.name} {category} doing?
             </p>
-            <div className="flex gap-1">
+            <div className="flex gap-2">
               <input
                 value={drafts[category]}
                 onChange={(event) =>
@@ -439,13 +439,13 @@ function StartStopKeepView({
                   if (event.key === "Enter") submit(category);
                 }}
                 placeholder="Add item..."
-                className="h-[29px] min-w-0 flex-1 rounded-[5px] border border-gray-300 px-2 text-[11px] outline-none focus:border-blue-500"
+                className="app-field min-w-0 flex-1"
               />
               <button
                 type="button"
                 onClick={() => submit(category)}
                 disabled={pending === `${category}:add`}
-                className="h-[29px] w-[25px] rounded-[7px] bg-gray-950 text-[14px] font-bold text-white disabled:opacity-50"
+                className="grid h-10 w-10 place-items-center rounded-[8px] bg-[#101828] text-[16px] font-bold text-white shadow-sm disabled:opacity-50"
               >
                 +
               </button>
@@ -455,12 +455,12 @@ function StartStopKeepView({
       </div>
       <SectionCard className="overflow-hidden">
         <div className="border-b border-gray-200 px-3 py-3">
-          <p className="mb-2 text-[11px] font-bold text-gray-800">Past Weeks</p>
-          <p className="text-[11px] text-gray-500">Click to navigate</p>
+          <p className="mb-1 text-[12px] font-bold text-[#101828]">Past Weeks</p>
+          <p className="text-[12px] text-[#667085]">Click to navigate</p>
         </div>
-        <div className="flex h-[45px] items-center justify-between bg-gray-50 px-3 text-[11px] text-gray-700">
+        <div className="flex h-[48px] items-center justify-between bg-[#f8fafc] px-3 text-[12px] text-[#475467]">
           <span>Week of Mar 29</span>
-          <span className="text-gray-500">0 start, 0 stop, 0 keep</span>
+          <span className="text-[#667085]">0 start, 0 stop, 0 keep</span>
         </div>
       </SectionCard>
     </div>
@@ -480,19 +480,19 @@ function ProgressView({
 }) {
   const okrs = [
     "Admin (ToS, Privacy Policy)",
-    "Funnel Links/Functionality",
+    "Workspace Operations",
     "Get a Portfolio on Thumbnails",
     "Get a Job Description",
   ];
   return (
     <div>
-      <SectionCard className="mb-3 flex h-[43px] items-center justify-between px-3">
+      <SectionCard className="mb-4 flex min-h-[52px] items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-700">Employee</span>
+          <span className="font-bold text-[#475467]">Employee</span>
           <select
             value={selectedPersonKey}
             onChange={(event) => onPersonChange(event.target.value)}
-            className="h-[25px] min-w-[135px] rounded-[5px] border border-gray-300 bg-white px-2 text-[11px]"
+            className="app-field min-w-[160px]"
           >
             {people.map((person) => (
               <option key={person.key} value={person.key}>
@@ -501,15 +501,15 @@ function ProgressView({
             ))}
           </select>
         </div>
-        <span className="text-gray-500">Metrics snapshot: May 15, 10:44 PM</span>
+        <span className="text-[12px] font-semibold text-[#667085]">Current snapshot</span>
       </SectionCard>
       <SectionCard className="overflow-hidden">
-        <div className="flex items-start justify-between border-b border-gray-200 px-3 py-3">
+        <div className="flex items-start justify-between border-b border-[#e4e7ec] px-4 py-4">
           <div>
-            <p className="text-[13px] font-bold text-gray-900">{selectedPerson.name}</p>
-            <p className="mt-1 text-[11px] text-gray-500">{selectedPerson.role}</p>
+            <p className="text-[15px] font-bold text-[#101828]">{selectedPerson.name}</p>
+            <p className="mt-1 text-[12px] font-medium text-[#667085]">{selectedPerson.role}</p>
           </div>
-          <div className="flex gap-4 text-[11px] text-gray-700">
+          <div className="flex gap-4 text-[12px] text-[#475467]">
             <span>
               <b>0</b> KPIs
             </span>
@@ -524,37 +524,37 @@ function ProgressView({
             </span>
           </div>
         </div>
-        <div className="grid min-h-[735px] gap-3 p-3 xl:grid-cols-[1fr_1fr]">
+        <div className="grid min-h-[735px] gap-4 p-4 xl:grid-cols-[1fr_1fr]">
           <div>
-            <div className="mb-3 flex justify-between text-[11px] font-bold uppercase text-gray-600">
+            <div className="mb-3 flex justify-between text-[11px] font-bold uppercase tracking-[0.06em] text-[#667085]">
               <span>KPI Ownership</span>
               <span className="font-medium normal-case text-gray-500">0 targeted</span>
             </div>
-            <div className="rounded-[5px] border border-dashed border-gray-300 bg-gray-50 px-3 py-3 text-[11px] text-gray-400">
+            <div className="app-muted-box px-4 py-4 text-[12px]">
               No KPIs assigned.
             </div>
           </div>
           <div>
-            <div className="mb-3 flex justify-between text-[11px] font-bold uppercase text-gray-600">
+            <div className="mb-3 flex justify-between text-[11px] font-bold uppercase tracking-[0.06em] text-[#667085]">
               <span>Personal OKRs</span>
               <span className="font-medium normal-case text-gray-500">0/8 key results</span>
             </div>
             <div className="space-y-2">
               {okrs.map((okr, index) => (
-                <div key={okr} className="rounded-[6px] border border-gray-300 bg-gray-50 p-2">
+                <div key={okr} className="rounded-[8px] border border-[#d9e1ee] bg-[#fbfcfe] p-3">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="font-medium text-gray-800">{okr}</span>
-                    <span className="font-bold text-gray-700">0%</span>
+                    <span className="font-bold text-[#101828]">{okr}</span>
+                    <span className="font-bold text-[#475467]">0%</span>
                   </div>
-                  <div className="mb-2 h-[6px] rounded-full bg-gray-200" />
-                  <p className="mb-2 text-gray-500">0/1 key results complete</p>
-                  <p className="mb-2 font-bold uppercase text-gray-600">Key Results</p>
-                  <label className="mb-2 flex items-center gap-2 text-gray-700">
+                  <div className="mb-2 h-[7px] rounded-full bg-[#e4e7ec]" />
+                  <p className="mb-2 text-[#667085]">0/1 key results complete</p>
+                  <p className="mb-2 font-bold uppercase text-[#667085]">Key Results</p>
+                  <label className="mb-2 flex items-center gap-2 text-[#475467]">
                     <Checkbox checked={false} />
                     {okr}
                   </label>
-                  <p className="mb-2 font-bold uppercase text-gray-600">Assignments</p>
-                  <p className="text-gray-500">
+                  <p className="mb-2 font-bold uppercase text-[#667085]">Assignments</p>
+                  <p className="text-[#667085]">
                     {index === 2
                       ? "Research Jeremy Haynes, Hormozi, Dan Martell and build portfolio"
                       : "No assignments."}
@@ -594,14 +594,14 @@ function ManagementDiamondView({
 
   return (
     <div>
-      <SectionCard className="mb-3 flex h-[43px] items-center justify-between px-3">
+      <SectionCard className="mb-4 flex min-h-[52px] items-center justify-between px-4">
         <WeekButton weekStart={weekStart} />
-        <label className="flex items-center gap-2 text-[11px] text-gray-600">
+        <label className="flex items-center gap-2 text-[12px] font-bold text-[#667085]">
           User:
           <select
             value={selectedPersonKey}
             onChange={(event) => onPersonChange(event.target.value)}
-            className="h-[27px] min-w-[135px] rounded-[5px] border border-gray-300 bg-white px-2 text-[11px]"
+            className="app-field min-w-[160px]"
           >
             {people.map((person) => (
               <option key={person.key} value={person.key}>
@@ -612,18 +612,18 @@ function ManagementDiamondView({
         </label>
       </SectionCard>
       <SectionCard className="overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-gray-200 px-3 py-3">
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-gray-700 text-[11px] font-bold text-white">
+        <div className="flex items-center gap-3 border-b border-[#e4e7ec] px-4 py-4">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#344054] text-[12px] font-bold text-white">
             {selectedPerson.initials}
           </span>
           <div>
-            <p className="text-[12px] font-bold text-gray-800">{selectedPerson.name}</p>
-            <p className="text-[10px] text-gray-500">{selectedPerson.role}</p>
+            <p className="text-[14px] font-bold text-[#101828]">{selectedPerson.name}</p>
+            <p className="text-[12px] font-medium text-[#667085]">{selectedPerson.role}</p>
           </div>
         </div>
-        <table className="w-full border-collapse text-left text-[11px]">
-          <thead className="bg-gray-50 text-[10px] uppercase tracking-[0.04em] text-gray-600">
-            <tr className="border-b border-gray-200">
+        <table className="w-full border-collapse text-left text-[12px]">
+          <thead className="app-table-head">
+            <tr className="border-b border-[#e4e7ec]">
               <th className="w-[27%] px-3 py-3 font-bold">Day</th>
               <th className="w-[13%] px-3 py-3 font-bold">Task</th>
               <th className="w-[10%] px-3 py-3 font-bold">Time</th>
@@ -650,11 +650,11 @@ function ManagementDiamondView({
                   how_to_fix: "",
                 } satisfies ManagementDiamondEntry);
               return (
-                <tr key={day} className="h-[145px] border-b border-gray-100 align-top last:border-b-0">
-                  <td className="border-r border-gray-100 px-3 py-3">
-                    <p className="mb-1 font-bold text-gray-800">{day}</p>
-                    <p className="mb-3 text-[10px] text-gray-500">{formatMonthDay(addDays(weekStart, index))}</p>
-                    <p className="mb-1 text-[10px] text-gray-500">WM scheduled: 0/5</p>
+                <tr key={day} className="h-[145px] border-b border-[#edf0f5] align-top last:border-b-0 hover:bg-[#fbfcfe]">
+                  <td className="border-r border-[#edf0f5] px-3 py-3">
+                    <p className="mb-1 font-bold text-[#101828]">{day}</p>
+                    <p className="mb-3 text-[10px] font-semibold text-[#667085]">{formatMonthDay(addDays(weekStart, index))}</p>
+                    <p className="mb-1 text-[10px] text-[#667085]">WM scheduled: 0/5</p>
                     <p className="mb-1 inline-block rounded-[3px] bg-cyan-100 px-1 text-[9px] text-cyan-700">
                       0% Warm-up scheduled
                     </p>
@@ -671,23 +671,23 @@ function ManagementDiamondView({
                       0% Daily completed
                     </p>
                   </td>
-                  <td className="border-r border-gray-100 px-3 py-3 text-gray-400 italic">
+                  <td className="border-r border-[#edf0f5] px-3 py-3 text-[#98a2b3] italic">
                     {entry.task ? (
                       <input
                         value={entry.task}
                         onChange={(event) =>
                           onSave(selectedPerson, index, { ...entry, task: event.target.value })
                         }
-                        className="h-7 w-full border-0 bg-transparent p-0 text-[11px] not-italic text-gray-700 outline-none"
+                        className="h-7 w-full border-0 bg-transparent p-0 text-[12px] not-italic text-[#475467] outline-none"
                       />
                     ) : (
                       "No tasks"
                     )}
                   </td>
-                  <td className="border-r border-gray-100 px-3 py-3 text-gray-400">-</td>
-                  <td className="border-r border-gray-100 px-3 py-3 text-gray-400">-</td>
-                  <td className="border-r border-gray-100 px-3 py-3 text-gray-400">-</td>
-                  <td className="px-3 py-3 text-gray-400">-</td>
+                  <td className="border-r border-[#edf0f5] px-3 py-3 text-[#98a2b3]">-</td>
+                  <td className="border-r border-[#edf0f5] px-3 py-3 text-[#98a2b3]">-</td>
+                  <td className="border-r border-[#edf0f5] px-3 py-3 text-[#98a2b3]">-</td>
+                  <td className="px-3 py-3 text-[#98a2b3]">-</td>
                 </tr>
               );
             })}
@@ -719,54 +719,54 @@ function TeamRatingsView({
   ];
   return (
     <div>
-      <SectionCard className="mb-3 p-2">
-        <p className="mb-3 text-[11px] font-bold uppercase text-gray-700">Player Grades (4-week avg)</p>
-        <div className="grid gap-2 xl:grid-cols-4">
+      <SectionCard className="mb-4 p-4">
+        <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#475467]">Player Grades (4-week avg)</p>
+        <div className="grid gap-3 xl:grid-cols-4">
           {gradeBlocks.map((block) => (
-            <div key={block.grade} className={`flex h-[50px] items-center gap-3 rounded-[4px] px-3 ${block.className}`}>
-              <span className="grid h-5 w-5 place-items-center rounded-full bg-current text-[10px] font-bold">
+            <div key={block.grade} className={`flex min-h-[58px] items-center gap-3 rounded-[8px] px-3 ${block.className}`}>
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-current text-[11px] font-bold">
                 <span className="text-white">{block.grade}</span>
               </span>
               <div>
-                <p className="font-bold">{block.range}</p>
-                <p className="text-[9px] text-gray-500">{block.note}</p>
+                <p className="text-[13px] font-bold">{block.range}</p>
+                <p className="mt-1 text-[10px] font-medium text-[#667085]">{block.note}</p>
               </div>
             </div>
           ))}
         </div>
       </SectionCard>
-      <div className="mb-3 grid gap-2 xl:grid-cols-4">
-        <SectionCard className="h-[68px] p-3">
-          <p className="text-[20px] font-bold text-gray-900">{people.length}</p>
-          <p className="mt-2 text-[11px] text-gray-500">Team Members</p>
+      <div className="mb-4 grid gap-3 xl:grid-cols-4">
+        <SectionCard className="min-h-[78px] p-4">
+          <p className="text-[24px] font-bold text-[#101828]">{people.length}</p>
+          <p className="mt-1 text-[12px] font-medium text-[#667085]">Team Members</p>
         </SectionCard>
-        <SectionCard className="h-[68px] border-emerald-200 bg-emerald-50 p-3">
-          <p className="text-[20px] font-bold text-emerald-700">0</p>
-          <p className="mt-2 text-[11px] text-emerald-700">A Players</p>
+        <SectionCard className="min-h-[78px] border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-[24px] font-bold text-emerald-700">0</p>
+          <p className="mt-1 text-[12px] font-medium text-emerald-700">A Players</p>
         </SectionCard>
-        <SectionCard className="h-[68px] border-amber-200 bg-amber-50 p-3">
-          <p className="text-[20px] font-bold text-amber-700">0</p>
-          <p className="mt-2 text-[11px] text-amber-700">B Players</p>
+        <SectionCard className="min-h-[78px] border-amber-200 bg-amber-50 p-4">
+          <p className="text-[24px] font-bold text-amber-700">0</p>
+          <p className="mt-1 text-[12px] font-medium text-amber-700">B Players</p>
         </SectionCard>
-        <SectionCard className="h-[68px] border-rose-200 bg-rose-50 p-3">
-          <p className="text-[20px] font-bold text-rose-700">0</p>
-          <p className="mt-2 text-[11px] text-rose-700">D Players</p>
+        <SectionCard className="min-h-[78px] border-rose-200 bg-rose-50 p-4">
+          <p className="text-[24px] font-bold text-rose-700">0</p>
+          <p className="mt-1 text-[12px] font-medium text-rose-700">D Players</p>
         </SectionCard>
       </div>
-      <SectionCard className="mb-3 flex h-[43px] items-center justify-between px-3">
+      <SectionCard className="mb-4 flex min-h-[52px] items-center justify-between px-4">
         <WeekButton weekStart={weekStart} />
-        <div className="flex items-center gap-2">
-          <span className="text-gray-500">0/{people.length} rated</span>
+        <div className="flex items-center gap-2 text-[12px] font-semibold text-[#667085]">
+          <span>0/{people.length} rated</span>
           <span>Pod:</span>
-          <select className="h-[27px] min-w-[95px] rounded-[5px] border border-gray-300 bg-white px-2 text-[11px]">
+          <select className="app-field min-w-[110px]">
             <option>All Pods</option>
           </select>
         </div>
       </SectionCard>
       <SectionCard className="overflow-hidden">
-        <table className="w-full border-collapse text-left text-[11px]">
-          <thead className="bg-gray-50 text-[10px] uppercase tracking-[0.04em] text-gray-600">
-            <tr className="border-b border-gray-100">
+        <table className="w-full border-collapse text-left text-[12px]">
+          <thead className="app-table-head">
+            <tr className="border-b border-[#e4e7ec]">
               {[
                 "Employee",
                 "Grade",
@@ -790,33 +790,33 @@ function TeamRatingsView({
             {people.map((person) => {
               const rating = ratingsByPerson.get(person.key);
               return (
-                <tr key={person.key} className="h-[47px] border-b border-gray-100 last:border-b-0">
+                <tr key={person.key} className="h-[54px] border-b border-[#edf0f5] last:border-b-0 hover:bg-[#f8fafc]">
                   <td className="px-3">
                     <div className="flex items-center gap-2">
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-gray-700 text-[10px] font-bold text-white">
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-[#344054] text-[10px] font-bold text-white">
                         {person.initials}
                       </span>
                       <div>
-                        <p className="font-medium text-gray-800">{person.name}</p>
-                        <p className="text-[9px] text-gray-500">{person.role}</p>
+                        <p className="font-bold text-[#101828]">{person.name}</p>
+                        <p className="text-[10px] font-medium text-[#667085]">{person.role}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 text-gray-500">-</td>
-                  <td className="px-3 text-gray-500">{rating?.four_week_average ?? "-"}</td>
-                  <td className="px-3 text-gray-500">{rating?.current_week_score ?? "-"}</td>
-                  <td className="px-3 text-gray-500">{rating?.attitude_score ?? "-"}</td>
-                  <td className="px-3 text-gray-500">{rating?.participation_score ?? "-"}</td>
-                  <td className="px-3 text-gray-500">{rating?.work_quantity_score ?? "-"}</td>
-                  <td className="px-3 text-gray-500">{rating?.work_quality_score ?? "-"}</td>
-                  <td className="px-3 text-gray-500">{rating?.improvement_score ?? "-"}</td>
-                  <td className="px-3 text-gray-700">{rating?.trend ?? (person.key === "sauliusl-tvar" ? "+2.0" : "--")}</td>
+                  <td className="px-3 text-[#667085]">-</td>
+                  <td className="px-3 text-[#667085]">{rating?.four_week_average ?? "-"}</td>
+                  <td className="px-3 text-[#667085]">{rating?.current_week_score ?? "-"}</td>
+                  <td className="px-3 text-[#667085]">{rating?.attitude_score ?? "-"}</td>
+                  <td className="px-3 text-[#667085]">{rating?.participation_score ?? "-"}</td>
+                  <td className="px-3 text-[#667085]">{rating?.work_quantity_score ?? "-"}</td>
+                  <td className="px-3 text-[#667085]">{rating?.work_quality_score ?? "-"}</td>
+                  <td className="px-3 text-[#667085]">{rating?.improvement_score ?? "-"}</td>
+                  <td className="px-3 font-semibold text-[#475467]">{rating?.trend ?? (person.key === "sauliusl-tvar" ? "+2.0" : "--")}</td>
                   <td className="px-3">
                     <button
                       type="button"
                       onClick={() => onSaveRating(person, { trend: person.key === "sauliusl-tvar" ? 2 : null })}
                       disabled={pending === `rating:${person.key}`}
-                      className="h-[25px] rounded-[4px] bg-gray-950 px-3 text-[11px] font-bold text-white disabled:opacity-50"
+                      className="h-8 rounded-[7px] bg-[#101828] px-3 text-[12px] font-bold text-white shadow-sm disabled:opacity-50"
                     >
                       Rate
                     </button>

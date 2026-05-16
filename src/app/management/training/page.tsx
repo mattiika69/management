@@ -1,15 +1,24 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { ManagementEcosystemWorkspace } from "@/components/management-ecosystem-workspace";
+import {
+  TrainingScreeningWorkspace,
+  type TrainingItem,
+  type TrainingPerson,
+  type TrainingProgram,
+} from "@/components/training-screening-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { DEFAULT_OPERATIONS_PEOPLE, initialsFor } from "@/lib/operations/people";
 import { createClient } from "@/lib/supabase/server";
 
-type TrainingProgramRow = {
+type TrainingProgramRow = TrainingProgram;
+
+type TrainingItemRow = TrainingItem;
+
+type EmployeeRow = {
   id: string;
-  title: string;
-  owner_name: string;
-  cadence: string;
-  status: string;
+  user_id: string | null;
+  full_name: string;
+  role_title: string;
 };
 
 export default async function ManagementTrainingPage() {
@@ -23,37 +32,62 @@ export default async function ManagementTrainingPage() {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const { data, error } = await supabase
-    .from("management_training_programs")
-    .select("id,title,owner_name,cadence,status")
-    .eq("tenant_id", organization.id)
-    .is("archived_at", null)
-    .order("created_at", { ascending: false })
-    .returns<TrainingProgramRow[]>();
+  const [programsResult, itemsResult, employeesResult] = await Promise.all([
+    supabase
+      .from("management_training_programs")
+      .select("id,employee_id,title,owner_name,outcomes,cadence,status")
+      .eq("tenant_id", organization.id)
+      .is("archived_at", null)
+      .order("created_at", { ascending: false })
+      .returns<TrainingProgramRow[]>(),
+    supabase
+      .from("management_training_items")
+      .select("id,program_id,day_number,item_order,item_type,title,estimated_minutes,resource_url,details,sop_reference,status,created_at,updated_at")
+      .eq("tenant_id", organization.id)
+      .is("archived_at", null)
+      .order("day_number", { ascending: true })
+      .order("item_order", { ascending: true })
+      .returns<TrainingItemRow[]>(),
+    supabase
+      .from("employees")
+      .select("id,user_id,full_name,role_title")
+      .eq("tenant_id", organization.id)
+      .is("archived_at", null)
+      .neq("employment_status", "inactive")
+      .order("full_name", { ascending: true })
+      .returns<EmployeeRow[]>(),
+  ]);
 
-  if (error) throw new Error(error.message);
+  if (programsResult.error) throw new Error(programsResult.error.message);
+  if (itemsResult.error) throw new Error(itemsResult.error.message);
+  if (employeesResult.error) throw new Error(employeesResult.error.message);
+
+  const people: TrainingPerson[] = employeesResult.data?.length
+    ? employeesResult.data.map((employee) => ({
+        key: employee.id,
+        employeeId: employee.id,
+        name: employee.full_name,
+        role: employee.role_title || "Team Member",
+        initials: initialsFor(employee.full_name),
+      }))
+    : DEFAULT_OPERATIONS_PEOPLE.map((person) => ({
+        key: person.key,
+        employeeId: null,
+        name: person.name,
+        role: person.role,
+        initials: person.initials,
+      }));
 
   return (
-    <AppShell active="/management/training" title="Training" subtitle="Training plans that support hiring, meetings, and role success.">
-      <ManagementEcosystemWorkspace
-        title="New Training Plan"
-        description="Create training programs for employees and roles."
-        apiPath="/api/management/training"
-        createdKey="trainingProgram"
-        initialRows={(data ?? []) as unknown as Array<Record<string, unknown> & { id: string }>}
-        fields={[
-          { name: "title", label: "Training", kind: "text", placeholder: "Onboarding Week 1", required: true },
-          { name: "ownerName", label: "Owner", kind: "text", placeholder: "Manager name" },
-          { name: "outcomes", label: "Outcomes", kind: "textarea", placeholder: "What should be true when training is complete" },
-          { name: "cadence", label: "Cadence", kind: "select", options: [{ label: "Daily", value: "daily" }, { label: "Weekly", value: "weekly" }, { label: "Monthly", value: "monthly" }] },
-          { name: "status", label: "Status", kind: "select", options: [{ label: "Active", value: "active" }, { label: "Paused", value: "paused" }, { label: "Complete", value: "complete" }] },
-        ]}
-        columns={[
-          { key: "title", label: "Training" },
-          { key: "owner_name", label: "Owner" },
-          { key: "cadence", label: "Cadence" },
-          { key: "status", label: "Status" },
-        ]}
+    <AppShell
+      active="/management/training"
+      title="Training"
+      subtitle="Training plans that support hiring, meetings, and role success."
+    >
+      <TrainingScreeningWorkspace
+        initialPrograms={programsResult.data ?? []}
+        initialItems={itemsResult.data ?? []}
+        people={people}
       />
     </AppShell>
   );

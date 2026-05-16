@@ -120,24 +120,24 @@ export function LearningsWorkspace({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[378px_minmax(0,1fr)]">
-      <form onSubmit={submit} className="rounded-[7px] border border-gray-300 bg-white p-4 shadow-sm">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-[15px] font-bold text-gray-950">
+    <div className="grid gap-6 xl:grid-cols-[390px_minmax(0,1fr)]">
+      <form onSubmit={submit} className="app-card-pad">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <h2 className="text-[17px] font-bold text-[#101828]">
             {editingId ? "Edit Learning" : "Add Learning"}
           </h2>
           {editingId ? (
-            <button type="button" onClick={startNew} className="text-[12px] font-semibold text-blue-700">
+            <button type="button" onClick={startNew} className="text-[12px] font-bold text-[#155dfc]">
               New
             </button>
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <select
             value={form.sourceProvider}
             onChange={(event) => setForm({ ...form, sourceProvider: event.currentTarget.value as LearningForm["sourceProvider"] })}
-            className="h-9 w-full rounded-[5px] border border-gray-300 bg-white px-3 text-[13px] text-gray-950 outline-none focus:border-blue-500"
+            className="app-field w-full"
           >
             <option value="web">Web</option>
             <option value="slack">Slack</option>
@@ -146,7 +146,7 @@ export function LearningsWorkspace({
           <select
             value={form.category}
             onChange={(event) => setForm({ ...form, category: event.currentTarget.value })}
-            className="h-9 w-full rounded-[5px] border border-gray-300 bg-white px-3 text-[13px] capitalize text-gray-950 outline-none focus:border-blue-500"
+            className="app-field w-full capitalize"
           >
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -158,20 +158,20 @@ export function LearningsWorkspace({
             value={form.sourceLabel}
             onChange={(event) => setForm({ ...form, sourceLabel: event.currentTarget.value })}
             placeholder="Source label"
-            className="h-9 w-full rounded-[5px] border border-gray-300 px-3 text-[13px] text-gray-950 outline-none placeholder:text-gray-400 focus:border-blue-500"
+            className="app-field w-full"
           />
           <input
             value={form.title}
             onChange={(event) => setForm({ ...form, title: event.currentTarget.value })}
             placeholder="Learning title"
-            className="h-9 w-full rounded-[5px] border border-gray-300 px-3 text-[13px] text-gray-950 outline-none placeholder:text-gray-400 focus:border-blue-500"
+            className="app-field w-full"
             required
           />
           <textarea
             value={form.body}
             onChange={(event) => setForm({ ...form, body: event.currentTarget.value })}
             placeholder="What should future work remember?"
-            className="h-[166px] w-full rounded-[5px] border border-gray-300 px-3 py-3 text-[13px] text-gray-950 outline-none placeholder:text-gray-400 focus:border-blue-500"
+            className="app-textarea h-[190px] w-full"
           />
         </div>
 
@@ -182,46 +182,51 @@ export function LearningsWorkspace({
         <button
           type="submit"
           disabled={status === "saving"}
-          className="mt-4 h-9 w-full rounded-[5px] bg-gray-950 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+          className="app-button-primary mt-5 w-full"
         >
           {status === "saving" ? "Saving..." : editingId ? "Save Changes" : "Save Learning"}
         </button>
       </form>
 
-      <section className="rounded-[7px] border border-gray-300 bg-white p-4 shadow-sm">
-        <h2 className="text-[15px] font-bold text-gray-950">Saved Learnings</h2>
-        <div className="mt-4 space-y-2">
+      <section className="app-card-pad">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[17px] font-bold text-[#101828]">Saved Learnings</h2>
+          <span className="rounded-full border border-[#d9e1ee] bg-[#f8fafc] px-3 py-1 text-[12px] font-bold text-[#667085]">
+            {sortedItems.length}
+          </span>
+        </div>
+        <div className="mt-5 space-y-3">
           {sortedItems.length ? (
             sortedItems.map((item) => (
-              <article key={item.id} className="rounded-[6px] border border-gray-200 bg-gray-50 p-3">
+              <article key={item.id} className="rounded-[8px] border border-[#e4e7ec] bg-[#fbfcfe] p-4 transition hover:border-[#cfd8e6] hover:bg-white hover:shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="text-[13px] font-bold text-gray-950">{item.title}</h3>
-                    <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                    <h3 className="text-[14px] font-bold text-[#101828]">{item.title}</h3>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold text-[#667085]">
                       <span>{sourceLabel(item.source_provider)}</span>
                       <span className="capitalize">{item.category}</span>
                       {item.source_label ? <span>{item.source_label}</span> : null}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
-                    <button type="button" onClick={() => startEdit(item)} className="text-[12px] font-semibold text-blue-700">
+                    <button type="button" onClick={() => startEdit(item)} className="text-[12px] font-bold text-[#155dfc]">
                       Edit
                     </button>
                     <button
                       type="button"
                       onClick={() => deleteItem(item)}
                       disabled={status === `deleting:${item.id}`}
-                      className="text-[12px] font-semibold text-red-600 disabled:opacity-60"
+                      className="text-[12px] font-bold text-red-600 disabled:opacity-60"
                     >
                       Delete
                     </button>
                   </div>
                 </div>
-                {item.body ? <p className="mt-3 whitespace-pre-wrap text-[13px] leading-6 text-gray-700">{item.body}</p> : null}
+                {item.body ? <p className="mt-3 whitespace-pre-wrap text-[13px] leading-6 text-[#475467]">{item.body}</p> : null}
               </article>
             ))
           ) : (
-            <div className="grid h-[76px] place-items-center rounded-[6px] border border-dashed border-gray-300 bg-gray-50 px-4 text-center text-[13px] text-gray-500">
+            <div className="app-muted-box grid h-[112px] place-items-center px-4 text-center text-[13px] font-medium">
               Saved learnings will appear here.
             </div>
           )}

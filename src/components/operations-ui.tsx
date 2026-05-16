@@ -8,7 +8,7 @@ export function OperationsTabs({
   active: string;
 }) {
   return (
-    <div className="mb-3 flex flex-wrap gap-2">
+    <div className="mb-5 flex flex-wrap gap-2">
       {tabs.map((tab) => (
         <Link
           key={tab.id}

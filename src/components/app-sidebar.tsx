@@ -28,18 +28,31 @@ function isActiveItem(pathname: string, search: string, href: string) {
     return pathname === "/settings" || pathname === target.pathname;
   }
 
-  return pathname === target.pathname;
-}
-
-function isActiveGroup(pathname: string, href?: string) {
-  if (!href) return false;
-  const target = parseHref(href);
-
   if (target.pathname === "/settings") {
     return pathname === "/settings" || pathname.startsWith("/settings/");
   }
 
-  return pathname === target.pathname || pathname.startsWith(`${target.pathname}/`);
+  return pathname === target.pathname;
+}
+
+function isActiveGroup(pathname: string, search: string, items: SidebarItem[]) {
+  return items.some((item) => {
+    const target = parseHref(item.href);
+
+    if (target.search) {
+      return pathname === target.pathname && search === target.search;
+    }
+
+    if (target.pathname === "/management") {
+      return pathname === "/management";
+    }
+
+    if (target.pathname === "/settings") {
+      return pathname === "/settings" || pathname.startsWith("/settings/");
+    }
+
+    return pathname === target.pathname || pathname.startsWith(`${target.pathname}/`);
+  });
 }
 
 function moveItem(order: string[], sourceId: string, targetId: string) {
@@ -55,10 +68,10 @@ function DragHandle() {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-85 transition-opacity group-hover:opacity-100"
+      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-45 transition-opacity group-hover:opacity-80"
     >
       {Array.from({ length: 6 }).map((_, index) => (
-        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#7b8798]" />
+        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#98a7bc]" />
       ))}
     </span>
   );
@@ -67,16 +80,18 @@ function DragHandle() {
 function GroupHeader({
   group,
   isOpen,
+  active,
   onToggle,
 }: {
   group: SidebarGroup;
   isOpen: boolean;
+  active: boolean;
   onToggle: () => void;
 }) {
-  const pathname = usePathname() ?? "";
-  const active = isActiveGroup(pathname, group.href);
-  const className = `flex h-[29px] w-full items-center gap-1 border-b border-[#2f3f56] px-2 text-left text-[10px] font-medium uppercase tracking-[0.08em] transition-colors ${
-    active ? "text-[#dbe6f5]" : "text-[#7f8fa7] hover:text-[#d1d9e6]"
+  const className = `flex h-[30px] w-full items-center gap-1.5 rounded-[7px] border px-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors ${
+    active
+      ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.2)]"
+      : "border-transparent text-[#7f8fa7] hover:bg-[#21314a] hover:text-[#d1d9e6]"
   }`;
 
   if (group.href) {
@@ -126,7 +141,7 @@ function SidebarNavItem({
   const active = isActiveItem(pathname, search, item.href);
 
   return (
-    <div className="py-[1px]">
+    <div className="py-[2px]">
       <Link
         href={item.href}
         prefetch
@@ -145,15 +160,15 @@ function SidebarNavItem({
           onDrop(item.id);
         }}
         onDragEnd={() => onDragStart("")}
-        className={`group flex h-[28px] w-full cursor-move items-center justify-between gap-2 rounded-[4px] border px-2 text-left transition-colors ${
+        className={`group flex h-[29px] w-full cursor-move items-center justify-between gap-2 rounded-[6px] border px-2.5 text-left transition-all ${
           active
-            ? "border-[#3b82f6] bg-[#223654] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.32)]"
-            : "border-transparent text-[#9aa6b8] hover:border-slate-600/50 hover:bg-slate-700/35 hover:text-[#d1d9e6]"
+            ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.24),0_8px_18px_rgba(0,0,0,0.12)]"
+            : "border-transparent text-[#a4b0c2] hover:border-[#33445e] hover:bg-[#21314a] hover:text-[#eef4ff]"
         } ${dragging ? "opacity-55" : ""}`}
       >
         <span
-          className={`min-w-0 truncate text-[11px] font-normal tracking-normal transition-colors ${
-            active ? "text-[#f8fafc]" : "text-[#9aa6b8] group-hover:text-[#d1d9e6]"
+          className={`min-w-0 truncate text-[11.5px] font-medium tracking-normal transition-colors ${
+            active ? "text-[#f8fafc]" : "text-[#a4b0c2] group-hover:text-[#eef4ff]"
           }`}
         >
           {item.label}
@@ -165,9 +180,14 @@ function SidebarNavItem({
 }
 
 export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }) {
+  const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const search = query ? `?${query}` : "";
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
+  const [organizationName, setOrganizationName] = useState("Hyper Optimal Team");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(SIDEBAR_GROUPS.map((group) => [group.id, true])),
   );
@@ -184,8 +204,10 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
     let mounted = true;
     fetch("/api/settings/sidebar-order")
       .then((response) => response.json())
-      .then((body: { order?: string[] }) => {
-        if (mounted) setItemOrder(normalizeSidebarOrder(body.order));
+      .then((body: { order?: string[]; organizationName?: string }) => {
+        if (!mounted) return;
+        setItemOrder(normalizeSidebarOrder(body.order));
+        if (body.organizationName) setOrganizationName(body.organizationName);
       })
       .catch(() => {});
     return () => {
@@ -213,12 +235,12 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
 
   if (isSidebarCollapsed) {
     return (
-    <aside className="sticky top-0 flex h-screen w-9 shrink-0 flex-col border-r border-[#2f3f56] bg-[#172236] text-left text-white">
+      <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#26354c] bg-[#162234] text-left text-white">
         <div className="px-1.5 py-2">
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(false)}
-            className="mx-auto flex h-6 w-6 items-center justify-center rounded-full border border-slate-600/90 bg-slate-800/70 text-slate-300 shadow-sm transition-colors hover:bg-slate-700 hover:text-white"
+            className="mx-auto flex h-7 w-7 items-center justify-center rounded-full border border-[#33445e] bg-[#21314a] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
             aria-label="Expand sidebar"
             title="Expand sidebar"
           >
@@ -232,19 +254,19 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[211px] shrink-0 flex-col border-r border-[#2f3f56] bg-[#1b283b] text-left text-white">
-      <div className="border-b border-[#2f3f56] px-2 py-[7px]">
+    <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col border-r border-[#26354c] bg-[#162234] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
+      <div className="px-2.5 pt-3 pb-2">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="flex min-w-0 items-center gap-2">
-            <div className="flex h-[22px] w-[22px] items-center justify-center rounded-[5px] bg-blue-500 shadow-sm ring-1 ring-blue-300/40">
+            <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-[#2f7bff] shadow-sm ring-1 ring-white/15">
               <span className="text-xs font-bold text-white">H</span>
             </div>
-            <span className="truncate text-[13px] font-semibold tracking-[-0.01em]">HyperOptimal Funnel</span>
+            <span className="truncate text-[13px] font-bold tracking-[-0.01em] text-white">HyperOptimal</span>
           </Link>
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(true)}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-600/90 bg-slate-800/70 text-slate-300 shadow-sm transition-colors hover:bg-slate-700 hover:text-white"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#33445e] bg-[#21314a] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >
@@ -253,16 +275,31 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
             </svg>
           </button>
         </div>
+        <div className="mt-2 flex items-center gap-1.5">
+          <span className="shrink-0 text-[10px] font-medium text-[#7f8fa7]">Org:</span>
+          <button
+            type="button"
+            className="flex h-6 min-w-0 flex-1 items-center justify-between rounded-[5px] border border-[#2b3a51] bg-[#202e46] px-2 text-left text-[10px] font-medium text-[#aeb9ca]"
+            title={organizationName}
+          >
+            <span className="truncate">{organizationName}</span>
+            <svg className="h-3 w-3 shrink-0 text-[#7f8fa7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
       </div>
+      <div aria-hidden="true" className="mx-2.5 h-px bg-[#2b3a51]" />
 
       <nav className="flex-1 overflow-y-auto px-0 py-3">
-        <div>
+        <div className="space-y-1">
           {groups.map((group) => (
-            <section key={group.id}>
+            <section key={group.id} className="px-2">
               {group.label ? (
                 <GroupHeader
                   group={group}
                   isOpen={openGroups[group.id] ?? true}
+                  active={isActiveGroup(pathname, search, group.items)}
                   onToggle={() =>
                     setOpenGroups((current) => ({
                       ...current,
@@ -272,7 +309,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 />
               ) : null}
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-0.5 px-2 pb-1">
+                <div className="space-y-0.5 pb-1 pl-2.5 pt-1">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}
@@ -288,8 +325,8 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
           ))}
         </div>
         {!authBypassEnabled ? (
-          <div className="mt-1 border-t border-gray-700 pt-1">
-            <SignOutButton className="block w-full rounded px-2 py-1 text-left text-xs text-red-400 transition-colors hover:bg-gray-700 hover:text-red-300" />
+          <div className="mx-3 mt-3 border-t border-[#2b3a51] pt-3">
+            <SignOutButton className="block w-full rounded-[8px] px-2.5 py-2 text-left text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200" />
           </div>
         ) : null}
       </nav>

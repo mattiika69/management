@@ -56,7 +56,7 @@ function SectionCard({
   className?: string;
 }) {
   return (
-    <div className={`rounded-[4px] border border-gray-300 bg-white ${className}`}>
+    <div className={`app-card ${className}`}>
       {children}
     </div>
   );
@@ -66,7 +66,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`h-[28px] rounded-[3px] border border-gray-300 bg-white px-2 text-[11px] text-gray-700 outline-none focus:border-blue-500 ${props.className ?? ""}`}
+      className={`app-field h-9 px-2.5 text-[12px] ${props.className ?? ""}`}
     />
   );
 }
@@ -75,13 +75,13 @@ function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className={`h-[28px] rounded-[3px] border border-gray-300 bg-white px-2 text-[11px] text-gray-700 outline-none focus:border-blue-500 ${props.className ?? ""}`}
+      className={`app-field h-9 px-2.5 text-[12px] ${props.className ?? ""}`}
     />
   );
 }
 
 function Checkbox(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} type="checkbox" className="h-[13px] w-[13px] rounded-[2px] border-gray-400 accent-gray-950" />;
+  return <input {...props} type="checkbox" className="h-4 w-4 rounded-[4px] border-[#b8c2d0] accent-[#155dfc]" />;
 }
 
 function peopleOptions(people: WorkspacePerson[]) {
@@ -316,14 +316,14 @@ export function MeetingsWorkspace({
   }
 
   return (
-    <div className="text-[11px] text-gray-700">
+    <div className="text-[12px] text-[#475467]">
       <OperationsTabs tabs={meetingTabs} active={activeView} />
       {error ? (
-        <div className="mb-3 rounded-[6px] border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">
+        <div className="mb-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700">
           {error}
         </div>
       ) : null}
-      <div className="grid gap-2 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
         <MeetingList
           type={activeView}
           meetings={visibleMeetings}
@@ -360,7 +360,7 @@ function MeetingList({
 }) {
   return (
     <SectionCard className="overflow-hidden">
-      <div className="border-b border-gray-200 p-2">
+      <div className="border-b border-[#e4e7ec] p-3">
         <Select className="w-full" defaultValue="">
           <option value="">{type === "client" ? "All Clients" : type === "one_on_one" ? "All Employees" : "All Attendees"}</option>
           {peopleOptions(people)}
@@ -372,23 +372,23 @@ function MeetingList({
             <button
               key={meeting.id}
               type="button"
-              className="flex h-[58px] w-full items-center justify-between border-b border-gray-100 px-3 text-left hover:bg-gray-50"
+              className="flex min-h-[64px] w-full items-center justify-between border-b border-[#edf0f5] px-4 text-left transition hover:bg-[#f8fafc]"
             >
               <span>
-                <span className="block font-medium text-gray-800">
+                <span className="block text-[13px] font-bold text-[#101828]">
                   {meeting.client_name || meeting.title.replace(/^New\s*/, "")}
                 </span>
-                <span className="mt-1 block text-gray-500">
+                <span className="mt-1 block text-[12px] font-medium text-[#667085]">
                   {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(
                     new Date(`${meeting.meeting_date}T00:00:00`),
                   )}
                 </span>
               </span>
-              <span className="text-gray-400">×</span>
+              <span className="text-[#98a2b3]">×</span>
             </button>
           ))
         ) : (
-          <button type="button" onClick={onNew} className="h-[40px] w-full text-center text-gray-400">
+          <button type="button" onClick={onNew} className="h-[64px] w-full text-center text-[13px] font-medium text-[#667085] hover:bg-[#f8fafc]">
             No meetings yet
           </button>
         )}
@@ -403,7 +403,7 @@ function SaveButton({ saving, onSave, label = "Save Meeting" }: { saving: boolea
       type="button"
       onClick={onSave}
       disabled={saving}
-      className="h-[30px] rounded-[4px] bg-orange-600 px-4 text-[11px] font-bold text-white disabled:opacity-60"
+      className="app-button-primary h-9 px-4"
     >
       {saving ? "Saving..." : label}
     </button>
@@ -414,18 +414,18 @@ function AttendeesField({ people, draft }: { people: WorkspacePerson[]; draft: D
   const selected = draft.attendees.slice(0, 4);
   return (
     <div>
-      <label className="mb-1 block text-[10px] font-medium text-gray-700">Attendees</label>
-      <div className="flex h-[28px] items-center rounded-[3px] border border-gray-300 bg-white px-2">
-        <span className="mr-2 text-gray-500">{selected.length} attendees:</span>
+      <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.06em] text-[#667085]">Attendees</label>
+      <div className="flex h-9 items-center rounded-[7px] border border-[#cfd8e6] bg-white px-2.5 shadow-sm">
+        <span className="mr-2 text-[12px] font-semibold text-[#667085]">{selected.length} attendees:</span>
         <div className="flex min-w-0 flex-1 gap-1">
           {selected.map((key, index) => (
-            <span key={`${key}-${index}`} className="rounded-[3px] border border-gray-200 bg-gray-50 px-2 py-[2px] text-[10px] text-gray-600">
+            <span key={`${key}-${index}`} className="rounded-full border border-[#d9e1ee] bg-[#f8fafc] px-2 py-[2px] text-[10px] font-semibold text-[#475467]">
               <span className="mr-1 inline-block h-[6px] w-[6px] rounded-full bg-blue-500" />
               {personName(people, key)}
             </span>
           ))}
         </div>
-        <span className="text-gray-400">▼</span>
+        <span className="text-[#98a2b3]">▼</span>
       </div>
     </div>
   );

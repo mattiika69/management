@@ -33,10 +33,16 @@ export async function GET() {
     .maybeSingle<{ item_order: string[] }>();
 
   if (error) {
-    return NextResponse.json({ order: normalizeSidebarOrder([]) });
+    return NextResponse.json({
+      order: normalizeSidebarOrder([]),
+      organizationName: context.organization.name,
+    });
   }
 
-  return NextResponse.json({ order: normalizeSidebarOrder(data?.item_order) });
+  return NextResponse.json({
+    order: normalizeSidebarOrder(data?.item_order),
+    organizationName: context.organization.name,
+  });
 }
 
 export async function PUT(request: Request) {

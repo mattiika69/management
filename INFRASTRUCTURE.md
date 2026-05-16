@@ -34,8 +34,8 @@ Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from 
 - Team members: Settings > Team supports member listing and invitations.
 - Stripe billing: database tables and checkout route exist.
 - V1 credit billing: generated workspace assets can spend credits; Stripe credit checkout and webhook ledger writes exist.
-- Data persistence: company document, management, meetings, training, learning, AI outputs, notes, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
-- Page shell: app pages use the shared sidebar and Settings tabs, with Account, Team, Billing, Integrations, Scheduling, Slack, and Telegram under Settings.
+- Data persistence: AI context, management, screening, meetings, training, learning, AI outputs, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
+- Page shell: app pages use the shared sidebar and Settings tabs, with AI Context, Employees, Team, Pods, Calendars, Zoom, Billing, Integrations, Scheduling, Slack, Telegram, Archive, and Usage under Settings.
 
 ## Organization, User, And RLS Architecture Source Of Truth
 
@@ -52,7 +52,7 @@ This section is the required architecture for all future product work.
 
 - `tenants` is the canonical tenant root table.
 - `tenant_memberships` connects users to tenants.
-- `organizations` and `organization_memberships` remain compatibility tables for existing Funnel code and are synced to canonical tenant tables.
+- `organizations` and `organization_memberships` remain compatibility tables for existing code and are synced to canonical tenant tables.
 - Valid membership roles are `owner`, `admin`, `member`, and `viewer`.
 - Every persistent product/business table must include `tenant_id uuid not null references public.tenants(id) on delete cascade`, unless the table is a documented global catalog. Existing tables may also include `organization_id` while legacy code is being migrated.
 - Every query for tenant data must filter by the active organization.
@@ -85,13 +85,9 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 
 - `company_contexts`
 - `company_context_versions`
-- `funnels`
-- `funnel_steps`
-- `funnel_launch_runs`
-- `funnel_asset_runs`
 - `workspace_ai_training`
-- `funnel_learning_items`
-- `funnel_ai_outputs`
+- `learning_items`
+- `funnel_ai_outputs` (legacy AI output storage name)
 - `workspace_notes`
 - `credit_accounts`
 - `credit_ledger_entries`
@@ -111,6 +107,13 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 - `management_start_stop_keep_items`
 - `management_diamond_entries`
 - `management_team_ratings`
+- `management_job_descriptions`
+- `management_hiring_candidates`
+- `management_training_programs`
+- `management_training_items`
+- `employees`
+- `calendar_connections`
+- `zoom_connections`
 - `meetings`
 - `meeting_attendees`
 - `meeting_agenda_items`
@@ -146,12 +149,12 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 | --- | --- |
 | AI | `POST /api/ai/run`, `PUT /api/ai/training` |
 | Context Docs | `GET/POST/PATCH/DELETE /api/contexts`, `PUT /api/company-context` |
-| Funnels | `GET/POST/PATCH/DELETE /api/funnels`, `PUT /api/funnels/[type]/steps`, `POST /api/funnels/[id]/launch` |
-| Inspiration | `POST /api/inspiration` |
-| Learning | `PUT /api/learning` |
-| Notes | `POST /api/notes`, `PUT /api/notes`, `DELETE /api/notes` |
-| Management | `POST /api/management` |
+| Learning | `GET/POST/PATCH/DELETE /api/learning` |
+| Management | `POST /api/management`, `GET/POST /api/management/job-descriptions`, `GET/POST /api/management/hiring`, `GET/POST /api/management/training`, `POST/PATCH/DELETE /api/management/training/items` |
 | Meetings | `POST /api/meetings` |
+| Employees | `GET/POST /api/employees`, `PATCH/DELETE /api/employees/[id]` |
+| Calendars | `GET/POST /api/calendars`, `PATCH/DELETE /api/calendars/[id]` |
+| Zoom | `GET/POST /api/zoom`, `PATCH/DELETE /api/zoom/[id]` |
 | Billing | `POST /api/billing/checkout`, `POST /api/billing/credits/checkout`, `POST /api/stripe/webhook` |
 | Email | `POST /api/email/send` |
 | SMS | `POST /api/sms/send` |
