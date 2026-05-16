@@ -58,10 +58,12 @@ function activeGroupIdFor(pathname: string, search: string) {
   return "management";
 }
 
-function initialOpenGroupId(activeGroupId: string) {
-  const activeGroup = SIDEBAR_GROUPS.find((group) => group.id === activeGroupId);
-  if (activeGroup && !activeGroup.href) return activeGroup.id;
-  return SIDEBAR_GROUPS.find((group) => !group.href)?.id ?? "";
+function initialOpenGroups() {
+  return Object.fromEntries(
+    SIDEBAR_GROUPS
+      .filter((group) => !group.href)
+      .map((group) => [group.id, true]),
+  );
 }
 
 function moveItem(order: string[], sourceId: string, targetId: string) {
@@ -194,7 +196,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
-  const [openGroupId, setOpenGroupId] = useState(() => initialOpenGroupId(activeGroupId));
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(initialOpenGroups);
   const groups = useMemo(
     () =>
       SIDEBAR_GROUPS.map((group) => ({
@@ -283,14 +285,17 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                   <GroupHeader
                     group={group}
                     isActive={group.id === activeGroupId}
-                    isOpen={openGroupId === group.id}
+                    isOpen={openGroups[group.id] ?? true}
                     onToggle={() =>
-                      setOpenGroupId((current) => (current === group.id ? "" : group.id))
+                      setOpenGroups((current) => ({
+                        ...current,
+                        [group.id]: !(current[group.id] ?? true),
+                      }))
                     }
                   />
                 </div>
               ) : null}
-              {!group.href && openGroupId === group.id ? (
+              {!group.href && (openGroups[group.id] ?? true) ? (
                 <div className="ho-sidebar-child-nav">
                   {group.items.map((item) => (
                     <SidebarNavItem
