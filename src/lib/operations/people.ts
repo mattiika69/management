@@ -38,6 +38,12 @@ export function orderPeople(people: WorkspacePerson[], order: string[]) {
   });
 }
 
+function isInternalBypassPerson(input: { name?: string | null; email?: string | null }) {
+  const name = input.name?.trim().toLowerCase() ?? "";
+  const email = input.email?.trim().toLowerCase() ?? "";
+  return name === "auth bypass user" || email === "auth-bypass@hyperoptimal-management.test";
+}
+
 function personFromProfile(input: {
   userId: string;
   role: string;
@@ -82,6 +88,8 @@ export async function listWorkspacePeople(
     }>>();
 
   for (const employee of employees ?? []) {
+    if (isInternalBypassPerson({ name: employee.full_name, email: employee.email })) continue;
+
     const key = slugify(employee.full_name) || `employee-${employee.id}`;
     people.set(key, {
       key,
@@ -92,15 +100,34 @@ export async function listWorkspacePeople(
     });
   }
 
-  const { data: memberships } = await supabase
-    .from("tenant_memberships")
-    .select("user_id,role")
-    .eq("tenant_id", tenantId)
-    .is("archived_at", null)
-    .order("created_at", { ascending: true })
-    .returns<Array<{ user_id: string; role: string }>>();
+  const [tenantMembershipsResult, organizationMembershipsResult] = await Promise.all([
+    supabase
+      .from("tenant_memberships")
+      .select("user_id,role")
+      .eq("tenant_id", tenantId)
+      .is("archived_at", null)
+      .order("created_at", { ascending: true })
+      .returns<Array<{ user_id: string; role: string }>>(),
+    supabase
+      .from("organization_memberships")
+      .select("user_id,role")
+      .eq("organization_id", tenantId)
+      .order("created_at", { ascending: true })
+      .returns<Array<{ user_id: string; role: string }>>(),
+  ]);
 
-  const userIds = (memberships ?? []).map((membership) => membership.user_id);
+  const membershipsByUserId = new Map<string, { user_id: string; role: string }>();
+
+  for (const membership of organizationMembershipsResult.data ?? []) {
+    membershipsByUserId.set(membership.user_id, membership);
+  }
+
+  for (const membership of tenantMembershipsResult.data ?? []) {
+    membershipsByUserId.set(membership.user_id, membership);
+  }
+
+  const memberships = Array.from(membershipsByUserId.values());
+  const userIds = memberships.map((membership) => membership.user_id);
   const profilesByUserId = new Map<string, { email: string | null; display_name: string | null }>();
 
   if (userIds.length) {
@@ -118,17 +145,22 @@ export async function listWorkspacePeople(
     }
   }
 
-  for (const membership of memberships ?? []) {
+  for (const membership of memberships) {
     const profile = profilesByUserId.get(membership.user_id);
+    const email = membership.user_id === currentUser.id ? currentUser.email : profile?.email;
+    const displayName =
+      profile?.display_name ||
+      (membership.user_id === currentUser.id
+        ? (currentUser.user_metadata?.name as string | undefined)
+        : undefined);
+
+    if (isInternalBypassPerson({ name: displayName, email })) continue;
+
     const person = personFromProfile({
       userId: membership.user_id,
       role: membership.role,
-      email: membership.user_id === currentUser.id ? currentUser.email : profile?.email,
-      displayName:
-        profile?.display_name ||
-        (membership.user_id === currentUser.id
-          ? (currentUser.user_metadata?.name as string | undefined)
-          : undefined),
+      email,
+      displayName,
     });
     if (!people.has(person.key)) people.set(person.key, person);
   }

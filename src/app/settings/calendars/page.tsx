@@ -2,10 +2,12 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
+import { listWorkspacePeople } from "@/lib/operations/people";
 import { createClient } from "@/lib/supabase/server";
 
 type EmployeeRow = {
   id: string;
+  user_id: string | null;
   full_name: string;
   email: string | null;
   role_title: string | null;
@@ -19,13 +21,15 @@ type CalendarRow = {
   sync_enabled: boolean;
 };
 
-function fallbackEmail(name: string) {
-  return `${name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "")}@hyperoptimal.com`;
-}
-
 function roleLabel(role: string | null) {
   const normalized = role?.toLowerCase() ?? "";
   return normalized.includes("owner") ? "Owner" : role || "";
+}
+
+function isInternalBypassPerson(input: { name?: string | null; email?: string | null }) {
+  const name = input.name?.trim().toLowerCase() ?? "";
+  const email = input.email?.trim().toLowerCase() ?? "";
+  return name === "auth bypass user" || email === "auth-bypass@hyperoptimal-management.test";
 }
 
 function providerLabel(provider: string) {
@@ -48,7 +52,7 @@ export default async function CalendarSettingsPage() {
   const [employeesResult, calendarsResult] = await Promise.all([
     supabase
       .from("employees")
-      .select("id,full_name,email,role_title,calendar_email")
+      .select("id,user_id,full_name,email,role_title,calendar_email")
       .eq("tenant_id", organization.id)
       .is("archived_at", null)
       .order("full_name", { ascending: true })
@@ -64,10 +68,39 @@ export default async function CalendarSettingsPage() {
   if (employeesResult.error) throw new Error(employeesResult.error.message);
   if (calendarsResult.error) throw new Error(calendarsResult.error.message);
 
+  const workspacePeople = await listWorkspacePeople(supabase, organization.id, user);
+  const peopleByKey = new Map(
+    (employeesResult.data ?? [])
+      .filter((employee) => !isInternalBypassPerson({ name: employee.full_name, email: employee.email }))
+      .map((employee) => [
+        employee.user_id ?? employee.email ?? employee.id,
+        {
+          id: employee.id,
+          full_name: employee.full_name,
+          email: employee.email,
+          role_title: employee.role_title,
+          calendar_email: employee.calendar_email,
+        },
+      ]),
+  );
+
+  for (const person of workspacePeople) {
+    const key = person.userId ?? person.key;
+    if (!peopleByKey.has(key)) {
+      peopleByKey.set(key, {
+        id: person.userId ?? person.key,
+        full_name: person.name,
+        email: null,
+        role_title: person.role,
+        calendar_email: null,
+      });
+    }
+  }
+
   const calendarsByEmail = new Map(
     (calendarsResult.data ?? []).map((calendar) => [calendar.account_email.toLowerCase(), calendar]),
   );
-  const employees = employeesResult.data ?? [];
+  const employees = Array.from(peopleByKey.values()).sort((a, b) => a.full_name.localeCompare(b.full_name));
 
   return (
     <AppShell
@@ -88,8 +121,8 @@ export default async function CalendarSettingsPage() {
 
           <div className="divide-y divide-[#e4e7ec]">
             {employees.map((employee) => {
-              const email = employee.calendar_email || employee.email || fallbackEmail(employee.full_name);
-              const calendar = calendarsByEmail.get(email.toLowerCase());
+              const email = employee.calendar_email || employee.email;
+              const calendar = email ? calendarsByEmail.get(email.toLowerCase()) : null;
               const role = roleLabel(employee.role_title);
 
               return (
@@ -103,7 +136,9 @@ export default async function CalendarSettingsPage() {
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 truncate text-[11px] font-medium text-[#667085]">{email}</p>
+                    <p className="mt-1 truncate text-[11px] font-medium text-[#667085]">
+                      {email ?? "No email on file"}
+                    </p>
                     <p className="mt-2 text-[11px] font-medium text-[#98a2b3]">
                       {calendar
                         ? `${providerLabel(calendar.provider)} connected${calendar.sync_enabled ? "" : " · paused"}`
