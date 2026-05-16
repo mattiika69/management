@@ -35,30 +35,6 @@ function isActiveItem(pathname: string, search: string, href: string) {
   return pathname === target.pathname;
 }
 
-function isActiveGroup(pathname: string, search: string, items: SidebarItem[]) {
-  return items.some((item) => {
-    const target = parseHref(item.href);
-
-    if (target.search) {
-      return pathname === target.pathname && search === target.search;
-    }
-
-    if (target.pathname === "/management") {
-      return pathname === "/management";
-    }
-
-    if (target.pathname === "/settings") {
-      return pathname === "/settings" || pathname.startsWith("/settings/");
-    }
-
-    if (target.pathname === "/settings/account") {
-      return pathname === "/settings" || pathname.startsWith("/settings/");
-    }
-
-    return pathname === target.pathname || pathname.startsWith(`${target.pathname}/`);
-  });
-}
-
 function moveItem(order: string[], sourceId: string, targetId: string) {
   if (sourceId === targetId) return order;
   const next = order.filter((id) => id !== sourceId);
@@ -72,10 +48,10 @@ function DragHandle() {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-0 transition-opacity group-hover:opacity-35 group-focus-visible:opacity-45"
+      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-0 transition-opacity group-hover:opacity-25 group-focus-visible:opacity-35"
     >
       {Array.from({ length: 6 }).map((_, index) => (
-        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#aeb9ca]" />
+        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#a7b4c7]" />
       ))}
     </span>
   );
@@ -84,19 +60,14 @@ function DragHandle() {
 function GroupHeader({
   group,
   isOpen,
-  active,
   onToggle,
 }: {
   group: SidebarGroup;
   isOpen: boolean;
-  active: boolean;
   onToggle: () => void;
 }) {
-  const className = `flex h-[24px] w-full items-center gap-1.5 rounded-[5px] border px-2 text-left text-[10px] font-bold uppercase tracking-[0.08em] transition-colors ${
-    active
-      ? "border-transparent bg-[#1f314d] text-[#dbe7f7]"
-      : "border-transparent text-[#7f8fa7] hover:bg-[#1b2a42] hover:text-[#d1d9e6]"
-  }`;
+  const className =
+    "flex h-[27px] w-full items-center gap-1.5 px-2 text-left text-[10px] font-bold uppercase leading-none tracking-[0.12em] text-[#7f8da3] transition-colors hover:text-[#a9b6c9]";
 
   if (group.href) {
     return (
@@ -116,12 +87,12 @@ function GroupHeader({
         aria-expanded={isOpen}
       >
         <svg
-          className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`}
+          className={`h-3 w-3 shrink-0 text-[#8190a6] transition-transform ${isOpen ? "rotate-90" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M9 5l7 7-7 7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" />
         </svg>
         <span className="truncate">{group.label}</span>
       </button>
@@ -140,10 +111,10 @@ function GroupHeader({
             onToggle();
           }
         }}
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] text-[#708097] transition hover:bg-[#2a3d5a] hover:text-white"
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] text-[#6f7f97] opacity-0 transition hover:bg-[#243650] hover:text-[#d8e2f0] group-hover:opacity-100 focus-visible:opacity-100"
       >
         <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 9l6 6 6-6" />
         </svg>
       </button>
     </div>
@@ -187,15 +158,15 @@ function SidebarNavItem({
           onDrop(item.id);
         }}
         onDragEnd={() => onDragStart("")}
-        className={`group flex h-[26px] w-full cursor-default items-center justify-between gap-2 rounded-[5px] border px-2.5 text-left transition-all ${
+        className={`group flex h-[27px] w-full cursor-default items-center justify-between gap-2 rounded-[5px] border px-2 text-left transition-all ${
           active
-            ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.24)]"
-            : "border-transparent text-[#a4b0c2] hover:border-[#33445e] hover:bg-[#21314a] hover:text-[#eef4ff]"
+            ? "border-[#4a8cff] bg-[#203b61] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(74,140,255,0.18)]"
+            : "border-transparent text-[#a8b3c4] hover:bg-[#22344d] hover:text-[#eef4ff]"
         } ${dragging ? "opacity-55" : ""}`}
       >
         <span
-          className={`min-w-0 truncate text-[11.5px] font-medium tracking-normal transition-colors ${
-            active ? "text-[#f8fafc]" : "text-[#a4b0c2] group-hover:text-[#eef4ff]"
+          className={`min-w-0 truncate text-[11.5px] font-medium leading-none tracking-normal transition-colors ${
+            active ? "text-[#f8fafc]" : "text-[#a8b3c4] group-hover:text-[#eef4ff]"
           }`}
         >
           {item.label}
@@ -207,10 +178,6 @@ function SidebarNavItem({
 }
 
 export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }) {
-  const pathname = usePathname() ?? "";
-  const searchParams = useSearchParams();
-  const query = searchParams.toString();
-  const search = query ? `?${query}` : "";
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
@@ -260,12 +227,12 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
 
   if (isSidebarCollapsed) {
     return (
-      <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#26354c] bg-[#162234] text-left text-white">
-        <div className="px-1.5 py-2">
-          <button
-            type="button"
-            onClick={() => setIsSidebarCollapsed(false)}
-            className="mx-auto flex h-7 w-7 items-center justify-center rounded-full border border-[#33445e] bg-[#21314a] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
+    <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#304057] bg-[#1b2a40] text-left text-white">
+      <div className="px-1.5 py-2">
+        <button
+          type="button"
+          onClick={() => setIsSidebarCollapsed(false)}
+          className="mx-auto flex h-7 w-7 items-center justify-center rounded-full border border-[#40516b] bg-[#22344e] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
             aria-label="Expand sidebar"
             title="Expand sidebar"
           >
@@ -279,19 +246,19 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col border-r border-[#26354c] bg-[#162234] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
-      <div className="px-2.5 pt-3 pb-2">
+    <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col border-r border-[#304057] bg-[#1b2a40] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
+      <div className="border-b border-[#304057] px-2.5 py-3">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="flex min-w-0 items-center gap-2">
             <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-[#2f7bff] shadow-sm ring-1 ring-white/15">
               <span className="text-xs font-bold text-white">H</span>
             </div>
-            <span className="truncate text-[13px] font-bold tracking-[-0.01em] text-white">HyperOptimal</span>
+            <span className="truncate text-[13px] font-bold tracking-normal text-white">HyperOptimal</span>
           </Link>
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(true)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#33445e] bg-[#21314a] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#40516b] bg-[#22344e] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >
@@ -303,24 +270,25 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
       </div>
 
       <nav className="flex-1 overflow-y-auto px-0 py-2">
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {groups.map((group) => (
             <section key={group.id} className="px-2">
               {group.label ? (
-                <GroupHeader
-                  group={group}
-                  isOpen={openGroups[group.id] ?? true}
-                  active={isActiveGroup(pathname, search, group.items)}
-                  onToggle={() =>
-                    setOpenGroups((current) => ({
-                      ...current,
-                      [group.id]: !(current[group.id] ?? true),
-                    }))
-                  }
-                />
+                <div className="group">
+                  <GroupHeader
+                    group={group}
+                    isOpen={openGroups[group.id] ?? true}
+                    onToggle={() =>
+                      setOpenGroups((current) => ({
+                        ...current,
+                        [group.id]: !(current[group.id] ?? true),
+                      }))
+                    }
+                  />
+                </div>
               ) : null}
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-0.5 pb-1 pl-2 pt-0.5">
+                <div className="space-y-[3px] pb-1 pl-2 pt-[2px]">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}
@@ -336,7 +304,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
           ))}
         </div>
         {!authBypassEnabled ? (
-          <div className="mx-3 mt-3 border-t border-[#2b3a51] pt-3">
+          <div className="mx-3 mt-3 border-t border-[#304057] pt-3">
             <SignOutButton className="block w-full rounded-[8px] px-2.5 py-2 text-left text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200" />
           </div>
         ) : null}
