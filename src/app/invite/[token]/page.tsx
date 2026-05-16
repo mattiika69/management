@@ -37,7 +37,7 @@ function InviteShell({ children }: { children: ReactNode }) {
           href="/"
           className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]"
         >
-          HyperOptimal Funnel
+          HyperOptimal Management
         </Link>
         {children}
       </section>

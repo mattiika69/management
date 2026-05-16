@@ -94,7 +94,7 @@ export function NotesWorkspace({
       body: JSON.stringify({
         title: "Untitled",
         body: "",
-        folder: "Funnel",
+        folder: "Workspace",
         source: "Manual",
         tags: [],
         visibility: "private",
@@ -222,7 +222,7 @@ export function NotesWorkspace({
               Folders
             </p>
             <div className="mt-2 space-y-1 text-sm text-[#9aa7bb]">
-              {(folders.length ? folders : ["Funnel"]).map((folder) => (
+              {(folders.length ? folders : ["Workspace"]).map((folder) => (
                 <button
                   key={folder}
                   type="button"
@@ -260,7 +260,7 @@ export function NotesWorkspace({
               ))}
             </select>
             <select value={funnelFilter} onChange={(event) => setFunnelFilter(event.currentTarget.value)} className="h-8 rounded-md border border-[#cfd8e6] bg-white px-2 text-xs">
-              <option value="">All funnels</option>
+              <option value="">All workspace areas</option>
               {funnels.map((funnel) => (
                 <option key={funnel.id} value={funnel.id}>{funnel.name}</option>
               ))}

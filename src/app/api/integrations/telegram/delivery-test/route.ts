@@ -21,14 +21,14 @@ export async function POST(request: Request) {
 
     const result = await postTelegramMessage(
       chatId,
-      "HyperOptimal Funnel Telegram delivery is working.",
+      "HyperOptimal Management Telegram delivery is working.",
     );
 
     await context.supabase.from("integration_outbound_messages").insert({
       tenant_id: context.tenant.id,
       provider: "telegram",
       target_id: chatId,
-      message_text: "HyperOptimal Funnel Telegram delivery is working.",
+      message_text: "HyperOptimal Management Telegram delivery is working.",
       status: "sent",
       provider_message_id: result.result?.message_id?.toString() ?? null,
       payload: result,

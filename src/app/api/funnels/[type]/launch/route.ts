@@ -86,7 +86,7 @@ async function generateWithClaude(prompt: string) {
         "claude-sonnet-4-5",
       max_tokens: anthropicMaxTokens(),
       system:
-        "You generate production-ready Book-a-Call funnel assets for HyperOptimal Funnel. Return polished assets, builder prompts, labels, and implementation details. Do not include internal notes.",
+        "You generate production-ready workspace assets for HyperOptimal Management. Return polished assets, builder prompts, labels, and implementation details. Do not include internal notes.",
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -195,7 +195,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   const organization = await getOrCreateDefaultOrganization(supabase, user);
   const funnel = await getFunnelById(supabase, organization, funnelId);
   if (!funnel || funnel.template_key !== "book-a-call") {
-    return NextResponse.json({ error: "A Book-a-Call funnel is required." }, { status: 404 });
+    return NextResponse.json({ error: "A valid workspace is required." }, { status: 404 });
   }
 
   if (!funnel.context_id) {

@@ -29,7 +29,7 @@ export default async function TelegramSettingsPage() {
     <AppShell
       active="/settings/telegram"
       title="Telegram"
-      subtitle="Connect Telegram to work with funnel updates from your workspace."
+      subtitle="Connect Telegram to work with updates from your workspace."
       tabs={settingsTabs}
     >
       <section className="mx-auto max-w-6xl">

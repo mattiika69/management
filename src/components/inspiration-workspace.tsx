@@ -68,7 +68,7 @@ export function InspirationWorkspace({
           <input
             value={title}
             onChange={(event) => setTitle(event.currentTarget.value)}
-            placeholder="Email inspiration, ad angle, VSL hook..."
+            placeholder="Idea, note, client context..."
             className="h-10 w-full rounded-md border border-[#cfd8e6] px-3 text-sm outline-none focus:border-[#2f80ed]"
           />
         </label>
@@ -89,7 +89,7 @@ export function InspirationWorkspace({
         </label>
         <label>
           <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
-            Funnel
+            Workspace Area
           </span>
           <select
             value={funnelId}

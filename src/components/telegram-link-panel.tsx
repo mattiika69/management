@@ -26,7 +26,7 @@ export function TelegramLinkPanel() {
     <div className="rounded-lg border border-[#e8ded2] bg-white p-6">
       <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Connect Telegram</h2>
       <p className="mt-2 text-sm leading-6 text-[#8a7f73]">
-        Generate a one-time code, then send it to the HyperOptimal Funnel Telegram bot.
+        Generate a one-time code, then send it to the HyperOptimal Management Telegram bot.
       </p>
       <button
         type="button"

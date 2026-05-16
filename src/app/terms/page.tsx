@@ -6,7 +6,7 @@ export default function TermsPage() {
       <section>
         <p className="text-sm text-[#8a7f73]">Effective May 15, 2026</p>
         <p className="mt-4">
-          These terms govern access to HyperOptimal Funnel. By creating an
+          These terms govern access to HyperOptimal Management. By creating an
           account or using the product, users agree to use the service lawfully,
           maintain accurate account information, and protect account credentials.
         </p>

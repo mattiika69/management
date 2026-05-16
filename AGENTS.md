@@ -20,8 +20,8 @@
 - Communication-related work must be designed for Slack and Telegram from day one, including tenant-scoped integration connections, verified inbound webhooks, outbound response capability, and durable message/audit storage.
 - Email-related work must be designed for Resend from day one, including server-only API keys, tenant-scoped send logs, authenticated send endpoints, and RLS-protected audit records.
 - SMS-related work must be designed for Roezan from day one, including server-only API keys, tenant-scoped send logs, authenticated send endpoints, Roezan rate-limit awareness, and RLS-protected audit records.
-- The product name is HyperOptimal Funnel. Use that name for product-facing titles, docs, metadata, and future naming unless the user explicitly asks for a different name.
+- The product name is HyperOptimal Management. Use that name for product-facing titles, docs, metadata, and future naming unless the user explicitly asks for a different name.
 - Never put internal notes on client-facing pages again. Internal implementation notes, planning notes, setup notes, data/auth/RLS explanations, temporary status labels, or developer-facing commentary belong in repo docs or admin-only surfaces, not in the product UI.
 - Public account/legal/admin surface must exist for signup, login, password reset/update, privacy policy, terms of service, and authenticated workspace administration.
-- Treat HyperOptimal Funnel as primarily a desktop app. New screens and features should be desktop-first while still being as mobile-optimized as practical, with responsive layouts that avoid overflow, clipping, or incoherent overlap on small screens.
+- Treat HyperOptimal Management as primarily a desktop app. New screens and features should be desktop-first while still being as mobile-optimized as practical, with responsive layouts that avoid overflow, clipping, or incoherent overlap on small screens.
 - Do not overwrite unrelated user changes.

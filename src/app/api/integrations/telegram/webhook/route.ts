@@ -47,7 +47,7 @@ async function connectTelegramCode(
 
   if (error) throw new Error(error.message);
   if (!code || code.used_at || new Date(code.expires_at).getTime() < Date.now()) {
-    await postTelegramMessage(chatId, "That HyperOptimal Funnel link code is invalid or expired.");
+    await postTelegramMessage(chatId, "That HyperOptimal Management link code is invalid or expired.");
     return { handled: true };
   }
 
@@ -65,13 +65,13 @@ async function connectTelegramCode(
   });
   const response = await postTelegramMessage(
     chatId,
-    "Telegram is connected to HyperOptimal Funnel. Send /help for commands.",
+    "Telegram is connected to HyperOptimal Management. Send /help for commands.",
   );
   await saveIntegrationMessage(supabase, {
     connection,
     direction: "outbound",
     externalMessageId: response.result?.message_id?.toString(),
-    messageText: "Telegram is connected to HyperOptimal Funnel. Send /help for commands.",
+    messageText: "Telegram is connected to HyperOptimal Management. Send /help for commands.",
     payload: response,
     command: "connect",
     status: "sent",

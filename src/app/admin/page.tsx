@@ -59,7 +59,7 @@ export default async function AdminPage() {
               href="/"
               className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]"
             >
-              HyperOptimal Funnel
+              HyperOptimal Management
             </Link>
             <h1 className="mt-4 text-4xl font-bold text-[#171717]">Admin</h1>
             <p className="mt-2 text-[#5d5d55]">

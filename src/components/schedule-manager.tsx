@@ -92,7 +92,7 @@ export function ScheduleManager({
         <label className="mt-4 block text-sm font-medium text-[#34342f]">
           Workflow
           <select name="workflowKey" className="mt-2 w-full border border-[#d9d7cb] px-3 py-2">
-            <option value="weekly_funnel_review">Weekly funnel review</option>
+            <option value="weekly_workspace_review">Weekly workspace review</option>
             <option value="daily_notes_digest">Daily notes digest</option>
             <option value="learning_prompt">Learning prompt</option>
           </select>

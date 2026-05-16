@@ -35,9 +35,9 @@ export default async function BillingSettingsPage() {
     >
       <section className="mx-auto max-w-6xl">
         <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
-          <h2 className="text-2xl font-bold text-[#111827]">Launch Credits</h2>
+          <h2 className="text-2xl font-bold text-[#111827]">Workspace Credits</h2>
           <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-            Credits are spent per generated funnel asset.
+            Credits are spent per generated workspace asset.
           </p>
           <div className="mt-4 rounded-md border border-[#d8dee9] bg-[#f8fafc] px-4 py-3 text-sm">
             <span className="font-semibold text-[#111827]">{creditAccount?.balance_credits ?? 0}</span> credits available

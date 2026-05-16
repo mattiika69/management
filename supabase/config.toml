@@ -18,9 +18,9 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://funnel-mattiika69.vercel.app"
+site_url = "https://management-swart-iota.vercel.app"
 additional_redirect_urls = [
-  "https://funnel-mattiika69.vercel.app/auth/callback",
+  "https://management-swart-iota.vercel.app/auth/callback",
   "https://funnel-omega-rouge.vercel.app/auth/callback",
   "https://funnel-*-mattiika69.vercel.app/auth/callback",
   "http://localhost:3000/auth/callback",
@@ -52,31 +52,31 @@ port = 465
 user = "resend"
 pass = "env(RESEND_API_KEY)"
 admin_email = "onboarding@resend.dev"
-sender_name = "HyperOptimal Funnel"
+sender_name = "HyperOptimal Management"
 
 [auth.email.template.confirmation]
-subject = "Confirm your HyperOptimal Funnel account"
+subject = "Confirm your HyperOptimal Management account"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.magic_link]
-subject = "Log in to HyperOptimal Funnel"
+subject = "Log in to HyperOptimal Management"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.recovery]
-subject = "Reset your HyperOptimal Funnel password"
+subject = "Reset your HyperOptimal Management password"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.invite]
-subject = "You have been invited to HyperOptimal Funnel"
+subject = "You have been invited to HyperOptimal Management"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.email_change]
-subject = "Confirm your HyperOptimal Funnel email change"
+subject = "Confirm your HyperOptimal Management email change"
 content_path = "./supabase/templates/email_change.html"
 
 [auth.email.notification.password_changed]
 enabled = true
-subject = "Your HyperOptimal Funnel password was changed"
+subject = "Your HyperOptimal Management password was changed"
 content_path = "./templates/password_changed_notification.html"
 
 [auth.mfa]

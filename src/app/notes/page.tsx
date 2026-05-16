@@ -3,7 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { NotesWorkspace } from "@/components/notes-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { storageTabs } from "@/lib/hyperoptimal/navigation";
-import { listCompanyContexts, listFunnels } from "@/lib/hyperoptimal/server";
+import { listCompanyContexts } from "@/lib/hyperoptimal/server";
 import { getWorkspaceNotes } from "@/lib/notes/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,24 +29,23 @@ export default async function NotesPage({
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
   const params = searchParams ? await searchParams : {};
-  const [notes, contexts, funnels] = await Promise.all([
+  const [notes, contexts] = await Promise.all([
     getWorkspaceNotes(supabase, organization),
     listCompanyContexts(supabase, organization),
-    listFunnels(supabase, organization, "book-a-call"),
   ]);
 
   return (
     <AppShell
       active="/notes"
       title="Notes"
-      subtitle="Capture funnel ideas, channel messages, and working references."
+      subtitle="Capture workspace ideas, channel messages, and working references."
       tabs={storageTabs}
     >
       <NotesWorkspace
         initialNotes={notes}
         initialSelectedNoteId={readParam(params.note)}
         contexts={contexts}
-        funnels={funnels}
+        funnels={[]}
       />
     </AppShell>
   );

@@ -12,8 +12,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "HyperOptimal Funnel",
-  description: "HyperOptimal Funnel workspace.",
+  title: "HyperOptimal Management",
+  description: "HyperOptimal Management workspace.",
 };
 
 export default function RootLayout({

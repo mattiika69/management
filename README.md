@@ -1,6 +1,6 @@
-# HyperOptimal Funnel
+# HyperOptimal Management
 
-A minimal Next.js lead capture app backed by Supabase and ready for Vercel.
+A Next.js management workspace backed by Supabase and ready for Vercel.
 
 ## Architecture
 
@@ -40,7 +40,7 @@ records:
 supabase db push
 ```
 
-Supabase Auth is configured to send HyperOptimal Funnel account emails through
+Supabase Auth is configured to send HyperOptimal Management account emails through
 Resend SMTP. The tracked config includes production/local redirect URLs and
 templates for signup confirmation, magic login, password reset, workspace
 invites, email changes, and password change notifications. Push auth email

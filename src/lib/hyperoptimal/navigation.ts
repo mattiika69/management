@@ -1,7 +1,3 @@
-export const funnelTabs = [
-  { href: "/funnels/book-a-call", label: "Book a Call Funnel" },
-];
-
 export const storageTabs = [
   { href: "/inspiration", label: "Inspiration" },
   { href: "/notes", label: "Notes" },

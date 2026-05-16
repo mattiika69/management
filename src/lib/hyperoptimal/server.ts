@@ -406,7 +406,7 @@ export async function createFunnel(
     .insert({
       organization_id: organization.id,
       template_key: "book-a-call",
-      name: input.name?.trim() || (source ? `${source.name} Copy` : "Book a Call Funnel"),
+      name: input.name?.trim() || (source ? `${source.name} Copy` : "Management Workspace"),
       context_id: input.contextId ?? source?.context_id ?? null,
       builder_key: input.builderKey ?? source?.builder_key ?? "lovable",
       builder_project_url: input.builderProjectUrl?.trim() ?? source?.builder_project_url ?? "",
@@ -464,7 +464,7 @@ export async function updateFunnel(
   const { data, error } = await supabase
     .from("funnels")
     .update({
-      ...(input.name !== undefined ? { name: input.name.trim() || "Book a Call Funnel" } : {}),
+      ...(input.name !== undefined ? { name: input.name.trim() || "Management Workspace" } : {}),
       ...(input.contextId !== undefined ? { context_id: input.contextId } : {}),
       ...(input.builderKey ? { builder_key: input.builderKey } : {}),
       ...(input.builderProjectUrl !== undefined ? { builder_project_url: input.builderProjectUrl.trim() } : {}),

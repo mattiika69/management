@@ -6,7 +6,7 @@ export default function PrivacyPage() {
       <section>
         <p className="text-sm text-[#8a7f73]">Effective May 15, 2026</p>
         <p className="mt-4">
-          HyperOptimal Funnel collects account, workspace, funnel, billing,
+          HyperOptimal Management collects account, workspace, billing,
           communication, and integration data needed to operate the product.
           We use this data to provide the service, deliver requested
           communications, process billing, and protect customer workspaces.
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <h2 className="text-2xl font-semibold text-[#171717]">Data We Process</h2>
         <p className="mt-3">
           We may process names, email addresses, phone numbers, organization
-          membership details, funnel records, billing identifiers, message
+          membership details, management records, billing identifiers, message
           content, delivery metadata, and connected account identifiers.
         </p>
       </section>

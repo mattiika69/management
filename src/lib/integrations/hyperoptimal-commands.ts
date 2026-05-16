@@ -20,13 +20,11 @@ type CommandResult = {
 };
 
 const HELP_TEXT = [
-  "HyperOptimal Funnel commands:",
+  "HyperOptimal Management commands:",
   "/company - read the latest confirmed AI Context Doc summary",
-  "/book_a_call - read Book-a-Call Funnel status",
-  "/outputs - read recent AI outputs",
+  "/outputs - read recent saved outputs",
   `/inspiration ${INSPIRATION_CATEGORIES.join("|")} Your example - save inspiration to Notes`,
   "/set company companyName Example Co - update one AI Context Doc field",
-  "/set book-a-call opt_in_page url https://example.com - update one funnel step field",
 ].join("\n");
 
 function normalizeCommand(text: string) {
@@ -345,12 +343,12 @@ export async function handleHyperoptimalCommand(
     if (!match) {
       return {
         command: "set_funnel",
-        text: "Use `/set book-a-call opt_in_page url https://example.com`.",
+        text: "Use `/set company companyName Example Co` for workspace updates.",
       };
     }
     const funnelType = canonicalFunnelToken(match[1]);
     if (funnelType !== "book-a-call") {
-      return { command: "set_funnel", text: "V1 only supports Book-a-Call funnel commands." };
+      return { command: "set_funnel", text: "That workspace command is not available." };
     }
     return {
       command: "set_funnel",

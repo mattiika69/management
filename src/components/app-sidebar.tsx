@@ -213,7 +213,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
             <div className="flex h-[22px] w-[22px] items-center justify-center rounded-[5px] bg-blue-500 shadow-sm ring-1 ring-blue-300/40">
               <span className="text-xs font-bold text-white">H</span>
             </div>
-            <span className="truncate text-xs font-semibold">HyperOptimal Funnel</span>
+            <span className="truncate text-xs font-semibold">HyperOptimal Management</span>
           </Link>
           <button
             type="button"

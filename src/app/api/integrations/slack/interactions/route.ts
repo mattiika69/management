@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const supabase = createAdminClient();
   const connection = await findSlackConnectionByTeam(supabase, teamId);
   if (!connection) {
-    return NextResponse.json({ text: "HyperOptimal Funnel is not connected to this Slack workspace." });
+    return NextResponse.json({ text: "HyperOptimal Management is not connected to this Slack workspace." });
   }
 
   await saveIntegrationMessage(supabase, {
@@ -70,5 +70,5 @@ export async function POST(request: Request) {
     status: "sent",
   });
 
-  return NextResponse.json({ response_type: "ephemeral", text: "Handled by HyperOptimal Funnel." });
+  return NextResponse.json({ response_type: "ephemeral", text: "Handled by HyperOptimal Management." });
 }

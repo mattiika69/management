@@ -53,7 +53,7 @@ export function buildTeamInviteEmail({
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#fffdf9;border:1px solid #eadfd3;border-radius:8px;padding:32px;">
             <tr>
               <td>
-                <p style="margin:0 0 12px;color:#ef4b25;font-size:14px;font-weight:700;">HyperOptimal Funnel</p>
+                <p style="margin:0 0 12px;color:#ef4b25;font-size:14px;font-weight:700;">HyperOptimal Management</p>
                 <h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;color:#2b2118;">Join ${safeOrganizationName}</h1>
                 <p style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#6f6358;">${safeInviterEmail} invited you to join this workspace as ${safeRole}.</p>
                 <p style="margin:0 0 28px;">

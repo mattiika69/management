@@ -14,9 +14,9 @@ export type SidebarGroup = {
 export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: "system", label: "System", href: "/ai-company-document?tab=system", groupId: "company" },
   { id: "ai-context-document", label: "AI Context Document", href: "/ai-company-document", groupId: "company" },
+  { id: "management", label: "Management", href: "/management", groupId: "workspace" },
+  { id: "meetings", label: "Meetings", href: "/meetings", groupId: "workspace" },
   { id: "learn", label: "Learn", href: "/learn", groupId: "workspace" },
-  { id: "inspiration", label: "Inspiration", href: "/inspiration", groupId: "workspace" },
-  { id: "notes", label: "Notes", href: "/notes", groupId: "workspace" },
   { id: "account", label: "Account", href: "/settings/account", groupId: "settings" },
   { id: "team", label: "Team", href: "/settings/team", groupId: "settings" },
   { id: "billing", label: "Billing", href: "/settings/billing", groupId: "settings" },
@@ -35,7 +35,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     id: "workspace",
     label: "Workspace",
-    itemIds: ["learn", "inspiration", "notes"],
+    itemIds: ["management", "meetings", "learn"],
   },
   {
     id: "settings",

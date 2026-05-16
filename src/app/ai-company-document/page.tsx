@@ -36,7 +36,7 @@ export default async function AICompanyDocumentPage({
     <AppShell
       active="/ai-company-document"
       title="AI Context Docs"
-      subtitle="The business profile used by your Book-a-Call funnel AIs."
+      subtitle="The business profile used by your workspace."
     >
       <ContextWorkspace contexts={contexts.length ? contexts : [activeContext]} activeContext={activeContext} />
     </AppShell>

@@ -38,7 +38,7 @@ export default async function IntegrationsSettingsPage() {
           </Link>
           <Link href="/settings/telegram" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#e85b3c]">
             <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Telegram</h2>
-            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Telegram to send and receive funnel updates.</p>
+            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Telegram to send and receive workspace updates.</p>
           </Link>
         </div>
 

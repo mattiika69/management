@@ -63,7 +63,7 @@ async function generateWithClaude(prompt: string) {
         "claude-sonnet-4-5",
       max_tokens: anthropicMaxTokens(),
       system:
-        "You are generating production-ready funnel assets for HyperOptimal Funnel. Use only the provided company context, funnel step, and training criteria. Return concise, directly usable copy.",
+        "You are generating production-ready assets for HyperOptimal Management. Use only the provided company context, selected step, and training criteria. Return concise, directly usable copy.",
       messages: [{ role: "user", content: prompt }],
     }),
   });

@@ -39,7 +39,7 @@ export function UpdatePasswordForm() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[#171717]">Update password</h1>
         <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-          Choose a new password for your HyperOptimal Funnel account.
+          Choose a new password for your HyperOptimal Management account.
         </p>
       </div>
 

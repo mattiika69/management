@@ -6,7 +6,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 
 const APP_ROUTE_PREFIXES = [
   "/ai-company-document",
-  "/funnels",
+  "/management",
+  "/meetings",
   "/inspiration",
   "/notes",
   "/settings",

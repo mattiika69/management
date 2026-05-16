@@ -60,7 +60,7 @@ export default async function GetStartedPage({
     {
       eyebrow: "Step 3",
       title: "Business profile",
-      body: "Add the details that guide your funnel setup.",
+      body: "Add the details that guide your workspace setup.",
       status: "Optional",
     },
   ];
@@ -74,7 +74,7 @@ export default async function GetStartedPage({
               href="/"
               className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]"
             >
-              HyperOptimal Funnel
+              HyperOptimal Management
             </Link>
             <h1 className="mt-4 text-4xl font-bold text-[#171717]">
               Get started

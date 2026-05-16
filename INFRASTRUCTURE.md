@@ -1,9 +1,9 @@
-# HyperOptimal Funnel Infrastructure
+# HyperOptimal Management Infrastructure
 
 Author: mattiika69
 
 `ARCHITECTURE.md` is the authoritative HyperOptimal SaaS standard. This file
-tracks the current HyperOptimal Funnel implementation state against that
+tracks the current HyperOptimal Management implementation state against that
 standard.
 
 ## Hard Rules
@@ -21,7 +21,7 @@ standard.
 | --- | --- | --- |
 | GitHub | Connected | `https://github.com/mattiika69/management.git`, branch `main` |
 | Supabase | Connected | Project ref `oxsopkedpalgdlcmbxzs` |
-| Vercel | Connected | Project `funnel`, project id `prj_g1tKXY8pXxiO4j4yNpcvAYsjn0CC`, production URL `https://funnel-mattiika69.vercel.app` |
+| Vercel | Connected | GitHub-linked production deployment for `mattiika69/management` |
 
 Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Manual `vercel deploy` is fallback-only.
 
@@ -33,8 +33,8 @@ Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from 
 - RLS: migrations enable row-level security and member policies on app data tables.
 - Team members: Settings > Team supports member listing and invitations.
 - Stripe billing: database tables and checkout route exist.
-- V1 credit billing: Book-a-Call launch assets spend credits per generated asset; Stripe credit checkout and webhook ledger writes exist.
-- Data persistence: company document, funnels, funnel steps, training, learning, AI outputs, notes, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
+- V1 credit billing: generated workspace assets can spend credits; Stripe credit checkout and webhook ledger writes exist.
+- Data persistence: company document, management, meetings, training, learning, AI outputs, notes, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
 - Page shell: app pages use the shared sidebar and Settings tabs, with Account, Team, Billing, Integrations, Scheduling, Slack, and Telegram under Settings.
 
 ## Organization, User, And RLS Architecture Source Of Truth

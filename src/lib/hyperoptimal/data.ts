@@ -126,7 +126,7 @@ export const FUNNEL_DEFINITIONS: Record<
   { name: string; subtitle: string; steps: FunnelStepDefinition[] }
 > = {
   "book-a-call": {
-    name: "Book-a-Call Funnel",
+    name: "Management Workspace",
     subtitle: "Track the booked-call path from opt-in through sales call and follow-up.",
     steps: [
       { key: "opt_in_page", title: "Opt-In Page", agentId: "opt-in-page" },
@@ -136,7 +136,7 @@ export const FUNNEL_DEFINITIONS: Record<
       { key: "application_form", title: "Application Form", agentId: "application-form" },
       { key: "unqualified_page", title: "Unqualified Page", agentId: "unqualified-page" },
       { key: "thank_you_page", title: "Thank You Page", agentId: "confirmation-page" },
-      { key: "book_a_call", title: "Book a Call", agentId: null },
+      { key: "book_a_call", title: "Management", agentId: null },
       { key: "welcome_flow", title: "Welcome Flow", agentId: "welcome-flow" },
       { key: "pre_call_flow", title: "Pre-Call Flow", agentId: "pre-call-flow" },
       { key: "retargeting_ads", title: "Retargeting Ads", agentId: "retargeting-ads" },
@@ -224,7 +224,7 @@ export const DEFAULT_LEARNING_ITEMS: Record<
   Array<{ section: "learning" | "training"; itemType: "learning" | "training" | "assignment"; title: string; body: string }>
 > = {
   "book-a-call": [
-    { section: "learning", itemType: "learning", title: "Book-a-Call Funnel Learning", body: "Understand how each step increases qualified booked calls before operating the funnel." },
+    { section: "learning", itemType: "learning", title: "Management Learning", body: "Understand how each step supports the workspace before operating it." },
     { section: "training", itemType: "training", title: "Opt-in and sales pages", body: "Train opt-in page, lead magnet, sales page, VSL, application form, unqualified page, book-a-call link, and thank-you page checks." },
     { section: "training", itemType: "training", title: "Pre-call conversion assets", body: "Train welcome flow, pre-call flow, selfie video, retargeting ads, appointment-setting message, and breakout video review." },
     { section: "training", itemType: "training", title: "Sales Call Plan", body: "Train offer-specific call plan structure, discovery questions, objection handling, close logic, and call-to-follow-up handoff." },

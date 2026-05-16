@@ -3,7 +3,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const TRUTHY_VALUES = new Set(["1", "true", "yes", "on"]);
-const DEFAULT_BYPASS_EMAIL = "auth-bypass@hyperoptimal-funnel.test";
+const DEFAULT_BYPASS_EMAIL = "auth-bypass@hyperoptimal-management.test";
 
 function readBypassEmail() {
   return (

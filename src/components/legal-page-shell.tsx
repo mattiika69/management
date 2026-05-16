@@ -15,7 +15,7 @@ export function LegalPageShell({
           href="/"
           className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f766e]"
         >
-          HyperOptimal Funnel
+          HyperOptimal Management
         </Link>
         <h1 className="mt-6 text-5xl font-bold leading-tight text-[#171717]">
           {title}

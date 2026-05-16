@@ -32,7 +32,7 @@ export default async function SlackSettingsPage() {
     <AppShell
       active="/settings/slack"
       title="Slack"
-      subtitle="Connect Slack to work with funnel updates from your workspace."
+      subtitle="Connect Slack to work with updates from your workspace."
       tabs={settingsTabs}
     >
       <section className="mx-auto max-w-6xl">
@@ -41,7 +41,7 @@ export default async function SlackSettingsPage() {
             <div>
               <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Connect Slack</h2>
               <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
-                Authorize the workspace to start using Slack with HyperOptimal Funnel.
+                Authorize the workspace to start using Slack with HyperOptimal Management.
               </p>
             </div>
             {envReady ? (
