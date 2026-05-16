@@ -75,13 +75,14 @@ function GroupHeader({
 }) {
   const pathname = usePathname() ?? "";
   const active = isActiveGroup(pathname, group.href);
-  const className = `flex h-[34px] w-full items-center gap-1 border-b border-[#334258] px-2 text-left text-[10px] font-medium uppercase tracking-[0.08em] transition-colors ${
+  const className = `flex h-[29px] w-full items-center gap-1 border-b border-[#2f3f56] px-2 text-left text-[10px] font-medium uppercase tracking-[0.08em] transition-colors ${
     active ? "text-[#dbe6f5]" : "text-[#7f8fa7] hover:text-[#d1d9e6]"
   }`;
 
   if (group.href) {
     return (
       <Link href={group.href} className={className}>
+        <span className="w-3 shrink-0" />
         <span className="truncate">{group.label}</span>
       </Link>
     );
@@ -125,7 +126,7 @@ function SidebarNavItem({
   const active = isActiveItem(pathname, search, item.href);
 
   return (
-    <div className="py-[2px]">
+    <div className="py-[1px]">
       <Link
         href={item.href}
         prefetch
@@ -212,7 +213,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
 
   if (isSidebarCollapsed) {
     return (
-      <aside className="sticky top-0 flex h-screen w-9 shrink-0 flex-col border-r border-slate-700/80 bg-gradient-to-b from-[#1d293a] via-[#1d293a] to-[#121b2c] text-left text-white">
+    <aside className="sticky top-0 flex h-screen w-9 shrink-0 flex-col border-r border-[#2f3f56] bg-[#172236] text-left text-white">
         <div className="px-1.5 py-2">
           <button
             type="button"
@@ -231,14 +232,14 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[211px] shrink-0 flex-col border-r border-slate-700/80 bg-gradient-to-b from-[#1d293a] via-[#1d293a] to-[#121b2c] text-left text-white">
-      <div className="border-b border-[#334258] px-2 py-2">
+    <aside className="sticky top-0 flex h-screen w-[211px] shrink-0 flex-col border-r border-[#2f3f56] bg-[#1b283b] text-left text-white">
+      <div className="border-b border-[#2f3f56] px-2 py-[7px]">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="flex min-w-0 items-center gap-2">
             <div className="flex h-[22px] w-[22px] items-center justify-center rounded-[5px] bg-blue-500 shadow-sm ring-1 ring-blue-300/40">
               <span className="text-xs font-bold text-white">H</span>
             </div>
-            <span className="truncate text-xs font-semibold">HyperOptimal Funnel</span>
+            <span className="truncate text-[13px] font-semibold tracking-[-0.01em]">HyperOptimal Funnel</span>
           </Link>
           <button
             type="button"
@@ -269,7 +270,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 }
               />
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-0.5 px-2 py-1.5">
+                <div className="space-y-0.5 px-2 py-1">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}

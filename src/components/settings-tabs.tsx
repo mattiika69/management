@@ -1,12 +1,27 @@
 import Link from "next/link";
 
-type SettingsTab = "team" | "billing" | "integrations" | "slack" | "telegram";
+type SettingsTab =
+  | "account"
+  | "employees"
+  | "team"
+  | "calendars"
+  | "zoom"
+  | "billing"
+  | "integrations"
+  | "scheduling"
+  | "slack"
+  | "telegram";
 
 export function SettingsTabs({ active }: { active: SettingsTab }) {
   const tabs: Array<{ href: string; label: string; key: SettingsTab }> = [
+    { href: "/settings/account", label: "Account", key: "account" },
+    { href: "/settings/employees", label: "Employees", key: "employees" },
     { href: "/settings/team", label: "Team", key: "team" },
+    { href: "/settings/calendars", label: "Calendars", key: "calendars" },
+    { href: "/settings/zoom", label: "Zoom", key: "zoom" },
     { href: "/settings/billing", label: "Billing", key: "billing" },
     { href: "/settings/integrations", label: "Integrations", key: "integrations" },
+    { href: "/settings/scheduling", label: "Scheduling", key: "scheduling" },
     { href: "/settings/slack", label: "Slack", key: "slack" },
     { href: "/settings/telegram", label: "Telegram", key: "telegram" },
   ];

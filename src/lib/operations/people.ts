@@ -91,8 +91,37 @@ export async function listWorkspacePeople(
 ) {
   const people = new Map<string, WorkspacePerson>();
 
-  for (const person of DEFAULT_OPERATIONS_PEOPLE) {
-    people.set(person.key, person);
+  const { data: employees } = await supabase
+    .from("employees")
+    .select("id,user_id,full_name,role_title,email,employment_status")
+    .eq("tenant_id", tenantId)
+    .is("archived_at", null)
+    .neq("employment_status", "inactive")
+    .order("full_name", { ascending: true })
+    .returns<Array<{
+      id: string;
+      user_id: string | null;
+      full_name: string;
+      role_title: string;
+      email: string | null;
+      employment_status: string;
+    }>>();
+
+  for (const employee of employees ?? []) {
+    const key = slugify(employee.full_name) || `employee-${employee.id}`;
+    people.set(key, {
+      key,
+      userId: employee.user_id,
+      name: employee.full_name,
+      role: employee.role_title || "Team Member",
+      initials: initialsFor(employee.full_name),
+    });
+  }
+
+  if (!people.size) {
+    for (const person of DEFAULT_OPERATIONS_PEOPLE) {
+      people.set(person.key, person);
+    }
   }
 
   const { data: memberships } = await supabase

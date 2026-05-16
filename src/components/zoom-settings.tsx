@@ -1,0 +1,154 @@
+"use client";
+
+import type { FormEvent } from "react";
+import { useState } from "react";
+
+export type ZoomConnectionRow = {
+  id: string;
+  display_name: string;
+  account_email: string;
+  sync_enabled: boolean;
+  cloud_recording_sync: boolean;
+  default_meeting_duration_minutes: number;
+  status: string;
+};
+
+const emptyForm = {
+  displayName: "",
+  accountEmail: "",
+  syncEnabled: true,
+  cloudRecordingSync: false,
+  defaultMeetingDurationMinutes: 30,
+};
+
+export function ZoomSettings({
+  initialZoomConnections,
+  canManage,
+}: {
+  initialZoomConnections: ZoomConnectionRow[];
+  canManage: boolean;
+}) {
+  const [connections, setConnections] = useState(initialZoomConnections);
+  const [form, setForm] = useState(emptyForm);
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function addZoom(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canManage) return;
+    setSaving(true);
+    setMessage("");
+
+    const response = await fetch("/api/zoom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const body = (await response.json()) as { zoomConnection?: ZoomConnectionRow; error?: string };
+    setSaving(false);
+
+    if (!response.ok || !body.zoomConnection) {
+      setMessage(body.error ?? "Zoom account could not be saved.");
+      return;
+    }
+
+    setConnections((current) => [body.zoomConnection as ZoomConnectionRow, ...current]);
+    setForm(emptyForm);
+    setMessage("Zoom account saved.");
+  }
+
+  async function toggleZoom(connection: ZoomConnectionRow) {
+    if (!canManage) return;
+    const response = await fetch(`/api/zoom/${connection.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ syncEnabled: !connection.sync_enabled }),
+    });
+    const body = (await response.json()) as { zoomConnection?: ZoomConnectionRow; error?: string };
+    if (!response.ok || !body.zoomConnection) {
+      setMessage(body.error ?? "Zoom account could not be updated.");
+      return;
+    }
+    setConnections((current) => current.map((item) => (item.id === connection.id ? body.zoomConnection as ZoomConnectionRow : item)));
+  }
+
+  async function archiveZoom(id: string) {
+    if (!canManage) return;
+    const response = await fetch(`/api/zoom/${id}`, { method: "DELETE" });
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      setMessage(body.error ?? "Zoom account could not be removed.");
+      return;
+    }
+    setConnections((current) => current.filter((connection) => connection.id !== id));
+  }
+
+  return (
+    <section className="mx-auto max-w-6xl">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[380px_1fr]">
+        <form onSubmit={addZoom} className="rounded-[6px] border border-gray-300 bg-white p-5 shadow-sm">
+          <h2 className="text-[15px] font-bold text-gray-950">Add Zoom Account</h2>
+          <div className="mt-4 grid gap-3">
+            <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
+              Name
+              <input className="h-9 rounded-[4px] border border-gray-300 px-3 text-[13px] font-medium normal-case text-gray-950" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} placeholder="Operations Zoom" required />
+            </label>
+            <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
+              Account Email
+              <input className="h-9 rounded-[4px] border border-gray-300 px-3 text-[13px] font-medium normal-case text-gray-950" type="email" value={form.accountEmail} onChange={(event) => setForm({ ...form, accountEmail: event.target.value })} placeholder="zoom@company.com" required />
+            </label>
+            <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
+              Default Duration
+              <input className="h-9 rounded-[4px] border border-gray-300 px-3 text-[13px] font-medium normal-case text-gray-950" type="number" min={5} max={480} value={form.defaultMeetingDurationMinutes} onChange={(event) => setForm({ ...form, defaultMeetingDurationMinutes: Number(event.target.value) })} />
+            </label>
+            <label className="flex items-center gap-2 text-[12px] font-medium text-gray-700">
+              <input type="checkbox" checked={form.syncEnabled} onChange={(event) => setForm({ ...form, syncEnabled: event.target.checked })} />
+              Sync enabled
+            </label>
+            <label className="flex items-center gap-2 text-[12px] font-medium text-gray-700">
+              <input type="checkbox" checked={form.cloudRecordingSync} onChange={(event) => setForm({ ...form, cloudRecordingSync: event.target.checked })} />
+              Cloud recordings
+            </label>
+          </div>
+          <button disabled={!canManage || saving} className="mt-4 h-9 w-full rounded-[5px] bg-gray-950 px-3 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400">
+            {saving ? "Saving..." : "Add Zoom"}
+          </button>
+          {message ? <p className="mt-3 text-[12px] font-medium text-gray-600">{message}</p> : null}
+        </form>
+
+        <section className="overflow-hidden rounded-[6px] border border-gray-300 bg-white shadow-sm">
+          <div className="grid grid-cols-[1fr_0.8fr_0.8fr_0.7fr_112px] gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 text-[11px] font-bold uppercase text-gray-600">
+            <span>Zoom</span>
+            <span>Duration</span>
+            <span>Recordings</span>
+            <span>Status</span>
+            <span />
+          </div>
+          {connections.length ? (
+            connections.map((connection) => (
+              <div key={connection.id} className="grid grid-cols-[1fr_0.8fr_0.8fr_0.7fr_112px] gap-3 border-b border-gray-100 px-4 py-3 text-[12px] text-gray-700 last:border-b-0">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-gray-950">{connection.display_name}</p>
+                  <p className="truncate text-[11px] text-gray-500">{connection.account_email}</p>
+                </div>
+                <span>{connection.default_meeting_duration_minutes} min</span>
+                <span>{connection.cloud_recording_sync ? "On" : "Off"}</span>
+                <span>{connection.sync_enabled ? "On" : "Paused"}</span>
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => toggleZoom(connection)} className="text-[11px] font-semibold text-blue-700">
+                    {connection.sync_enabled ? "Pause" : "Resume"}
+                  </button>
+                  <button type="button" onClick={() => archiveZoom(connection.id)} className="text-[11px] font-semibold text-red-600">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="px-4 py-8 text-[13px] text-gray-500">No Zoom accounts connected yet.</p>
+          )}
+        </section>
+      </div>
+    </section>
+  );
+}

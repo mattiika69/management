@@ -32,18 +32,26 @@ export default async function IntegrationsSettingsPage() {
     >
       <section className="mx-auto max-w-6xl">
         <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <Link href="/settings/calendars" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#2563eb]">
+            <h2 className="text-2xl font-bold text-[#111827]">Calendars</h2>
+            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Sync multiple calendars for meetings, hiring, and employee workflows.</p>
+          </Link>
+          <Link href="/settings/zoom" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#2563eb]">
+            <h2 className="text-2xl font-bold text-[#111827]">Zoom</h2>
+            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Zoom accounts for management meetings and recordings.</p>
+          </Link>
           <Link href="/settings/slack" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#e85b3c]">
-            <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Slack</h2>
+            <h2 className="text-2xl font-bold text-[#111827]">Slack</h2>
             <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Slack so your team can work from channel messages.</p>
           </Link>
           <Link href="/settings/telegram" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#e85b3c]">
-            <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Telegram</h2>
+            <h2 className="text-2xl font-bold text-[#111827]">Telegram</h2>
             <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Telegram to send and receive workspace updates.</p>
           </Link>
         </div>
 
         <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
-          <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Active Connections</h2>
+          <h2 className="text-2xl font-bold text-[#111827]">Active Connections</h2>
           <div className="mt-4 space-y-3 text-sm">
             {connections?.length ? (
               connections.map((connection) => (
