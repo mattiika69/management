@@ -1,10 +1,8 @@
 import Link from "next/link";
 
 export const operationsCompanyTabs = [
-  { href: "/ai-company-document?tab=system", label: "System" },
   { href: "/ai-company-document", label: "AI Context Document" },
-  { href: "/ai-company-document?tab=offer", label: "Offer" },
-  { href: "/ai-company-document?tab=constraints", label: "Constraints" },
+  { href: "/learn", label: "Learn" },
 ];
 
 const chips = [

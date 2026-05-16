@@ -8,29 +8,22 @@ export type SidebarItem = {
 export type SidebarGroup = {
   id: string;
   label: string;
+  href?: string;
   itemIds: string[];
 };
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: "system", label: "System", href: "/ai-company-document?tab=system", groupId: "company" },
   { id: "ai-context-document", label: "AI Context Document", href: "/ai-company-document", groupId: "company" },
   { id: "management", label: "Management", href: "/management", groupId: "workspace" },
   { id: "meetings", label: "Meetings", href: "/meetings", groupId: "workspace" },
   { id: "learn", label: "Learn", href: "/learn", groupId: "workspace" },
-  { id: "account", label: "Account", href: "/settings/account", groupId: "settings" },
-  { id: "team", label: "Team", href: "/settings/team", groupId: "settings" },
-  { id: "billing", label: "Billing", href: "/settings/billing", groupId: "settings" },
-  { id: "integrations", label: "Integrations", href: "/settings/integrations", groupId: "settings" },
-  { id: "scheduling", label: "Scheduling", href: "/settings/scheduling", groupId: "settings" },
-  { id: "slack", label: "Slack", href: "/settings/slack", groupId: "settings" },
-  { id: "telegram", label: "Telegram", href: "/settings/telegram", groupId: "settings" },
 ];
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     id: "company",
     label: "Company",
-    itemIds: ["system", "ai-context-document"],
+    itemIds: ["ai-context-document"],
   },
   {
     id: "workspace",
@@ -38,9 +31,22 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     itemIds: ["management", "meetings", "learn"],
   },
   {
+    id: "inspiration",
+    label: "Inspiration",
+    href: "/inspiration",
+    itemIds: [],
+  },
+  {
+    id: "notes",
+    label: "Notes",
+    href: "/notes",
+    itemIds: [],
+  },
+  {
     id: "settings",
     label: "Settings",
-    itemIds: ["account", "team", "billing", "integrations", "scheduling", "slack", "telegram"],
+    href: "/settings",
+    itemIds: [],
   },
 ];
 

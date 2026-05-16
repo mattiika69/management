@@ -20,8 +20,8 @@ standard.
 | Service | Status | Project |
 | --- | --- | --- |
 | GitHub | Connected | `https://github.com/mattiika69/management.git`, branch `main` |
-| Supabase | Connected | Project ref `oxsopkedpalgdlcmbxzs` |
-| Vercel | Connected | GitHub-linked production deployment for `mattiika69/management` |
+| Supabase | Connected | Project ref `sszrrmvuahpwceegymry`, URL `https://sszrrmvuahpwceegymry.supabase.co` |
+| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://management-mattiika69.vercel.app`, alias `https://management-swart-iota.vercel.app` |
 
 Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Manual `vercel deploy` is fallback-only.
 
