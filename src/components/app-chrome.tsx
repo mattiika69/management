@@ -37,7 +37,7 @@ export function AppChrome({
           <aside className="ho-side-nav" />
         }
       >
-        <AppSidebar authBypassEnabled={authBypassEnabled} />
+        <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />
       </Suspense>
       <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
         {children}

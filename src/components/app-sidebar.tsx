@@ -58,7 +58,9 @@ function activeGroupIdFor(pathname: string, search: string) {
   return "management";
 }
 
-function initialOpenGroupId() {
+function initialOpenGroupId(activeGroupId: string) {
+  const activeGroup = SIDEBAR_GROUPS.find((group) => group.id === activeGroupId);
+  if (activeGroup && !activeGroup.href) return activeGroup.id;
   return SIDEBAR_GROUPS.find((group) => !group.href)?.id ?? "";
 }
 
@@ -192,7 +194,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
-  const [openGroupId, setOpenGroupId] = useState(initialOpenGroupId);
+  const [openGroupId, setOpenGroupId] = useState(() => initialOpenGroupId(activeGroupId));
   const groups = useMemo(
     () =>
       SIDEBAR_GROUPS.map((group) => ({
