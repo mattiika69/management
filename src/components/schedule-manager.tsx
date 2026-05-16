@@ -83,15 +83,15 @@ export function ScheduleManager({
 
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
-      <form onSubmit={createSchedule} className="border border-[#d9d7cb] bg-white p-6">
+      <form onSubmit={createSchedule} className="settings-card-pad">
         <h2 className="text-2xl font-semibold text-[#171717]">New schedule</h2>
         <label className="mt-5 block text-sm font-medium text-[#34342f]">
           Name
-          <input name="name" required className="mt-2 w-full border border-[#d9d7cb] px-3 py-2" />
+          <input name="name" required className="settings-field mt-2 w-full" />
         </label>
         <label className="mt-4 block text-sm font-medium text-[#34342f]">
           Workflow
-          <select name="workflowKey" className="mt-2 w-full border border-[#d9d7cb] px-3 py-2">
+          <select name="workflowKey" className="settings-field mt-2 w-full">
             <option value="weekly_workspace_review">Weekly workspace review</option>
             <option value="daily_notes_digest">Daily notes digest</option>
             <option value="learning_prompt">Learning prompt</option>
@@ -99,7 +99,7 @@ export function ScheduleManager({
         </label>
         <label className="mt-4 block text-sm font-medium text-[#34342f]">
           Cadence
-          <select name="cadence" className="mt-2 w-full border border-[#d9d7cb] px-3 py-2">
+          <select name="cadence" className="settings-field mt-2 w-full">
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>
@@ -111,7 +111,7 @@ export function ScheduleManager({
           <input
             name="timezone"
             defaultValue="America/New_York"
-            className="mt-2 w-full border border-[#d9d7cb] px-3 py-2"
+            className="settings-field mt-2 w-full"
           />
         </label>
         <fieldset className="mt-4 grid gap-2 text-sm text-[#34342f]">
@@ -128,19 +128,19 @@ export function ScheduleManager({
           <textarea
             name="messageTemplate"
             rows={4}
-            className="mt-2 w-full border border-[#d9d7cb] px-3 py-2"
+            className="mt-2 w-full border border-[#d9d7cb] px-3 py-2 outline-none focus:border-[#0f766e]"
           />
         </label>
         <button
           disabled={busy}
-          className="mt-5 bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          className="settings-button-teal mt-5"
         >
           Save schedule
         </button>
         {message ? <p className="mt-4 text-sm text-[#5d5d55]">{message}</p> : null}
       </form>
 
-      <section className="border border-[#d9d7cb] bg-white p-6">
+      <section className="settings-card-pad">
         <h2 className="text-2xl font-semibold text-[#171717]">Schedules</h2>
         <div className="mt-5 grid gap-3">
           {schedules.length ? (
@@ -158,7 +158,7 @@ export function ScheduleManager({
                       type="button"
                       disabled={busy}
                       onClick={() => runNow(schedule.id)}
-                      className="border border-[#0f766e] px-3 py-2 text-sm font-semibold text-[#0f766e]"
+                      className="settings-button-outline h-9 px-3"
                     >
                       Run now
                     </button>
@@ -166,7 +166,7 @@ export function ScheduleManager({
                       type="button"
                       disabled={busy}
                       onClick={() => updateSchedule(schedule.id, !schedule.enabled)}
-                      className="border border-[#d9d7cb] px-3 py-2 text-sm font-semibold text-[#34342f]"
+                      className="settings-button-outline h-9 px-3"
                     >
                       {schedule.enabled ? "Pause" : "Enable"}
                     </button>

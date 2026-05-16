@@ -30,7 +30,7 @@ function ConnectCard({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="rounded-[7px] border border-gray-300 bg-white p-5 shadow-sm">
+    <section id={id} className="settings-card-pad">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-[15px] font-bold text-gray-950">{title}</h2>
@@ -97,7 +97,7 @@ export default async function IntegrationsSettingsPage() {
       subtitle="Connect the tools your team uses."
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl space-y-6">
+      <section className="settings-page space-y-6">
         <div className="flex flex-wrap gap-2">
           {[
             ["#calendars", "Calendars"],
@@ -125,11 +125,11 @@ export default async function IntegrationsSettingsPage() {
           description="Connect Slack so messages and learnings can move between your team and the app."
         >
           {slackReady ? (
-            <a href="/api/integrations/slack/oauth/start?returnTo=/settings/integrations" className="rounded-[5px] bg-gray-950 px-4 py-2 text-[13px] font-semibold text-white">
+            <a href="/api/integrations/slack/oauth/start?returnTo=/settings/integrations" className="settings-button-dark">
               Connect Slack
             </a>
           ) : (
-            <span className="rounded-[5px] border border-gray-300 px-4 py-2 text-[13px] font-semibold text-gray-600">
+            <span className="settings-button-outline">
               Connect with an owner
             </span>
           )}
@@ -144,19 +144,19 @@ export default async function IntegrationsSettingsPage() {
               title="Telegram"
               description="Connect Telegram so messages and learnings can move between your team and the app."
             >
-              <span className="rounded-[5px] border border-gray-300 px-4 py-2 text-[13px] font-semibold text-gray-600">
+              <span className="settings-button-outline">
                 Connect with an owner
               </span>
             </ConnectCard>
           )}
         </div>
 
-        <section className="rounded-[7px] border border-gray-300 bg-white p-5 shadow-sm">
+        <section className="settings-card-pad">
           <h2 className="text-[15px] font-bold text-gray-950">Connections</h2>
           <div className="mt-4 space-y-2 text-[13px]">
             {connectionsResult.data?.length ? (
               connectionsResult.data.map((connection) => (
-                <div key={connection.id} className="flex items-center justify-between rounded-[5px] border border-gray-200 px-3 py-2">
+                <div key={connection.id} className="flex items-center justify-between border border-[#ebe3d8] px-3 py-2">
                   <span className="font-semibold capitalize text-gray-950">{connection.provider}</span>
                   <span className="text-gray-600">{connection.display_name ?? connection.external_channel_id ?? connection.external_team_id}</span>
                 </div>

@@ -23,7 +23,7 @@ export function TelegramLinkPanel() {
   }
 
   return (
-    <div className="rounded-[7px] border border-gray-300 bg-white p-5 shadow-sm">
+    <div className="settings-card-pad">
       <h2 className="text-[15px] font-bold text-gray-950">Connect Telegram</h2>
       <p className="mt-2 text-[13px] leading-6 text-gray-600">
         Generate a one-time code, then send it to the HyperOptimal Management Telegram bot.
@@ -32,7 +32,7 @@ export function TelegramLinkPanel() {
         type="button"
         onClick={createCode}
         disabled={loading}
-        className="mt-5 rounded-[5px] bg-gray-950 px-4 py-2 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+        className="settings-button-dark mt-5"
       >
         {loading ? "Generating..." : "Generate Telegram code"}
       </button>
@@ -44,7 +44,7 @@ export function TelegramLinkPanel() {
       ) : null}
 
       {linkCode?.code ? (
-        <div className="mt-4 rounded-[5px] border border-gray-200 bg-gray-50 p-4 text-[13px]">
+        <div className="mt-4 border border-[#ebe3d8] bg-[#fbfaf7] p-4 text-[13px]">
           <p className="text-gray-600">Code</p>
           <p className="mt-1 font-mono text-xl font-semibold text-gray-950">{linkCode.code}</p>
           {linkCode.deepLink ? (

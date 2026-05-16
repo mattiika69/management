@@ -85,13 +85,13 @@ export default async function CalendarSettingsPage() {
       subtitle="Manage team calendar access."
       tabs={settingsTabs}
     >
-      <section className="max-w-[1064px]">
-        <div className="mb-6 border-b border-[#101828] pb-3">
+      <section className="settings-page">
+        <div className="settings-title-rule">
           <h2 className="text-lg font-bold text-[#101828]">Calendars</h2>
         </div>
 
-        <section className="app-card overflow-hidden">
-          <div className="border-b border-[#e4e7ec] bg-[#fbfcfe] px-4 py-3">
+        <section className="settings-card overflow-hidden">
+          <div className="settings-card-header">
             <h3 className="text-[13px] font-bold text-[#101828]">Team Calendar Assignments</h3>
           </div>
 

@@ -84,22 +84,22 @@ export function ZoomSettings({
   }
 
   return (
-    <section className="mx-auto max-w-6xl">
+    <section className="settings-page">
       <div className="mt-6 grid gap-6 xl:grid-cols-[380px_1fr]">
-        <form onSubmit={addZoom} className="rounded-[6px] border border-gray-300 bg-white p-5 shadow-sm">
+        <form onSubmit={addZoom} className="settings-card-pad">
           <h2 className="text-[15px] font-bold text-gray-950">Add Zoom Account</h2>
           <div className="mt-4 grid gap-3">
             <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
               Name
-              <input className="h-9 rounded-[4px] border border-gray-300 px-3 text-[13px] font-medium normal-case text-gray-950" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} placeholder="Operations Zoom" required />
+              <input className="settings-field w-full normal-case" value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} placeholder="Operations Zoom" required />
             </label>
             <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
               Account Email
-              <input className="h-9 rounded-[4px] border border-gray-300 px-3 text-[13px] font-medium normal-case text-gray-950" type="email" value={form.accountEmail} onChange={(event) => setForm({ ...form, accountEmail: event.target.value })} placeholder="zoom@company.com" required />
+              <input className="settings-field w-full normal-case" type="email" value={form.accountEmail} onChange={(event) => setForm({ ...form, accountEmail: event.target.value })} placeholder="zoom@company.com" required />
             </label>
             <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
               Default Duration
-              <input className="h-9 rounded-[4px] border border-gray-300 px-3 text-[13px] font-medium normal-case text-gray-950" type="number" min={5} max={480} value={form.defaultMeetingDurationMinutes} onChange={(event) => setForm({ ...form, defaultMeetingDurationMinutes: Number(event.target.value) })} />
+              <input className="settings-field w-full normal-case" type="number" min={5} max={480} value={form.defaultMeetingDurationMinutes} onChange={(event) => setForm({ ...form, defaultMeetingDurationMinutes: Number(event.target.value) })} />
             </label>
             <label className="flex items-center gap-2 text-[12px] font-medium text-gray-700">
               <input type="checkbox" checked={form.syncEnabled} onChange={(event) => setForm({ ...form, syncEnabled: event.target.checked })} />
@@ -110,14 +110,14 @@ export function ZoomSettings({
               Cloud recordings
             </label>
           </div>
-          <button disabled={!canManage || saving} className="mt-4 h-9 w-full rounded-[5px] bg-gray-950 px-3 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:bg-gray-400">
+          <button disabled={!canManage || saving} className="settings-button-dark mt-4 w-full">
             {saving ? "Saving..." : "Add Zoom"}
           </button>
           {message ? <p className="mt-3 text-[12px] font-medium text-gray-600">{message}</p> : null}
         </form>
 
-        <section className="overflow-hidden rounded-[6px] border border-gray-300 bg-white shadow-sm">
-          <div className="grid grid-cols-[1fr_0.8fr_0.8fr_0.7fr_112px] gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 text-[11px] font-bold uppercase text-gray-600">
+        <section className="settings-card overflow-hidden">
+          <div className="settings-table-head grid grid-cols-[1fr_0.8fr_0.8fr_0.7fr_112px] gap-3 border-b border-[#ebe3d8] px-4 py-3">
             <span>Zoom</span>
             <span>Duration</span>
             <span>Recordings</span>

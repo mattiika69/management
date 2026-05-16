@@ -33,8 +33,8 @@ export default async function BillingSettingsPage() {
       subtitle={`Manage billing for ${organization.name}.`}
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl">
-        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
+      <section className="settings-page">
+        <section className="settings-card-pad mt-6">
           <h2 className="text-2xl font-bold text-[#111827]">Workspace Credits</h2>
           <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
             Credits are spent per generated workspace asset.
@@ -48,7 +48,7 @@ export default async function BillingSettingsPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
+        <section className="settings-card-pad mt-6">
           <h2 className="text-2xl font-bold text-[#111827]">Subscription</h2>
           <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
             Choose a plan or update the current subscription.
@@ -58,12 +58,12 @@ export default async function BillingSettingsPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
-          <h2 className="font-serif text-2xl font-bold text-[#2d2620]">Subscriptions</h2>
+        <section className="settings-card-pad mt-6">
+          <h2 className="text-2xl font-bold text-[#111827]">Subscriptions</h2>
           <div className="mt-4 space-y-3 text-sm">
             {subscriptions?.length ? (
               subscriptions.map((subscription) => (
-                <div key={`${subscription.status}-${subscription.created_at}`} className="rounded-md border border-[#ebe3d8] p-4">
+                <div key={`${subscription.status}-${subscription.created_at}`} className="border border-[#ebe3d8] p-4">
                   <p className="font-semibold text-[#171717]">{subscription.status}</p>
                   <p className="mt-1 text-[#5d5d55]">
                     {subscription.cancel_at_period_end ? "Cancels at period end" : "Renews automatically"}

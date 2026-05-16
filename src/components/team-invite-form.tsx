@@ -40,7 +40,7 @@ export function TeamInviteForm() {
   }
 
   return (
-    <form onSubmit={inviteMember} className="border border-[#d9d7cb] bg-white p-6">
+    <form onSubmit={inviteMember} className="settings-card-pad">
       <div className="mb-5">
         <h2 className="text-2xl font-semibold text-[#171717]">Invite member</h2>
         <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
@@ -56,7 +56,7 @@ export function TeamInviteForm() {
             name="email"
             type="email"
             autoComplete="email"
-            className="w-full border border-[#c9c6b8] px-4 py-3 outline-none focus:border-[#0f766e]"
+            className="settings-field w-full"
             placeholder="teammate@example.com"
           />
         </label>
@@ -66,7 +66,7 @@ export function TeamInviteForm() {
           <select
             name="role"
             defaultValue="member"
-            className="w-full border border-[#c9c6b8] bg-white px-4 py-3 outline-none focus:border-[#0f766e]"
+            className="settings-field w-full"
           >
             <option value="member">Member</option>
             <option value="viewer">Viewer</option>
@@ -78,7 +78,7 @@ export function TeamInviteForm() {
       <button
         type="submit"
         disabled={status === "loading"}
-        className="mt-5 bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-70"
+        className="settings-button-teal mt-5"
       >
         {status === "loading" ? "Sending..." : "Send invite"}
       </button>

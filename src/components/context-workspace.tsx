@@ -55,15 +55,15 @@ export function ContextWorkspace({
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-      <aside className="rounded-lg border border-[#d8dee9] bg-white p-3 shadow-sm">
+    <div className="settings-page grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+      <aside className="settings-card p-3">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-bold text-[#111827]">AI Context Docs</h2>
           <button
             type="button"
             onClick={createContext}
             disabled={busy}
-            className="rounded-md border border-[#bfdbfe] bg-[#eff6ff] px-2.5 py-1.5 text-xs font-semibold text-[#1d4ed8] disabled:opacity-60"
+            className="border border-[#c9c6b8] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#34342f] disabled:opacity-60"
           >
             Add
           </button>
@@ -73,7 +73,7 @@ export function ContextWorkspace({
             <Link
               key={context.id}
               href={`/settings/ai-context-docs?context=${context.id}`}
-              className={`block rounded-md border px-3 py-2 text-sm transition ${
+              className={`block border px-3 py-2 text-sm transition ${
                 context.id === activeContext.id
                   ? "border-blue-400/70 bg-blue-50 text-blue-900"
                   : "border-transparent text-[#647084] hover:border-[#d8dee9] hover:bg-[#f8fafc]"
@@ -88,7 +88,7 @@ export function ContextWorkspace({
           type="button"
           onClick={archiveContext}
           disabled={busy}
-          className="mt-4 w-full rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-60"
+          className="mt-4 w-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-60"
         >
           Delete Selected
         </button>

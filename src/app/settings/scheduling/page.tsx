@@ -37,7 +37,7 @@ export default async function SchedulingSettingsPage() {
       subtitle="Manage recurring workspace workflows."
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl">
+      <section className="settings-page">
         <ScheduleManager initialSchedules={schedules ?? []} />
       </section>
     </AppShell>

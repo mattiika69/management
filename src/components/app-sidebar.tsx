@@ -51,6 +51,10 @@ function isActiveGroup(pathname: string, search: string, items: SidebarItem[]) {
       return pathname === "/settings" || pathname.startsWith("/settings/");
     }
 
+    if (target.pathname === "/settings/account") {
+      return pathname === "/settings" || pathname.startsWith("/settings/");
+    }
+
     return pathname === target.pathname || pathname.startsWith(`${target.pathname}/`);
   });
 }
@@ -68,10 +72,10 @@ function DragHandle() {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-45 transition-opacity group-hover:opacity-80"
+      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-0 transition-opacity group-hover:opacity-35 group-focus-visible:opacity-45"
     >
       {Array.from({ length: 6 }).map((_, index) => (
-        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#98a7bc]" />
+        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#aeb9ca]" />
       ))}
     </span>
   );
@@ -104,22 +108,45 @@ function GroupHeader({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={className}
-      aria-expanded={isOpen}
-    >
-      <svg
-        className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+    <div className={`${className} justify-between`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+        aria-expanded={isOpen}
       >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M9 5l7 7-7 7" />
-      </svg>
-      <span className="truncate">{group.label}</span>
-    </button>
+        <svg
+          className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M9 5l7 7-7 7" />
+        </svg>
+        <span className="truncate">{group.label}</span>
+      </button>
+      <button
+        type="button"
+        aria-label={`${isOpen ? "Collapse" : "Expand"} ${group.label}`}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onToggle();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            onToggle();
+          }
+        }}
+        className="grid h-5 w-5 shrink-0 place-items-center rounded-[5px] text-[#8fa0b7] transition hover:bg-[#2a3d5a] hover:text-white"
+      >
+        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+    </div>
   );
 }
 
@@ -160,7 +187,7 @@ function SidebarNavItem({
           onDrop(item.id);
         }}
         onDragEnd={() => onDragStart("")}
-        className={`group flex h-[29px] w-full cursor-move items-center justify-between gap-2 rounded-[6px] border px-2.5 text-left transition-all ${
+        className={`group flex h-[29px] w-full cursor-default items-center justify-between gap-2 rounded-[6px] border px-2.5 text-left transition-all ${
           active
             ? "border-[#3b82f6] bg-[#223a5d] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(59,130,246,0.24),0_8px_18px_rgba(0,0,0,0.12)]"
             : "border-transparent text-[#a4b0c2] hover:border-[#33445e] hover:bg-[#21314a] hover:text-[#eef4ff]"

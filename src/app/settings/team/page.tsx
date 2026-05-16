@@ -109,7 +109,7 @@ export default async function TeamSettingsPage({
       subtitle={`Manage workspace settings for ${organization.name}.`}
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl">
+      <section className="settings-page">
         {inviteStatus === "accepted" ? (
           <div className="mt-6 border border-[#b7d7cf] bg-[#eef7f5] px-5 py-4 text-sm text-[#0f766e]">
             Invitation accepted. You now have access to this workspace.
@@ -117,7 +117,7 @@ export default async function TeamSettingsPage({
         ) : null}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-          <section className="border border-[#d9d7cb] bg-white p-6">
+          <section className="settings-card-pad">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-semibold text-[#171717]">Team</h2>
@@ -131,7 +131,7 @@ export default async function TeamSettingsPage({
             </div>
 
             <div className="mt-6 overflow-hidden border border-[#ebe3d8]">
-              <div className="hidden grid-cols-[1fr_140px_140px] gap-3 bg-[#f8f4ee] px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#8a7f73] md:grid">
+              <div className="settings-table-head hidden grid-cols-[1fr_140px_140px] gap-3 px-4 py-3 md:grid">
                 <span>Email</span>
                 <span>Role</span>
                 <span>Joined</span>
@@ -160,7 +160,7 @@ export default async function TeamSettingsPage({
           {canManage ? (
             <TeamInviteForm />
           ) : (
-            <section className="border border-[#d9d7cb] bg-white p-6">
+            <section className="settings-card-pad">
               <h2 className="text-2xl font-semibold text-[#171717]">Invite member</h2>
               <p className="mt-2 text-sm leading-6 text-[#5d5d55]">
                 Ask a workspace owner or admin to invite new team members.
@@ -170,7 +170,7 @@ export default async function TeamSettingsPage({
         </div>
 
         {canManage ? (
-          <section className="mt-6 border border-[#d9d7cb] bg-white p-6">
+          <section className="settings-card-pad mt-6">
             <h2 className="text-2xl font-semibold text-[#171717]">Pending invites</h2>
             <div className="mt-5 space-y-3">
               {(invitations ?? []).length ? (

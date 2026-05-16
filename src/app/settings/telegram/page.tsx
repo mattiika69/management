@@ -37,21 +37,21 @@ export default async function TelegramSettingsPage() {
 
   return (
     <AppShell active="/settings/telegram" title="Telegram" subtitle="Manage Telegram access." tabs={settingsTabs}>
-      <section className="max-w-4xl space-y-5">
+      <section className="settings-page space-y-5">
         {telegramReady ? (
           <TelegramLinkPanel />
         ) : (
-          <section className="app-card-pad">
+          <section className="settings-card-pad">
             <h2 className="text-[17px] font-bold text-[#101828]">Telegram</h2>
             <p className="mt-2 text-[13px] leading-6 text-[#667085]">
               Connect Telegram so workspace updates can be sent and received from approved chats.
             </p>
-            <span className="app-button-secondary mt-5 inline-flex">Connect with an owner</span>
+            <span className="settings-button-outline mt-5 inline-flex">Connect with an owner</span>
           </section>
         )}
 
-        <section className="app-card overflow-hidden">
-          <div className="border-b border-[#e4e7ec] bg-[#fbfcfe] px-4 py-3">
+        <section className="settings-card overflow-hidden">
+          <div className="settings-card-header">
             <h2 className="text-[13px] font-bold text-[#101828]">Connected Chats</h2>
           </div>
           {data?.length ? (

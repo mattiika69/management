@@ -40,7 +40,7 @@ export default async function SlackSettingsPage() {
 
   return (
     <AppShell active="/settings/slack" title="Slack" subtitle="Manage Slack access." tabs={settingsTabs}>
-      <section className="app-card-pad max-w-4xl">
+      <section className="settings-card-pad settings-page">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-[17px] font-bold text-[#101828]">Slack</h2>
@@ -49,15 +49,15 @@ export default async function SlackSettingsPage() {
             </p>
           </div>
           {slackReady ? (
-            <a href="/api/integrations/slack/oauth/start?returnTo=/settings/slack" className="app-button-dark">
+            <a href="/api/integrations/slack/oauth/start?returnTo=/settings/slack" className="settings-button-dark">
               Connect Slack
             </a>
           ) : (
-            <span className="app-button-secondary">Connect with an owner</span>
+            <span className="settings-button-outline">Connect with an owner</span>
           )}
         </div>
 
-        <div className="mt-6 divide-y divide-[#e4e7ec] overflow-hidden rounded-[8px] border border-[#e4e7ec]">
+        <div className="mt-6 divide-y divide-[#ebe3d8] overflow-hidden border border-[#ebe3d8]">
           {data?.length ? (
             data.map((connection) => (
               <div key={connection.id} className="flex items-center justify-between gap-4 px-4 py-3">

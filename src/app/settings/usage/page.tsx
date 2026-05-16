@@ -20,11 +20,11 @@ export default async function UsageSettingsPage() {
 
   return (
     <AppShell active="/settings/usage" title="Usage" subtitle="Review workspace usage." tabs={settingsTabs}>
-      <section className="max-w-[1064px]">
-        <div className="mb-6 border-b border-[#101828] pb-3">
+      <section className="settings-page">
+        <div className="settings-title-rule">
           <h2 className="text-lg font-bold text-[#101828]">Usage</h2>
         </div>
-        <section className="app-card-pad">
+        <section className="settings-card-pad">
           <h3 className="text-[13px] font-bold text-[#101828]">Workspace Credits</h3>
           <p className="mt-2 text-[24px] font-bold text-[#101828]">{creditAccount?.balance_credits ?? 0}</p>
           <p className="mt-1 text-[13px] font-medium text-[#667085]">Credits available</p>

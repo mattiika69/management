@@ -24,9 +24,9 @@ export default async function AccountSettingsPage() {
       subtitle="Manage account access."
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl">
+      <section className="settings-page">
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-          <section className="border border-[#d9d7cb] bg-white p-6">
+          <section className="settings-card-pad">
             <h2 className="text-2xl font-semibold text-[#171717]">Profile</h2>
             <dl className="mt-5 grid gap-4 text-sm">
               <div>
@@ -40,16 +40,16 @@ export default async function AccountSettingsPage() {
             </dl>
           </section>
 
-          <section className="border border-[#d9d7cb] bg-white p-6">
+          <section className="settings-card-pad">
             <h2 className="text-2xl font-semibold text-[#171717]">Access</h2>
             <div className="mt-5 grid gap-3">
               <a
                 href="/update-password"
-                className="border border-[#0f766e] px-4 py-3 text-center text-sm font-semibold text-[#0f766e]"
+                className="settings-button-outline"
               >
                 Update password
               </a>
-              <SignOutButton className="border border-red-200 px-4 py-3 text-sm font-semibold text-red-700" />
+              <SignOutButton className="inline-flex h-10 items-center justify-center border border-red-200 bg-white px-4 text-[13px] font-bold text-red-700 transition hover:bg-red-50" />
             </div>
           </section>
         </div>

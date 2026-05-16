@@ -1,10 +1,11 @@
 export const storageTabs = [];
 
 export const settingsTabs = [
-  { href: "/settings/account", label: "Organization" },
+  { href: "/settings/account", label: "Account" },
   { href: "/settings/ai-context-docs", label: "AI Context" },
   { href: "/settings/employees", label: "Employees" },
   { href: "/settings/team", label: "Team" },
+  { href: "/settings/learning", label: "Learning" },
   { href: "/settings/pods", label: "Pods" },
   { href: "/settings/calendars", label: "Calendars" },
   { href: "/settings/zoom", label: "Zoom" },

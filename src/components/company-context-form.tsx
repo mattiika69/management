@@ -79,7 +79,7 @@ export function CompanyContextForm({
       }}
       className="space-y-5"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e8ded2] bg-white px-4 py-3">
+      <div className="settings-card flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-[260px] flex-1">
           <label className="block text-xs font-semibold uppercase tracking-wide text-[#8490a3]">
             Context Name
@@ -87,7 +87,7 @@ export function CompanyContextForm({
           <input
             value={contextTitle}
             onChange={(event) => setContextTitle(event.currentTarget.value)}
-            className="mt-1 h-10 w-full rounded-md border border-[#d9d0c3] bg-white px-3 text-sm outline-none focus:border-[#2f80ed]"
+            className="settings-field mt-1 w-full"
           />
           <p className="mt-2 text-xs text-[#6f6257]">
             {contextStatus === "confirmed" ? "Confirmed" : "Draft"} · Last saved{" "}
@@ -100,7 +100,7 @@ export function CompanyContextForm({
           <button
             type="submit"
             disabled={status === "saving"}
-            className="rounded-md border border-[#d8dee9] bg-[#f8fafc] px-4 py-2 text-sm font-semibold text-[#647084] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+            className="settings-button-outline"
           >
             {status === "saving" ? "Saving..." : "Save Draft"}
           </button>
@@ -110,7 +110,7 @@ export function CompanyContextForm({
               void saveContext("confirmed");
             }}
             disabled={status === "saving"}
-            className="rounded-md bg-[#111827] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#020617] disabled:cursor-not-allowed disabled:opacity-70"
+            className="settings-button-dark"
           >
             Confirm Context
           </button>
@@ -131,8 +131,8 @@ export function CompanyContextForm({
       ) : null}
 
       {COMPANY_FIELD_GROUPS.map((group) => (
-        <section key={group.title} className="rounded-lg border border-[#e8ded2] bg-white p-5">
-          <h2 className="font-serif text-2xl font-bold text-[#2d2620]">{group.title}</h2>
+        <section key={group.title} className="settings-card-pad">
+          <h2 className="text-2xl font-bold text-[#171717]">{group.title}</h2>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             {group.fields.map((field) => (
               <label
@@ -147,13 +147,13 @@ export function CompanyContextForm({
                     name={field.key}
                     defaultValue={initialData[field.key] ?? ""}
                     rows={5}
-                    className="min-h-28 w-full resize-y rounded-md border border-[#d9d0c3] bg-[#fffdf8] px-3 py-2 text-sm leading-6 outline-none focus:border-[#e85b3c]"
+                    className="min-h-28 w-full resize-y border border-[#d9d0c3] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-[#0f766e]"
                   />
                 ) : (
                   <input
                     name={field.key}
                     defaultValue={initialData[field.key] ?? ""}
-                    className="w-full rounded-md border border-[#d9d0c3] bg-[#fffdf8] px-3 py-2 text-sm outline-none focus:border-[#e85b3c]"
+                    className="w-full border border-[#d9d0c3] bg-white px-3 py-2 text-sm outline-none focus:border-[#0f766e]"
                   />
                 )}
               </label>
