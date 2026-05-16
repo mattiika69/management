@@ -54,8 +54,8 @@ function activeGroupIdFor(pathname: string, search: string) {
   return "management";
 }
 
-function initialOpenGroups(activeGroupId: string) {
-  return Object.fromEntries(SIDEBAR_GROUPS.map((group) => [group.id, group.id === activeGroupId]));
+function initialOpenGroupId() {
+  return SIDEBAR_GROUPS.find((group) => !group.href)?.id ?? "";
 }
 
 function moveItem(order: string[], sourceId: string, targetId: string) {
@@ -69,22 +69,28 @@ function moveItem(order: string[], sourceId: string, targetId: string) {
 
 function DragHandle() {
   return (
-    <span className="ho-sidebar-drag-handle" aria-hidden="true">⋮⋮</span>
+    <span className="ho-sidebar-drag-handle" aria-hidden="true">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <span key={index} />
+      ))}
+    </span>
   );
 }
 
 function GroupHeader({
   group,
+  isActive,
   isOpen,
   onToggle,
 }: {
   group: SidebarGroup;
+  isActive: boolean;
   isOpen: boolean;
   onToggle: () => void;
 }) {
   if (group.href) {
     return (
-      <Link href={group.href} className="ho-sidebar-parent-link">
+      <Link href={group.href} className={`ho-sidebar-direct-link ${isActive ? "active" : ""}`}>
         {group.label}
       </Link>
     );
@@ -144,7 +150,7 @@ function SidebarNavItem({
     <div
       draggable
       data-item-id={item.id}
-      className={`ho-sidebar-menu-row ${dragging ? "dragging" : ""}`}
+      className={`ho-sidebar-menu-row ${active ? "active" : ""} ${dragging ? "dragging" : ""}`}
       onDragStart={(event) => {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", item.id);
@@ -182,9 +188,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    initialOpenGroups(activeGroupId),
-  );
+  const [openGroupId, setOpenGroupId] = useState(initialOpenGroupId);
   const groups = useMemo(
     () =>
       SIDEBAR_GROUPS.map((group) => ({
@@ -272,17 +276,15 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 <div>
                   <GroupHeader
                     group={group}
-                    isOpen={openGroups[group.id] ?? true}
+                    isActive={group.id === activeGroupId}
+                    isOpen={openGroupId === group.id}
                     onToggle={() =>
-                      setOpenGroups((current) => ({
-                        ...current,
-                        [group.id]: !(current[group.id] ?? true),
-                      }))
+                      setOpenGroupId((current) => (current === group.id ? "" : group.id))
                     }
                   />
                 </div>
               ) : null}
-              {!group.href && (openGroups[group.id] ?? true) ? (
+              {!group.href && openGroupId === group.id ? (
                 <div className="ho-sidebar-child-nav">
                   {group.items.map((item) => (
                     <SidebarNavItem

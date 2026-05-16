@@ -361,7 +361,33 @@ textarea {
 }
 
 .ho-sidebar-parent-link:hover,
+.ho-sidebar-parent-link.active,
 .ho-sidebar-parent-block.parent-active .ho-sidebar-parent-link {
+  color: #9aaac1;
+  text-decoration: none;
+}
+
+.ho-sidebar-direct-link {
+  display: flex;
+  min-height: 27px;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #7e8ca3;
+  font-size: 10.25px;
+  font-weight: 600;
+  letter-spacing: 0.095em;
+  line-height: 1;
+  padding: 8px 8px 7px;
+  text-align: left;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 160ms ease;
+}
+
+.ho-sidebar-direct-link:hover,
+.ho-sidebar-direct-link.active {
   color: #9aaac1;
   text-decoration: none;
 }
@@ -378,8 +404,16 @@ textarea {
   display: flex;
   min-height: 29px;
   align-items: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
   gap: 4px;
   padding: 0;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.ho-sidebar-menu-row.active {
+  border-color: #3b82f6;
+  background: #1f4280;
 }
 
 .ho-sidebar-sub-link {
@@ -387,8 +421,8 @@ textarea {
   min-height: 29px;
   flex: 1;
   align-items: center;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  border: 0;
+  border-radius: 3px;
   background: transparent;
   color: #a8b4c4;
   font-size: 12.25px;
@@ -406,20 +440,34 @@ textarea {
   color: #dbe6f4;
 }
 
+.ho-sidebar-menu-row.active .ho-sidebar-sub-link,
 .ho-sidebar-sub-link.active {
-  border-color: #3b82f6;
-  background: #1f4280;
+  background: transparent;
   color: #ffffff;
   box-shadow: none;
 }
 
+.ho-sidebar-menu-row.active .ho-sidebar-sub-link:hover {
+  background: transparent;
+  color: #ffffff;
+}
+
 .ho-sidebar-drag-handle {
+  display: grid;
+  grid-template-columns: repeat(2, 2px);
+  gap: 3px;
+  justify-content: center;
   width: 14px;
-  color: #93a4bb;
-  font-size: 13px;
-  line-height: 1;
+  flex: 0 0 14px;
   opacity: 0;
   transition: opacity 160ms ease;
+}
+
+.ho-sidebar-drag-handle span {
+  width: 2px;
+  height: 2px;
+  border-radius: 999px;
+  background: #93a4bb;
 }
 
 .ho-sidebar-menu-row:hover .ho-sidebar-drag-handle,
