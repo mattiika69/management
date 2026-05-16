@@ -8,6 +8,7 @@ import {
   normalizeSidebarOrder,
   orderSidebarGroupItems,
   SIDEBAR_GROUPS,
+  SIDEBAR_ITEMS,
   SIDEBAR_ITEM_IDS,
   type SidebarGroup,
   type SidebarItem,
@@ -35,6 +36,28 @@ function isActiveItem(pathname: string, search: string, href: string) {
   return pathname === target.pathname;
 }
 
+function activeGroupIdFor(pathname: string, search: string) {
+  const activeItem = SIDEBAR_ITEMS.find((item) => isActiveItem(pathname, search, item.href));
+  if (activeItem) return activeItem.groupId;
+  if (pathname === "/settings" || pathname.startsWith("/settings/")) return "settings";
+  if (pathname === "/learn" || pathname.startsWith("/learn/")) return "training";
+  if (pathname === "/meetings" || pathname.startsWith("/meetings/")) return "management";
+  if (pathname === "/management/training" || pathname.startsWith("/management/training/")) return "training";
+  if (
+    pathname === "/management/hiring" ||
+    pathname.startsWith("/management/hiring/") ||
+    pathname === "/management/job-descriptions" ||
+    pathname.startsWith("/management/job-descriptions/")
+  ) {
+    return "hiring";
+  }
+  return "management";
+}
+
+function initialOpenGroups(activeGroupId: string) {
+  return Object.fromEntries(SIDEBAR_GROUPS.map((group) => [group.id, group.id === activeGroupId]));
+}
+
 function moveItem(order: string[], sourceId: string, targetId: string) {
   if (sourceId === targetId) return order;
   const next = order.filter((id) => id !== sourceId);
@@ -48,10 +71,10 @@ function DragHandle() {
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-0 transition-opacity group-hover:opacity-25 group-focus-visible:opacity-35"
+      className="grid shrink-0 grid-cols-2 gap-x-[3px] gap-y-[2px] opacity-35 transition-opacity group-hover:opacity-55 group-focus-visible:opacity-65"
     >
       {Array.from({ length: 6 }).map((_, index) => (
-        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#a7b4c7]" />
+        <span key={index} className="h-[2px] w-[2px] rounded-full bg-[#9eabbf]" />
       ))}
     </span>
   );
@@ -67,7 +90,7 @@ function GroupHeader({
   onToggle: () => void;
 }) {
   const className =
-    "flex h-[27px] w-full items-center gap-1.5 px-2 text-left text-[10px] font-bold uppercase leading-none tracking-[0.12em] text-[#7f8da3] transition-colors hover:text-[#a9b6c9]";
+    "flex h-[27px] w-full items-center gap-1.5 px-2 text-left text-[10px] font-bold uppercase leading-none tracking-[0.11em] text-[#8190a6] transition-colors hover:text-[#a8b5c8]";
 
   if (group.href) {
     return (
@@ -79,45 +102,22 @@ function GroupHeader({
   }
 
   return (
-    <div className={`${className} justify-between`}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
-        aria-expanded={isOpen}
+    <button
+      type="button"
+      onClick={onToggle}
+      className={className}
+      aria-expanded={isOpen}
+    >
+      <svg
+        className={`h-3 w-3 shrink-0 text-[#8797ad] transition-transform ${isOpen ? "rotate-90" : ""}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
       >
-        <svg
-          className={`h-3 w-3 shrink-0 text-[#8190a6] transition-transform ${isOpen ? "rotate-90" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" />
-        </svg>
-        <span className="truncate">{group.label}</span>
-      </button>
-      <button
-        type="button"
-        aria-label={`${isOpen ? "Collapse" : "Expand"} ${group.label}`}
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          onToggle();
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            event.stopPropagation();
-            onToggle();
-          }
-        }}
-        className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] text-[#6f7f97] opacity-0 transition hover:bg-[#243650] hover:text-[#d8e2f0] group-hover:opacity-100 focus-visible:opacity-100"
-      >
-        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-    </div>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5l7 7-7 7" />
+      </svg>
+      <span className="truncate">{group.label}</span>
+    </button>
   );
 }
 
@@ -158,15 +158,15 @@ function SidebarNavItem({
           onDrop(item.id);
         }}
         onDragEnd={() => onDragStart("")}
-        className={`group flex h-[27px] w-full cursor-default items-center justify-between gap-2 rounded-[5px] border px-2 text-left transition-all ${
+        className={`group flex h-[30px] w-full cursor-default items-center justify-between gap-2 rounded-[5px] border px-2 text-left transition-all ${
           active
-            ? "border-[#4a8cff] bg-[#203b61] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(74,140,255,0.18)]"
-            : "border-transparent text-[#a8b3c4] hover:bg-[#22344d] hover:text-[#eef4ff]"
+            ? "border-[#4a8cff] bg-[#223f68] text-[#f8fafc] shadow-[inset_0_0_0_1px_rgba(74,140,255,0.18)]"
+            : "border-transparent text-[#aeb9c8] hover:bg-[#243752] hover:text-[#f2f6fb]"
         } ${dragging ? "opacity-55" : ""}`}
       >
         <span
-          className={`min-w-0 truncate text-[11.5px] font-medium leading-none tracking-normal transition-colors ${
-            active ? "text-[#f8fafc]" : "text-[#a8b3c4] group-hover:text-[#eef4ff]"
+          className={`min-w-0 truncate text-[12px] font-medium leading-none tracking-normal transition-colors ${
+            active ? "text-[#f8fafc]" : "text-[#aeb9c8] group-hover:text-[#f2f6fb]"
           }`}
         >
           {item.label}
@@ -178,11 +178,16 @@ function SidebarNavItem({
 }
 
 export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }) {
+  const pathname = usePathname() ?? "";
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const search = query ? `?${query}` : "";
+  const activeGroupId = activeGroupIdFor(pathname, search);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(SIDEBAR_GROUPS.map((group) => [group.id, true])),
+    initialOpenGroups(activeGroupId),
   );
   const groups = useMemo(
     () =>
@@ -227,12 +232,12 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
 
   if (isSidebarCollapsed) {
     return (
-    <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#304057] bg-[#1b2a40] text-left text-white">
-      <div className="px-1.5 py-2">
-        <button
-          type="button"
-          onClick={() => setIsSidebarCollapsed(false)}
-          className="mx-auto flex h-7 w-7 items-center justify-center rounded-full border border-[#40516b] bg-[#22344e] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
+      <aside className="sticky top-0 flex h-screen w-10 shrink-0 flex-col border-r border-[#334158] bg-[#1d2c42] text-left text-white">
+        <div className="px-1.5 py-2">
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="mx-auto flex h-7 w-7 items-center justify-center rounded-full border border-[#40516b] bg-[#22344e] text-slate-200 shadow-sm transition-colors hover:bg-[#2a3d5a] hover:text-white"
             aria-label="Expand sidebar"
             title="Expand sidebar"
           >
@@ -246,8 +251,8 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[220px] shrink-0 flex-col border-r border-[#304057] bg-[#1b2a40] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
-      <div className="border-b border-[#304057] px-2.5 py-3">
+    <aside className="sticky top-0 flex h-screen w-[219px] shrink-0 flex-col border-r border-[#334158] bg-[#1d2c42] text-left text-white shadow-[8px_0_24px_rgba(16,24,40,0.08)]">
+      <div className="border-b border-[#334158] px-2.5 py-3">
         <div className="flex items-center justify-between gap-2">
           <Link href="/" className="flex min-w-0 items-center gap-2">
             <div className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-[#2f7bff] shadow-sm ring-1 ring-white/15">
@@ -270,7 +275,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
       </div>
 
       <nav className="flex-1 overflow-y-auto px-0 py-2">
-        <div className="space-y-1">
+        <div className="space-y-[5px]">
           {groups.map((group) => (
             <section key={group.id} className="px-2">
               {group.label ? (
@@ -288,7 +293,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 </div>
               ) : null}
               {!group.href && (openGroups[group.id] ?? true) ? (
-                <div className="space-y-[3px] pb-1 pl-2 pt-[2px]">
+                <div className="space-y-[2px] pb-1 pt-[2px]">
                   {group.items.map((item) => (
                     <SidebarNavItem
                       key={item.id}
@@ -304,7 +309,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
           ))}
         </div>
         {!authBypassEnabled ? (
-          <div className="mx-3 mt-3 border-t border-[#304057] pt-3">
+          <div className="mx-3 mt-3 border-t border-[#334158] pt-3">
             <SignOutButton className="block w-full rounded-[8px] px-2.5 py-2 text-left text-xs font-semibold text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200" />
           </div>
         ) : null}
