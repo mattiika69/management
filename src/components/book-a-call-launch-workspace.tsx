@@ -185,124 +185,124 @@ export function BookACallLaunchWorkspace({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-[16px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
+      <section className="rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] shadow-[var(--shadow-card)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--color-border)] px-6 py-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-[15px] font-semibold tracking-tight text-[color:var(--color-ink-900)]">
               Funnel settings
             </h2>
-            <p className="mt-0.5 text-[13px] text-[color:var(--color-ink-500)]">
-              Configure the active funnel, then launch its asset bundle.
-            </p>
+            <Badge
+              tone={
+                activeFunnel.status === "ready"
+                  ? "success"
+                  : activeFunnel.status === "draft"
+                    ? "neutral"
+                    : "brand"
+              }
+            >
+              {activeFunnel.status}
+            </Badge>
           </div>
-          <Badge
-            tone={
-              activeFunnel.status === "ready"
-                ? "success"
-                : activeFunnel.status === "draft"
-                  ? "neutral"
-                  : "brand"
-            }
-          >
-            {activeFunnel.status}
-          </Badge>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-[220px_minmax(0,1fr)_190px_220px]">
-          <Field label="Funnel">
-            <Select
-              value={activeFunnel.id}
-              onChange={(event) => {
-                window.location.href = `/funnels/book-a-call?funnel=${event.currentTarget.value}`;
-              }}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Button size="sm" variant="secondary" onClick={() => createFunnel()} disabled={busy}>
+              New funnel
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => createFunnel(activeFunnel.id)}
+              disabled={busy}
             >
-              {funnels.map((funnel) => (
-                <option key={funnel.id} value={funnel.id}>
-                  {funnel.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Name">
-            <Input
-              value={name}
-              onChange={(event) => setName(event.currentTarget.value)}
-            />
-          </Field>
-          <Field label="Builder">
-            <Select
-              value={builderKey}
-              onChange={(event) => setBuilderKey(event.currentTarget.value as BuilderKey)}
+              Duplicate
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={deleteFunnel}
+              disabled={busy}
+              className="text-[color:var(--color-danger)] hover:border-red-200 hover:bg-red-50"
             >
-              {BUILDER_OPTIONS.map((builder) => (
-                <option key={builder.key} value={builder.key}>
-                  {builder.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Builder link">
-            <Input
-              value={builderProjectUrl}
-              onChange={(event) => setBuilderProjectUrl(event.currentTarget.value)}
-              placeholder="https://…"
-            />
-          </Field>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => createFunnel()} disabled={busy}>
-            New funnel
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => createFunnel(activeFunnel.id)}
-            disabled={busy}
-          >
-            Duplicate
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={deleteFunnel}
-            disabled={busy}
-            className="text-[color:var(--color-danger)] hover:bg-red-50"
-          >
-            Delete
-          </Button>
-        </div>
-
-        <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto_auto] xl:items-end">
-          <Field label="Linked AI Context Doc">
-            <Select
-              value={contextId}
-              onChange={(event) => setContextId(event.currentTarget.value)}
-            >
-              <option value="">Select confirmed context</option>
-              {contexts.map((context) => (
-                <option key={context.id} value={context.id}>
-                  {context.title} {context.status === "confirmed" ? "" : "(draft)"}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <div className="flex items-center gap-2 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] px-3.5 py-2 text-[13px] text-[color:var(--color-ink-700)]">
-            <svg className="h-4 w-4 text-[color:var(--color-brand-500)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M8 12h8M12 8v8" />
-            </svg>
-            <span className="font-semibold tabular-nums text-[color:var(--color-ink-900)]">
-              {creditAccount?.balance_credits ?? 0}
-            </span>{" "}
-            credits available
+              Delete
+            </Button>
           </div>
-          <Button variant="secondary" onClick={saveFunnel} disabled={busy}>
-            Save settings
-          </Button>
         </div>
 
-        <div className="mt-6 rounded-xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] p-5">
+        <div className="p-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Funnel">
+              <Select
+                value={activeFunnel.id}
+                onChange={(event) => {
+                  window.location.href = `/funnels/book-a-call?funnel=${event.currentTarget.value}`;
+                }}
+              >
+                {funnels.map((funnel) => (
+                  <option key={funnel.id} value={funnel.id}>
+                    {funnel.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Name">
+              <Input
+                value={name}
+                onChange={(event) => setName(event.currentTarget.value)}
+              />
+            </Field>
+            <Field label="Builder">
+              <Select
+                value={builderKey}
+                onChange={(event) => setBuilderKey(event.currentTarget.value as BuilderKey)}
+              >
+                {BUILDER_OPTIONS.map((builder) => (
+                  <option key={builder.key} value={builder.key}>
+                    {builder.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Builder link">
+              <Input
+                value={builderProjectUrl}
+                onChange={(event) => setBuilderProjectUrl(event.currentTarget.value)}
+                placeholder="https://…"
+              />
+            </Field>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <Field label="Linked AI Context Doc">
+              <Select
+                value={contextId}
+                onChange={(event) => setContextId(event.currentTarget.value)}
+              >
+                <option value="">Select confirmed context</option>
+                {contexts.map((context) => (
+                  <option key={context.id} value={context.id}>
+                    {context.title} {context.status === "confirmed" ? "" : "(draft)"}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 text-[12px] text-[color:var(--color-ink-500)]">
+                <svg className="h-3.5 w-3.5 text-[color:var(--color-brand-500)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M8 12h8M12 8v8" />
+                </svg>
+                <span className="font-semibold tabular-nums text-[color:var(--color-ink-900)]">
+                  {creditAccount?.balance_credits ?? 0}
+                </span>
+                credits
+              </span>
+              <Button variant="primary" onClick={saveFunnel} loading={busy}>
+                Save settings
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ export function BookACallLaunchWorkspace({
               {busy ? "Working" : "Launch funnel"}
             </Button>
           </div>
-          <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {BOOK_A_CALL_LAUNCH_ASSETS.map((asset) => {
               const checked = selectedAssets[asset.key] ?? false;
               return (
@@ -354,39 +354,39 @@ export function BookACallLaunchWorkspace({
               );
             })}
           </div>
-        </div>
 
-        {message ? (
-          <div
-            className={`mt-4 rounded-lg border px-4 py-3 text-[13px] ${
-              messageTone === "error"
-                ? "border-red-200 bg-red-50 text-red-700"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700"
-            }`}
-            role="status"
-          >
-            {message}
-          </div>
-        ) : null}
-        {lastLaunchLinks.length ? (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {lastLaunchLinks
-              .filter((result) => result.noteId)
-              .map((result) => (
-                <a
-                  key={`${result.assetKey}-${result.noteId}`}
-                  href={`/notes?note=${result.noteId}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-brand-100)] bg-[color:var(--color-brand-50)] px-3 py-1 text-[12px] font-semibold text-[color:var(--color-brand-700)] transition-colors hover:bg-[color:var(--color-brand-100)]"
-                >
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                  {result.assetKey}
-                </a>
-              ))}
-          </div>
-        ) : null}
+          {message ? (
+            <div
+              className={`mt-4 rounded-lg border px-4 py-3 text-[13px] ${
+                messageTone === "error"
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              }`}
+              role="status"
+            >
+              {message}
+            </div>
+          ) : null}
+          {lastLaunchLinks.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {lastLaunchLinks
+                .filter((result) => result.noteId)
+                .map((result) => (
+                  <a
+                    key={`${result.assetKey}-${result.noteId}`}
+                    href={`/notes?note=${result.noteId}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--color-brand-100)] bg-[color:var(--color-brand-50)] px-3 py-1 text-[12px] font-semibold text-[color:var(--color-brand-700)] transition-colors hover:bg-[color:var(--color-brand-100)]"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    {result.assetKey}
+                  </a>
+                ))}
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <FunnelTracker funnelType="book-a-call" funnel={activeFunnel} steps={steps} />
