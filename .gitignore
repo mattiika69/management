@@ -6,6 +6,7 @@
 node_modules/
 .npm-cache/
 .claude/
+.management-push-work/
 out/
 supabase/.branches/
 supabase/.temp/
