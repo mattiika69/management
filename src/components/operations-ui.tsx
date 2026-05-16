@@ -1,10 +1,5 @@
 import Link from "next/link";
 
-export const operationsCompanyTabs = [
-  { href: "/ai-company-document", label: "AI Context Document" },
-  { href: "/learn", label: "Learn" },
-];
-
 const chips = [
   { label: "Note", className: "border-violet-200 bg-violet-50 text-violet-700" },
   { label: "Course", className: "border-violet-300 bg-violet-50 text-violet-700" },

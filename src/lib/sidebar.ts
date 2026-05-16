@@ -26,8 +26,8 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     itemIds: ["ai-context-document"],
   },
   {
-    id: "workspace",
-    label: "Workspace",
+    id: "management",
+    label: "Management",
     itemIds: ["management", "meetings", "learn"],
   },
   {
