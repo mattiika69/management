@@ -5,6 +5,7 @@
 .vercel/
 node_modules/
 .npm-cache/
+.claude/
 out/
 supabase/.branches/
 supabase/.temp/

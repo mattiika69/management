@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { Suspense, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 
@@ -33,7 +33,13 @@ export function AppChrome({
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 text-gray-900">
-      <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />
+      <Suspense
+        fallback={
+          <aside className="sticky top-0 h-screen w-[220px] shrink-0 border-r border-slate-700/70 bg-slate-800" />
+        }
+      >
+        <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />
+      </Suspense>
       <main
         className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth"
         style={{ zoom: 0.9 } as CSSProperties}
