@@ -107,6 +107,16 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 - `organization_invitations`
 - `user_sidebar_preferences`
 - `leads`
+- `management_weekly_reviews`
+- `management_start_stop_keep_items`
+- `management_diamond_entries`
+- `management_team_ratings`
+- `meetings`
+- `meeting_attendees`
+- `meeting_agenda_items`
+- `meeting_action_items`
+- `meeting_decisions`
+- `meeting_training_items`
 
 ### Current Global Catalog Tables
 
@@ -140,6 +150,8 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 | Inspiration | `POST /api/inspiration` |
 | Learning | `PUT /api/learning` |
 | Notes | `POST /api/notes`, `PUT /api/notes`, `DELETE /api/notes` |
+| Management | `POST /api/management` |
+| Meetings | `POST /api/meetings` |
 | Billing | `POST /api/billing/checkout`, `POST /api/billing/credits/checkout`, `POST /api/stripe/webhook` |
 | Email | `POST /api/email/send` |
 | SMS | `POST /api/sms/send` |

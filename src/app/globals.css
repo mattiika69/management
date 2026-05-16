@@ -68,13 +68,13 @@ textarea {
 }
 
 @utility sm-tab {
-  @apply inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-lg border px-3 text-xs font-medium leading-none transition-colors;
+  @apply inline-flex h-[30px] shrink-0 items-center whitespace-nowrap rounded-[6px] border px-3 text-[11px] font-medium leading-none transition-colors;
 }
 
 @utility sm-tab-active {
-  @apply sm-tab border-gray-900 bg-gray-900 text-white shadow-sm;
+  @apply sm-tab border-gray-950 bg-gray-950 text-white shadow-sm;
 }
 
 @utility sm-tab-inactive {
-  @apply sm-tab border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900;
+  @apply sm-tab border-gray-300 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900;
 }

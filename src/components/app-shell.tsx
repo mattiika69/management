@@ -10,12 +10,14 @@ export function AppShell({
   active,
   title,
   tabs = [],
+  headerActions,
   children,
 }: {
   active: string;
   title: string;
   subtitle: string;
   tabs?: ShellTab[];
+  headerActions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -31,6 +33,11 @@ export function AppShell({
                 </p>
               </div>
             </div>
+            {headerActions ? (
+              <div className="hidden items-center justify-end gap-1.5 xl:flex">
+                {headerActions}
+              </div>
+            ) : null}
           </div>
 
           {tabs.length ? (
