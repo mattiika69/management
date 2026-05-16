@@ -1,9 +1,46 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
+import { CalendarSettings, type CalendarConnectionRow } from "@/components/calendar-settings";
+import { TelegramLinkPanel } from "@/components/telegram-link-panel";
+import { ZoomSettings, type ZoomConnectionRow } from "@/components/zoom-settings";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { canManageTeam, getMembershipRole } from "@/lib/team/permissions";
+
+type IntegrationConnection = {
+  id: string;
+  provider: string;
+  display_name: string | null;
+  external_team_id: string | null;
+  external_channel_id: string | null;
+  created_at: string;
+};
+
+function ConnectCard({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="rounded-[7px] border border-gray-300 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-[15px] font-bold text-gray-950">{title}</h2>
+          <p className="mt-2 text-[13px] leading-6 text-gray-600">{description}</p>
+        </div>
+        {children}
+      </div>
+    </section>
+  );
+}
 
 export default async function IntegrationsSettingsPage() {
   const supabase = await createClient();
@@ -16,52 +53,116 @@ export default async function IntegrationsSettingsPage() {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const { data: connections } = await supabase
-    .from("integration_connections")
-    .select("provider,status,display_name,external_team_id,external_channel_id,created_at")
-    .eq("organization_id", organization.id)
-    .is("revoked_at", null)
-    .order("created_at", { ascending: false });
+  const membershipRole = await getMembershipRole(supabase, organization.id, user);
+  const canManage = canManageTeam(membershipRole);
+  const [calendarsResult, zoomResult, connectionsResult] = await Promise.all([
+    supabase
+      .from("calendar_connections")
+      .select("id,provider,display_name,account_email,sync_direction,sync_enabled,include_events,include_tasks,color,status")
+      .eq("tenant_id", organization.id)
+      .is("archived_at", null)
+      .order("created_at", { ascending: false })
+      .returns<CalendarConnectionRow[]>(),
+    supabase
+      .from("zoom_connections")
+      .select("id,display_name,account_email,sync_enabled,cloud_recording_sync,default_meeting_duration_minutes,status")
+      .eq("tenant_id", organization.id)
+      .is("archived_at", null)
+      .order("created_at", { ascending: false })
+      .returns<ZoomConnectionRow[]>(),
+    supabase
+      .from("integration_connections")
+      .select("id,provider,status,display_name,external_team_id,external_channel_id,created_at")
+      .eq("organization_id", organization.id)
+      .is("revoked_at", null)
+      .order("created_at", { ascending: false })
+      .returns<IntegrationConnection[]>(),
+  ]);
+
+  if (calendarsResult.error) throw new Error(calendarsResult.error.message);
+  if (zoomResult.error) throw new Error(zoomResult.error.message);
+  if (connectionsResult.error) throw new Error(connectionsResult.error.message);
+
+  const slackReady = Boolean(
+    process.env.SLACK_CLIENT_ID &&
+      process.env.SLACK_CLIENT_SECRET &&
+      process.env.SLACK_SIGNING_SECRET,
+  );
+  const telegramReady = Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_WEBHOOK_SECRET);
 
   return (
     <AppShell
       active="/settings/integrations"
       title="Integrations"
-      subtitle="Connect the channels your team uses."
+      subtitle="Connect the tools your team uses."
       tabs={settingsTabs}
     >
-      <section className="mx-auto max-w-6xl">
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
-          <Link href="/settings/calendars" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#2563eb]">
-            <h2 className="text-2xl font-bold text-[#111827]">Calendars</h2>
-            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Sync multiple calendars for meetings, hiring, and employee workflows.</p>
-          </Link>
-          <Link href="/settings/zoom" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#2563eb]">
-            <h2 className="text-2xl font-bold text-[#111827]">Zoom</h2>
-            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Zoom accounts for management meetings and recordings.</p>
-          </Link>
-          <Link href="/settings/slack" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#e85b3c]">
-            <h2 className="text-2xl font-bold text-[#111827]">Slack</h2>
-            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Slack so your team can work from channel messages.</p>
-          </Link>
-          <Link href="/settings/telegram" className="rounded-lg border border-[#d9d7cb] bg-white p-6 hover:border-[#e85b3c]">
-            <h2 className="text-2xl font-bold text-[#111827]">Telegram</h2>
-            <p className="mt-2 text-sm leading-6 text-[#5d5d55]">Connect Telegram to send and receive workspace updates.</p>
-          </Link>
+      <section className="mx-auto max-w-6xl space-y-6">
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["#calendars", "Calendars"],
+            ["#zoom", "Zoom"],
+            ["#slack", "Slack"],
+            ["#telegram", "Telegram"],
+          ].map(([href, label]) => (
+            <a key={href} href={href} className="sm-tab-inactive">
+              {label}
+            </a>
+          ))}
         </div>
 
-        <section className="mt-6 rounded-lg border border-[#d9d7cb] bg-white p-6">
-          <h2 className="text-2xl font-bold text-[#111827]">Active Connections</h2>
-          <div className="mt-4 space-y-3 text-sm">
-            {connections?.length ? (
-              connections.map((connection) => (
-                <div key={`${connection.provider}-${connection.external_team_id}-${connection.external_channel_id}`} className="rounded-md border border-[#ebe3d8] p-4">
-                  <p className="font-semibold capitalize text-[#171717]">{connection.provider}</p>
-                  <p className="mt-1 text-[#5d5d55]">{connection.display_name ?? connection.external_channel_id ?? connection.external_team_id}</p>
+        <div id="calendars">
+          <CalendarSettings initialCalendars={calendarsResult.data ?? []} canManage={canManage} />
+        </div>
+
+        <div id="zoom">
+          <ZoomSettings initialZoomConnections={zoomResult.data ?? []} canManage={canManage} />
+        </div>
+
+        <ConnectCard
+          id="slack"
+          title="Slack"
+          description="Connect Slack so messages and learnings can move between your team and the app."
+        >
+          {slackReady ? (
+            <a href="/api/integrations/slack/oauth/start?returnTo=/settings/integrations" className="rounded-[5px] bg-gray-950 px-4 py-2 text-[13px] font-semibold text-white">
+              Connect Slack
+            </a>
+          ) : (
+            <span className="rounded-[5px] border border-gray-300 px-4 py-2 text-[13px] font-semibold text-gray-600">
+              Connect with an owner
+            </span>
+          )}
+        </ConnectCard>
+
+        <div id="telegram">
+          {telegramReady ? (
+            <TelegramLinkPanel />
+          ) : (
+            <ConnectCard
+              id="telegram-connect"
+              title="Telegram"
+              description="Connect Telegram so messages and learnings can move between your team and the app."
+            >
+              <span className="rounded-[5px] border border-gray-300 px-4 py-2 text-[13px] font-semibold text-gray-600">
+                Connect with an owner
+              </span>
+            </ConnectCard>
+          )}
+        </div>
+
+        <section className="rounded-[7px] border border-gray-300 bg-white p-5 shadow-sm">
+          <h2 className="text-[15px] font-bold text-gray-950">Connections</h2>
+          <div className="mt-4 space-y-2 text-[13px]">
+            {connectionsResult.data?.length ? (
+              connectionsResult.data.map((connection) => (
+                <div key={connection.id} className="flex items-center justify-between rounded-[5px] border border-gray-200 px-3 py-2">
+                  <span className="font-semibold capitalize text-gray-950">{connection.provider}</span>
+                  <span className="text-gray-600">{connection.display_name ?? connection.external_channel_id ?? connection.external_team_id}</span>
                 </div>
               ))
             ) : (
-              <p className="text-[#5d5d55]">No active integration connections yet.</p>
+              <p className="text-gray-500">No connections yet.</p>
             )}
           </div>
         </section>

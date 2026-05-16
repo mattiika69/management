@@ -60,7 +60,7 @@ export default async function GetStartedPage({
     {
       eyebrow: "Step 3",
       title: "Business profile",
-      body: "Add the details that guide your workspace setup.",
+      body: "Add the details that guide your team.",
       status: "Optional",
     },
   ];
@@ -80,7 +80,7 @@ export default async function GetStartedPage({
               Get started
             </h1>
             <p className="mt-2 max-w-2xl text-[#5d5d55]">
-              Finish your workspace setup for {organization.name}.
+              Finish onboarding for {organization.name}.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

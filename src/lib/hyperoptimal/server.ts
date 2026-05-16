@@ -737,6 +737,7 @@ export function buildAIOutputText(input: {
   stepTitle?: string;
   stepNotes?: string;
   training?: Partial<TrainingRow>;
+  learnings?: string;
 }) {
   const companyText = companyContextToText(input.companyContext);
   const criteria = [
@@ -754,8 +755,9 @@ export function buildAIOutputText(input: {
     input.training?.framework ? `## Framework\n${input.training.framework}` : "",
     `## Source Prompt\n${input.training?.ai_sequence?.trim() || input.agentPrompt}`,
     criteria.length ? `## Criteria\n${criteria.map((item) => `- ${item}`).join("\n")}` : "",
-    companyText ? `## AI Company Document\n${companyText}` : "## AI Company Document\nNo company context has been saved yet.",
-    "## Output\nLive AI generation is not available yet. This draft captures the current funnel context for review.",
+    companyText ? `## AI Context Document\n${companyText}` : "## AI Context Document\nNo context has been saved yet.",
+    input.learnings ? `## Learnings\n${input.learnings}` : "## Learnings\nNo learnings have been saved yet.",
+    "## Output\nDraft created from the current context and learnings.",
   ];
   return sections.filter(Boolean).join("\n\n");
 }

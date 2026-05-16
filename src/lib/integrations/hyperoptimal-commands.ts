@@ -2,9 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import {
   DEFAULT_COMPANY_CONTEXT,
   FUNNEL_DEFINITIONS,
-  INSPIRATION_CATEGORIES,
   companyContextToText,
-  isInspirationCategory,
   type CompanyContextData,
 } from "@/lib/hyperoptimal/data";
 import {
@@ -21,10 +19,11 @@ type CommandResult = {
 
 const HELP_TEXT = [
   "HyperOptimal Management commands:",
-  "/company - read the latest confirmed AI Context Doc summary",
+  "/context - read the AI Context Document summary",
+  "/learnings - read saved learnings",
+  "/learning Title | What future work should remember - save a learning",
   "/outputs - read recent saved outputs",
-  `/inspiration ${INSPIRATION_CATEGORIES.join("|")} Your example - save inspiration to Notes`,
-  "/set company companyName Example Co - update one AI Context Doc field",
+  "/set context companyName Example Co - update one AI Context Document field",
 ].join("\n");
 
 function normalizeCommand(text: string) {
@@ -92,7 +91,7 @@ async function upsertCompanyContextField(
   value: string,
 ) {
   if (!(field in DEFAULT_COMPANY_CONTEXT)) {
-    return `Unknown AI Company Document field: ${field}`;
+    return `Unknown AI Context Document field: ${field}`;
   }
 
   const existing = await loadCompanyContext(supabase, connection.organization_id);
@@ -112,7 +111,7 @@ async function upsertCompanyContextField(
     : await supabase.from("company_contexts").insert(payload);
 
   if (error) throw new Error(error.message);
-  return `Saved ${field} to the AI Company Document.`;
+  return `Saved ${field} to the AI Context Document.`;
 }
 
 async function ensureFunnelForCommand(
@@ -196,8 +195,7 @@ function formatFunnelStatus(funnelType: "book-a-call", steps: FunnelStepRow[]) {
     ...steps.map((step) => {
       const url = step.url ? ` | ${step.url}` : "";
       const assigned = step.assigned_to ? ` | DRI: ${step.assigned_to}` : "";
-      const note = step.metadata?.generatedNoteUrl ? ` | note: ${step.metadata.generatedNoteUrl}` : "";
-      return `${step.step_order}. ${step.title}: ${step.status}${assigned}${url}${note}`;
+      return `${step.step_order}. ${step.title}: ${step.status}${assigned}${url}`;
     }),
   ].join("\n");
 }
@@ -231,42 +229,63 @@ async function updateFunnelField(
   return `Saved ${step.title} ${normalizedField}.`;
 }
 
-async function saveInspirationFromCommand(
+async function listLearnings(supabase: SupabaseClient, organizationId: string) {
+  const { data, error } = await supabase
+    .from("learning_items")
+    .select("title,body,category,source_provider,updated_at")
+    .eq("tenant_id", organizationId)
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(10);
+
+  if (error) throw new Error(error.message);
+  if (!data?.length) return "No learnings saved yet.";
+
+  return [
+    "Saved learnings",
+    ...data.map((item, index) => {
+      const body = item.body ? ` - ${item.body}` : "";
+      return `${index + 1}. ${item.title}${body}`;
+    }),
+  ].join("\n");
+}
+
+async function saveLearningFromCommand(
   supabase: SupabaseClient,
   connection: IntegrationConnection,
-  rawCategory: string,
-  body: string,
+  rawText: string,
 ) {
-  const category = rawCategory.replace(/_/g, "-").toLowerCase();
-  if (!isInspirationCategory(category)) {
-    return `Unknown inspiration category. Use one of: ${INSPIRATION_CATEGORIES.join(", ")}.`;
+  const [rawTitle, ...rawBodyParts] = rawText.split("|");
+  const title = rawTitle.trim();
+  const body = rawBodyParts.join("|").trim();
+
+  if (!title) {
+    return "Add a title after /learning.";
   }
-  const trimmed = body.trim();
-  if (!trimmed) {
-    return "Add the inspiration text after the category.";
-  }
-  const title = `${category} inspiration - ${new Date().toLocaleDateString()}`;
-  const { error } = await supabase.from("workspace_notes").insert({
+
+  const { error } = await supabase.from("learning_items").insert({
+    tenant_id: connection.organization_id,
     organization_id: connection.organization_id,
     title,
-    body: trimmed,
-    source: connection.provider === "slack" ? "Slack" : "Telegram",
-    folder: "Inspiration",
-    tags: ["inspiration", category, connection.provider],
-    visibility: "private",
-    inspiration_category: category,
-    created_by: connection.created_by,
-    updated_by: connection.created_by,
-    metadata: { source: "channel", provider: connection.provider },
+    body,
+    category: "general",
+    source_provider: connection.provider,
+    source_label: connection.provider === "slack" ? "Slack" : "Telegram",
+    source_channel_id: connection.external_channel_id,
+    source_user_id: connection.external_user_id,
+    sync_status: "synced",
+    created_by_user_id: connection.created_by,
+    updated_by_user_id: connection.created_by,
   });
+
   if (error) throw new Error(error.message);
-  return `Saved ${category} inspiration to Notes.`;
+  return "Learning saved.";
 }
 
 async function formatOutputs(supabase: SupabaseClient, organizationId: string) {
   const { data, error } = await supabase
     .from("funnel_ai_outputs")
-    .select("agent_id,asset_key,status,note_id,created_at")
+    .select("agent_id,asset_key,status,created_at")
     .eq("organization_id", organizationId)
     .order("created_at", { ascending: false })
     .limit(5);
@@ -274,10 +293,7 @@ async function formatOutputs(supabase: SupabaseClient, organizationId: string) {
   if (!data?.length) return "No AI outputs saved yet.";
   return [
     "Recent AI outputs",
-    ...data.map((row) => {
-      const note = row.note_id ? ` | /notes?note=${row.note_id}` : "";
-      return `${row.asset_key ?? row.agent_id}: ${row.status} (${new Date(row.created_at).toLocaleString()})${note}`;
-    }),
+    ...data.map((row) => `${row.asset_key ?? row.agent_id}: ${row.status} (${new Date(row.created_at).toLocaleString()})`),
   ].join("\n");
 }
 
@@ -291,10 +307,23 @@ export async function handleHyperoptimalCommand(
 
   const lower = text.toLowerCase();
 
-  if (lower === "company" || lower === "ai-company" || lower === "ai_company") {
+  if (lower === "company" || lower === "context" || lower === "ai-context" || lower === "ai_company") {
     const context = await loadCompanyContext(supabase, connection.organization_id);
     const summary = companyContextToText(context?.data ?? DEFAULT_COMPANY_CONTEXT);
-    return { command: "company", text: summary || "No AI Company Document content saved yet." };
+    return { command: "context", text: summary || "No AI Context Document content saved yet." };
+  }
+
+  if (lower === "learning" || lower === "learnings") {
+    return { command: "learnings", text: await listLearnings(supabase, connection.organization_id) };
+  }
+
+  const learningMatch = text.match(/^learning\s+([\s\S]+)$/i);
+  if (learningMatch) {
+    return {
+      command: "learning",
+      text: await saveLearningFromCommand(supabase, connection, learningMatch[1]),
+      status: "saved",
+    };
   }
 
   const funnelToken = canonicalFunnelToken(text);
@@ -320,20 +349,11 @@ export async function handleHyperoptimalCommand(
     };
   }
 
-  const inspirationMatch = text.match(/^(?:save\s+)?inspiration\s+(\S+)\s+([\s\S]+)$/i);
-  if (inspirationMatch) {
+  if (lower.startsWith("set company ") || lower.startsWith("set context ")) {
+    const match = text.match(/^set\s+(?:company|context)\s+(\S+)\s+([\s\S]+)$/i);
+    if (!match) return { command: "set_context", text: "Use `/set context companyName Example Co`." };
     return {
-      command: "inspiration",
-      text: await saveInspirationFromCommand(supabase, connection, inspirationMatch[1], inspirationMatch[2]),
-      status: "saved",
-    };
-  }
-
-  if (lower.startsWith("set company ")) {
-    const match = text.match(/^set\s+company\s+(\S+)\s+([\s\S]+)$/i);
-    if (!match) return { command: "set_company", text: "Use `/set company companyName Example Co`." };
-    return {
-      command: "set_company",
+      command: "set_context",
       text: await upsertCompanyContextField(supabase, connection, match[1], match[2].trim()),
     };
   }
@@ -343,7 +363,7 @@ export async function handleHyperoptimalCommand(
     if (!match) {
       return {
         command: "set_funnel",
-        text: "Use `/set company companyName Example Co` for workspace updates.",
+        text: "Use `/set context companyName Example Co` for workspace updates.",
       };
     }
     const funnelType = canonicalFunnelToken(match[1]);

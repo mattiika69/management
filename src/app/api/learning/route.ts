@@ -1,63 +1,117 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
-import { isFunnelType } from "@/lib/hyperoptimal/data";
+import { createLearningItem } from "@/lib/learnings/server";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type Payload = {
   itemId?: string;
-  funnelType?: string;
   title?: string;
   body?: string;
-  section?: string;
-  itemType?: string;
+  category?: string;
+  sourceProvider?: "web" | "slack" | "telegram";
+  sourceLabel?: string;
 };
 
-function isSection(value: string): value is "learning" | "training" {
-  return value === "learning" || value === "training";
+function text(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
-function isItemType(value: string): value is "learning" | "training" | "assignment" {
-  return value === "learning" || value === "training" || value === "assignment";
+function provider(value: unknown): "web" | "slack" | "telegram" {
+  return value === "slack" || value === "telegram" ? value : "web";
 }
 
-export async function PUT(request: Request) {
-  const payload = (await request.json()) as Payload;
-  const itemId = payload.itemId?.trim();
-  const funnelType = payload.funnelType?.trim() ?? "";
-  const section = payload.section?.trim() ?? "";
-  const itemType = payload.itemType?.trim() ?? "";
-  const title = payload.title?.trim() ?? "";
+export async function GET() {
+  try {
+    const context = await requireTenantContext(await createClient());
+    const { data, error } = await context.supabase
+      .from("learning_items")
+      .select("id,title,body,category,source_provider,source_label,sync_status,created_at,updated_at")
+      .eq("tenant_id", context.tenant.id)
+      .is("archived_at", null)
+      .order("updated_at", { ascending: false });
 
-  if (!itemId || !isFunnelType(funnelType) || !isSection(section) || !isItemType(itemType) || !title) {
-    return NextResponse.json({ error: "A valid learning item is required." }, { status: 400 });
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ learningItems: data ?? [] });
+  } catch (error) {
+    return jsonError(error);
   }
+}
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function POST(request: Request) {
+  try {
+    const payload = (await request.json()) as Payload;
+    const context = await requireTenantContext(await createClient());
+    const learningItem = await createLearningItem(context.supabase, context.tenant, context.user, {
+      title: text(payload.title),
+      body: text(payload.body),
+      category: text(payload.category) || "general",
+      sourceProvider: provider(payload.sourceProvider),
+      sourceLabel: text(payload.sourceLabel),
+    });
 
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
+    return NextResponse.json({ learningItem });
+  } catch (error) {
+    return jsonError(error);
   }
+}
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const { error } = await supabase
-    .from("funnel_learning_items")
-    .update({
-      title,
-      body: payload.body?.trim() ?? "",
-      section,
-      item_type: itemType,
-      updated_by: user.id,
-    })
-    .eq("id", itemId)
-    .eq("organization_id", organization.id)
-    .eq("funnel_type", funnelType);
+export async function PATCH(request: Request) {
+  try {
+    const payload = (await request.json()) as Payload;
+    const itemId = text(payload.itemId);
+    const title = text(payload.title);
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    if (!itemId || !title) {
+      return NextResponse.json({ error: "Learning title is required." }, { status: 400 });
+    }
+
+    const context = await requireTenantContext(await createClient());
+    const { data, error } = await context.supabase
+      .from("learning_items")
+      .update({
+        title,
+        body: text(payload.body),
+        category: text(payload.category) || "general",
+        source_provider: provider(payload.sourceProvider),
+        source_label: text(payload.sourceLabel),
+        updated_by_user_id: context.user.id,
+      })
+      .eq("id", itemId)
+      .eq("tenant_id", context.tenant.id)
+      .is("archived_at", null)
+      .select("id,title,body,category,source_provider,source_label,sync_status,created_at,updated_at")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ learningItem: data });
+  } catch (error) {
+    return jsonError(error);
   }
+}
 
-  return NextResponse.json({ ok: true });
+export async function DELETE(request: Request) {
+  try {
+    const payload = (await request.json()) as Payload;
+    const itemId = text(payload.itemId);
+
+    if (!itemId) {
+      return NextResponse.json({ error: "Choose a learning to delete." }, { status: 400 });
+    }
+
+    const context = await requireTenantContext(await createClient());
+    const { error } = await context.supabase
+      .from("learning_items")
+      .update({
+        archived_at: new Date().toISOString(),
+        updated_by_user_id: context.user.id,
+      })
+      .eq("id", itemId)
+      .eq("tenant_id", context.tenant.id)
+      .is("archived_at", null);
+
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(error);
+  }
 }

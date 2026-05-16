@@ -27,7 +27,6 @@ export type LaunchAssetDefinition = {
   stepKey: string;
   creditCost: number;
   noteFolder: string;
-  inspirationCategories: string[];
 };
 
 export const BUILDER_OPTIONS: Array<{ key: BuilderKey; label: string; promptLabel: string }> = [
@@ -38,17 +37,6 @@ export const BUILDER_OPTIONS: Array<{ key: BuilderKey; label: string; promptLabe
   { key: "bolt", label: "Bolt", promptLabel: "Bolt app builder" },
   { key: "other", label: "Other", promptLabel: "selected builder" },
 ];
-
-export const INSPIRATION_CATEGORIES = [
-  "ads",
-  "opt-in-page",
-  "sales-page",
-  "vsl",
-  "thank-you-page",
-  "email",
-  "follow-up",
-  "general",
-] as const;
 
 export const COMPANY_FIELD_GROUPS: Array<{
   title: string;
@@ -186,26 +174,25 @@ export const AI_DEFINITIONS: AIDefinition[] = [
 ];
 
 export const BOOK_A_CALL_LAUNCH_ASSETS: LaunchAssetDefinition[] = [
-  { key: "opt_in_page", title: "Opt-In Page", agentId: "opt-in-page", stepKey: "opt_in_page", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["opt-in-page", "general"] },
-  { key: "lead_magnet", title: "Lead Magnet", agentId: "lead-magnet", stepKey: "lead_magnet", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["opt-in-page", "general"] },
-  { key: "sales_page", title: "Sales Page", agentId: "sales-page", stepKey: "page_with_vsl", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["sales-page", "general"] },
-  { key: "vsl", title: "VSL", agentId: "vsl", stepKey: "vsl", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["vsl", "general"] },
-  { key: "application_form", title: "Application Form", agentId: "application-form", stepKey: "application_form", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["general"] },
-  { key: "unqualified_page", title: "Unqualified Page", agentId: "unqualified-page", stepKey: "unqualified_page", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["sales-page", "general"] },
-  { key: "thank_you_page", title: "Thank You Page", agentId: "confirmation-page", stepKey: "thank_you_page", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["thank-you-page", "general"] },
-  { key: "welcome_flow", title: "Welcome Flow", agentId: "welcome-flow", stepKey: "welcome_flow", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["email", "general"] },
-  { key: "breakout_videos", title: "Breakout Videos", agentId: "youtube-intro", stepKey: "breakout_videos", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["vsl", "general"] },
-  { key: "pre_call_flow", title: "Pre-Call Flow", agentId: "pre-call-flow", stepKey: "pre_call_flow", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["email", "follow-up", "general"] },
-  { key: "retargeting_ads", title: "Retargeting Ads", agentId: "retargeting-ads", stepKey: "retargeting_ads", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["ads", "general"] },
-  { key: "appointment_setting_message", title: "Appointment-Setting Message", agentId: "appointment-setting-script", stepKey: "appointment_setting_message", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["follow-up", "general"] },
-  { key: "selfie_video", title: "Selfie Video", agentId: "selfie-video", stepKey: "selfie_video", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["vsl", "general"] },
-  { key: "sales_call_plan", title: "Sales Call Plan", agentId: "sales-call-plan", stepKey: "sales_call_plan", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["general"] },
-  { key: "follow_up_flow", title: "Follow-Up Flow", agentId: "post-call-follow-up", stepKey: "follow_up_flow", creditCost: 50, noteFolder: "Generated Assets", inspirationCategories: ["email", "follow-up", "general"] },
+  { key: "opt_in_page", title: "Opt-In Page", agentId: "opt-in-page", stepKey: "opt_in_page", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "lead_magnet", title: "Lead Magnet", agentId: "lead-magnet", stepKey: "lead_magnet", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "sales_page", title: "Sales Page", agentId: "sales-page", stepKey: "page_with_vsl", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "vsl", title: "VSL", agentId: "vsl", stepKey: "vsl", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "application_form", title: "Application Form", agentId: "application-form", stepKey: "application_form", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "unqualified_page", title: "Unqualified Page", agentId: "unqualified-page", stepKey: "unqualified_page", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "thank_you_page", title: "Thank You Page", agentId: "confirmation-page", stepKey: "thank_you_page", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "welcome_flow", title: "Welcome Flow", agentId: "welcome-flow", stepKey: "welcome_flow", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "breakout_videos", title: "Breakout Videos", agentId: "youtube-intro", stepKey: "breakout_videos", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "pre_call_flow", title: "Pre-Call Flow", agentId: "pre-call-flow", stepKey: "pre_call_flow", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "retargeting_ads", title: "Retargeting Ads", agentId: "retargeting-ads", stepKey: "retargeting_ads", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "appointment_setting_message", title: "Appointment-Setting Message", agentId: "appointment-setting-script", stepKey: "appointment_setting_message", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "selfie_video", title: "Selfie Video", agentId: "selfie-video", stepKey: "selfie_video", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "sales_call_plan", title: "Sales Call Plan", agentId: "sales-call-plan", stepKey: "sales_call_plan", creditCost: 50, noteFolder: "Generated Assets" },
+  { key: "follow_up_flow", title: "Follow-Up Flow", agentId: "post-call-follow-up", stepKey: "follow_up_flow", creditCost: 50, noteFolder: "Generated Assets" },
 ];
 
 const builderKeys = new Set(BUILDER_OPTIONS.map((builder) => builder.key));
 const launchAssetKeys = new Set(BOOK_A_CALL_LAUNCH_ASSETS.map((asset) => asset.key));
-const inspirationCategorySet = new Set<string>(INSPIRATION_CATEGORIES);
 
 export function isBuilderKey(value: string): value is BuilderKey {
   return builderKeys.has(value as BuilderKey);
@@ -213,10 +200,6 @@ export function isBuilderKey(value: string): value is BuilderKey {
 
 export function isBookACallAssetKey(value: string) {
   return launchAssetKeys.has(value);
-}
-
-export function isInspirationCategory(value: string) {
-  return inspirationCategorySet.has(value);
 }
 
 export const DEFAULT_LEARNING_ITEMS: Record<

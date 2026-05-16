@@ -12,6 +12,7 @@ import {
   type LaunchAssetDefinition,
 } from "@/lib/hyperoptimal/data";
 import { getFunnelById, normalizeCompanyContext, type TrainingRow } from "@/lib/hyperoptimal/server";
+import { formatLearningsForPrompt, type LearningItem } from "@/lib/learnings/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -86,7 +87,7 @@ async function generateWithClaude(prompt: string) {
         "claude-sonnet-4-5",
       max_tokens: anthropicMaxTokens(),
       system:
-        "You generate production-ready workspace assets for HyperOptimal Management. Return polished assets, builder prompts, labels, and implementation details. Do not include internal notes.",
+        "You generate production-ready workspace assets for HyperOptimal Management. Use the provided AI Context Document and Learnings for every recommendation. Return polished, client-ready assets.",
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -118,12 +119,8 @@ function buildPrompt(input: {
   training?: TrainingRow | null;
   developerTraining: string[];
   learningItems: string[];
-  inspiration: Array<{ title: string; body: string; inspiration_category: string | null }>;
 }) {
   const criteria = input.definition.default_criteria.map((item) => `- ${item}`).join("\n");
-  const inspirationText = input.inspiration
-    .map((note) => `### ${note.title}\nCategory: ${note.inspiration_category ?? "general"}\n${note.body}`)
-    .join("\n\n");
   const companyText = companyContextToText(input.context.data);
   return [
     `# ${input.asset.title} Launch Package`,
@@ -132,7 +129,7 @@ function buildPrompt(input: {
     `Builder: ${builderLabel(input.builderKey)}`,
     input.builderProjectUrl ? `Builder Project URL: ${input.builderProjectUrl}` : "",
     "",
-    "Create a production-ready deliverable for this exact asset. Include clearly labeled sections for final copy, implementation prompt, QA checklist, and any URLs/placeholders the builder needs.",
+    "Create a production-ready deliverable for this exact asset. Include clearly labeled sections for final copy, workflow steps, review checklist, and any links or placeholders the team needs.",
     input.asset.key === "lead_magnet"
       ? "For the lead magnet, include the core promise, outline, delivery format, opt-in page tie-in, and follow-up handoff."
       : "",
@@ -162,9 +159,8 @@ function buildPrompt(input: {
     input.training?.framework ? `## Customer Framework\n${input.training.framework}` : "",
     input.training?.criteria ? `## Customer Criteria\n${input.training.criteria}` : "",
     input.training?.ai_sequence ? `## Customer Sequence\n${input.training.ai_sequence}` : "",
-    input.developerTraining.length ? `## Developer Training\n${input.developerTraining.join("\n\n")}` : "",
-    input.learningItems.length ? `## Customer Learnings\n${input.learningItems.join("\n\n")}` : "",
-    inspirationText ? `## Inspiration\n${inspirationText}` : "",
+    input.developerTraining.length ? `## Workspace Training\n${input.developerTraining.join("\n\n")}` : "",
+    input.learningItems.length ? `## Learnings\n${input.learningItems.join("\n\n")}` : "## Learnings\nNo learnings have been saved yet.",
     criteria ? `## Default Criteria\n${criteria}` : "",
     `## Default AI Prompt\n${input.definition.default_prompt}`,
     companyText ? `## AI Context\n${companyText}` : "## AI Context\nNo context content was saved.",
@@ -316,15 +312,14 @@ export async function POST(request: Request, { params }: RouteContext) {
         .eq("funnel_type", "book-a-call")
         .order("updated_at", { ascending: false })
         .limit(10);
-      const { data: inspiration } = await admin
-        .from("workspace_notes")
-        .select("title,body,inspiration_category")
-        .eq("organization_id", organization.id)
-        .eq("folder", "Inspiration")
-        .in("inspiration_category", asset.inspirationCategories)
+      const { data: workspaceLearnings } = await admin
+        .from("learning_items")
+        .select("id,title,body,category")
+        .eq("tenant_id", organization.id)
+        .is("archived_at", null)
         .order("updated_at", { ascending: false })
-        .limit(8);
-
+        .limit(20)
+        .returns<Array<Pick<LearningItem, "id" | "title" | "body" | "category">>>();
       const prompt = buildPrompt({
         asset,
         definition,
@@ -335,8 +330,10 @@ export async function POST(request: Request, { params }: RouteContext) {
         step,
         training,
         developerTraining: (developerTraining ?? []).map((row) => row.instructions).filter(Boolean),
-        learningItems: (learningItems ?? []).map((row) => `### ${row.title}\n${row.body}`),
-        inspiration: inspiration ?? [],
+        learningItems: [
+          formatLearningsForPrompt(workspaceLearnings ?? []),
+          ...(learningItems ?? []).map((row) => `### ${row.title}\n${row.body}`),
+        ].filter(Boolean),
       });
       const generated = await generateWithClaude(prompt);
       const outputText = generated || prompt;
@@ -361,6 +358,7 @@ export async function POST(request: Request, { params }: RouteContext) {
           metadata: {
             source: "launch",
             builderProjectUrl,
+            learningItemIds: (workspaceLearnings ?? []).map((item) => item.id),
             liveProviderConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
             model:
               process.env.CLAUDE_MODEL?.trim() ||
@@ -392,6 +390,7 @@ export async function POST(request: Request, { params }: RouteContext) {
             launchRunId: launchRun.id,
             assetRunId: assetRun.id,
             builderProjectUrl,
+            learningItemIds: (workspaceLearnings ?? []).map((item) => item.id),
           },
           created_by: user.id,
           updated_by: user.id,
@@ -426,7 +425,6 @@ export async function POST(request: Request, { params }: RouteContext) {
             metadata: {
               ...(step.metadata ?? {}),
               generatedNoteId: note.id,
-              generatedNoteUrl: `/notes?note=${note.id}`,
               builderKey,
               builderProjectUrl,
             },

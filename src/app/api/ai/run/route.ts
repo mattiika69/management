@@ -7,6 +7,7 @@ import {
   getOrCreateCompanyContext,
   type TrainingRow,
 } from "@/lib/hyperoptimal/server";
+import { formatLearningsForPrompt, getLearningItems } from "@/lib/learnings/server";
 import { createWorkspaceNote } from "@/lib/notes/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -63,7 +64,7 @@ async function generateWithClaude(prompt: string) {
         "claude-sonnet-4-5",
       max_tokens: anthropicMaxTokens(),
       system:
-        "You are generating production-ready assets for HyperOptimal Management. Use only the provided company context, selected step, and training criteria. Return concise, directly usable copy.",
+        "You are generating production-ready assets for HyperOptimal Management. Use only the provided AI Context Document, Learnings, selected step, and training criteria. Return concise, directly usable copy.",
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -133,6 +134,7 @@ export async function POST(request: Request) {
     .eq("agent_id", agentId)
     .maybeSingle<TrainingRow>();
   const companyContext = await getOrCreateCompanyContext(supabase, organization, user);
+  const learnings = await getLearningItems(supabase, organization, 20);
   const prompt = buildAIOutputText({
     agentTitle: definition.title,
     agentPrompt: definition.default_prompt,
@@ -141,6 +143,7 @@ export async function POST(request: Request) {
     stepTitle: step?.title,
     stepNotes: step?.notes,
     training: training ?? undefined,
+    learnings: formatLearningsForPrompt(learnings),
   });
 
   let outputText = prompt;
@@ -181,6 +184,7 @@ export async function POST(request: Request) {
           process.env.ANTHROPIC_MODEL?.trim() ||
           "claude-sonnet-4-5",
         liveProviderConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+        learningItemIds: learnings.map((item) => item.id),
       },
     })
     .select("id,status")
@@ -205,6 +209,7 @@ export async function POST(request: Request) {
     metadata: {
       source: "manual-ai-run",
       provider: "anthropic",
+      learningItemIds: learnings.map((item) => item.id),
     },
   });
   await supabase.from("funnel_ai_outputs").update({ note_id: note.id }).eq("id", saved.id);

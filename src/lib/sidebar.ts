@@ -17,26 +17,16 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: "job-descriptions", label: "Job Descriptions", href: "/management/job-descriptions", groupId: "main" },
   { id: "hiring", label: "Hiring", href: "/management/hiring", groupId: "main" },
   { id: "training", label: "Training", href: "/management/training", groupId: "main" },
+  { id: "learning", label: "Learning", href: "/learn", groupId: "main" },
   { id: "meetings", label: "Meetings", href: "/meetings", groupId: "main" },
+  { id: "settings", label: "Settings", href: "/settings", groupId: "main" },
 ];
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     id: "main",
     label: "",
-    itemIds: ["management-overview", "job-descriptions", "hiring", "training", "meetings"],
-  },
-  {
-    id: "inspiration",
-    label: "Inspiration",
-    href: "/inspiration",
-    itemIds: [],
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    href: "/settings",
-    itemIds: [],
+    itemIds: ["management-overview", "job-descriptions", "hiring", "training", "learning", "meetings", "settings"],
   },
 ];
 

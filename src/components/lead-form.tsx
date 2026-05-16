@@ -47,7 +47,7 @@ export function LeadForm({ organizationName }: { organizationName: string }) {
 
     if (!response.ok || !body.url) {
       setStatus("error");
-      setMessage(body.error ?? "Billing is not available yet.");
+      setMessage(body.error ?? "Checkout could not be opened.");
       return;
     }
 
