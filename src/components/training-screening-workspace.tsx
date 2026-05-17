@@ -484,7 +484,7 @@ export function TrainingScreeningWorkspace({
               onChange={(event) => setItemForm({ ...itemForm, itemType: event.currentTarget.value })}
               className="app-field normal-case"
             >
-              <option value="learning">Learning</option>
+              <option value="learning">AI Agent</option>
               <option value="task">Task</option>
               <option value="sop">SOP</option>
               <option value="meeting">Meeting</option>
@@ -497,7 +497,7 @@ export function TrainingScreeningWorkspace({
               value={itemForm.title}
               onChange={(event) => setItemForm({ ...itemForm, title: event.currentTarget.value })}
               className="app-field normal-case"
-              placeholder="Learning title"
+              placeholder="AI Agent title"
               required
             />
           </label>

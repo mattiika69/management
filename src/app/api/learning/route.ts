@@ -62,7 +62,7 @@ export async function PATCH(request: Request) {
     const title = text(payload.title);
 
     if (!itemId || !title) {
-      return NextResponse.json({ error: "Learning title is required." }, { status: 400 });
+      return NextResponse.json({ error: "Title is required." }, { status: 400 });
     }
 
     const context = await requireTenantContext(await createClient());

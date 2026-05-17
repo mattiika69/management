@@ -20,8 +20,8 @@ type CommandResult = {
 const HELP_TEXT = [
   "HyperOptimal Management commands:",
   "/context - read the AI Context Document summary",
-  "/learnings - read saved learnings",
-  "/learning Title | What future work should remember - save a learning",
+  "/agent - read saved AI agent memory",
+  "/agent Title | What future work should remember - save AI agent memory",
   "/outputs - read recent saved outputs",
   "/set context companyName Example Co - update one AI Context Document field",
 ].join("\n");
@@ -239,10 +239,10 @@ async function listLearnings(supabase: SupabaseClient, organizationId: string) {
     .limit(10);
 
   if (error) throw new Error(error.message);
-  if (!data?.length) return "No learnings saved yet.";
+  if (!data?.length) return "No AI agent memory saved yet.";
 
   return [
-    "Saved learnings",
+    "Saved AI agent memory",
     ...data.map((item, index) => {
       const body = item.body ? ` - ${item.body}` : "";
       return `${index + 1}. ${item.title}${body}`;
@@ -260,7 +260,7 @@ async function saveLearningFromCommand(
   const body = rawBodyParts.join("|").trim();
 
   if (!title) {
-    return "Add a title after /learning.";
+    return "Add a title after /agent.";
   }
 
   const { error } = await supabase.from("learning_items").insert({
@@ -279,7 +279,7 @@ async function saveLearningFromCommand(
   });
 
   if (error) throw new Error(error.message);
-  return "Learning saved.";
+  return "AI agent memory saved.";
 }
 
 async function formatOutputs(supabase: SupabaseClient, organizationId: string) {
@@ -313,11 +313,11 @@ export async function handleHyperoptimalCommand(
     return { command: "context", text: summary || "No AI Context Document content saved yet." };
   }
 
-  if (lower === "learning" || lower === "learnings") {
+  if (lower === "agent" || lower === "agent-memory" || lower === "learning" || lower === "learnings") {
     return { command: "learnings", text: await listLearnings(supabase, connection.organization_id) };
   }
 
-  const learningMatch = text.match(/^learning\s+([\s\S]+)$/i);
+  const learningMatch = text.match(/^(?:agent|agent-memory|learning)\s+([\s\S]+)$/i);
   if (learningMatch) {
     return {
       command: "learning",

@@ -85,7 +85,7 @@ export function LearningsWorkspace({
 
     if (!response.ok || !body.learningItem) {
       setStatus("");
-      setError(body.error ?? "Learning could not be saved.");
+      setError(body.error ?? "AI Agent memory could not be saved.");
       return;
     }
 
@@ -110,7 +110,7 @@ export function LearningsWorkspace({
 
     if (!response.ok) {
       setStatus("");
-      setError(body.error ?? "Learning could not be deleted.");
+      setError(body.error ?? "AI Agent memory could not be deleted.");
       return;
     }
 
@@ -124,7 +124,7 @@ export function LearningsWorkspace({
       <form onSubmit={submit} className="app-card-pad">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h2 className="text-[17px] font-bold text-[#101828]">
-            {editingId ? "Edit Learning" : "Add Learning"}
+            {editingId ? "Edit AI Agent Memory" : "Add AI Agent Memory"}
           </h2>
           {editingId ? (
             <button type="button" onClick={startNew} className="text-[12px] font-bold text-[#155dfc]">
@@ -163,7 +163,7 @@ export function LearningsWorkspace({
           <input
             value={form.title}
             onChange={(event) => setForm({ ...form, title: event.currentTarget.value })}
-            placeholder="Learning title"
+            placeholder="AI Agent memory title"
             className="app-field w-full"
             required
           />
@@ -184,13 +184,13 @@ export function LearningsWorkspace({
           disabled={status === "saving"}
           className="app-button-primary mt-5 w-full"
         >
-          {status === "saving" ? "Saving..." : editingId ? "Save Changes" : "Save Learning"}
+          {status === "saving" ? "Saving..." : editingId ? "Save Changes" : "Save AI Agent Memory"}
         </button>
       </form>
 
       <section className="app-card-pad">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-[17px] font-bold text-[#101828]">Saved Learnings</h2>
+          <h2 className="text-[17px] font-bold text-[#101828]">Saved AI Agent Memory</h2>
           <span className="rounded-full border border-[#d9e1ee] bg-[#f8fafc] px-3 py-1 text-[12px] font-bold text-[#667085]">
             {sortedItems.length}
           </span>

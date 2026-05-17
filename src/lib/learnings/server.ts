@@ -91,7 +91,7 @@ export async function createLearningItem(
 ) {
   const title = cleanText(input.title);
   if (!title) {
-    throw new Error("Learning title is required.");
+    throw new Error("Title is required.");
   }
 
   const { data, error } = await supabase

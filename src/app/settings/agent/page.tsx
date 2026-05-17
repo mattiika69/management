@@ -115,15 +115,15 @@ export default async function AgentSettingsPage() {
   return (
     <AppShell
       active="/settings/agent"
-      title="Agent"
-      subtitle="Review workspace agent activity."
+      title="AI Agent"
+      subtitle="Review workspace AI agent activity."
       tabs={settingsTabs}
     >
       <section className="settings-page space-y-6">
         <section className="settings-card-pad">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-[22px] font-bold text-[#101828]">Agent</h2>
+              <h2 className="text-[22px] font-bold text-[#101828]">AI Agent</h2>
               <p className="mt-2 max-w-2xl text-[13px] font-medium leading-6 text-[#667085]">
                 Track requests, actions, and deployments started from approved workspace workflows.
               </p>
