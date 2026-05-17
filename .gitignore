@@ -5,10 +5,13 @@
 .vercel/
 node_modules/
 .npm-cache/
+.ms-playwright/
 .claude/
 .management-push-work/
 .planning-push-work/
 out/
+playwright-report/
+test-results/
 supabase/.branches/
 supabase/.temp/
 .vercel

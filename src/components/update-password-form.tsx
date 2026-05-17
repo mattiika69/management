@@ -27,7 +27,7 @@ export function UpdatePasswordForm() {
     }
 
     setMessage("Password updated.");
-    router.push("/admin");
+    router.push("/management");
     router.refresh();
   }
 
