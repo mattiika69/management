@@ -223,6 +223,7 @@ Production auth must be restored before customer launch:
 - Workflow: `.github/workflows/playwright.yml`
 - Triggers: pushes to `main`, pull requests, and manual dispatch.
 - Runner: `ubuntu-latest`.
-- Checks: `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build`, Chromium install, and `npm run test:e2e:public`.
+- Checks: `npm ci`, Supabase secret presence, `npm run lint`, `npm run typecheck`, `npm run build`, Chromium install, and `npm run test:e2e:public`.
 - Default smoke target: `https://management-mattiika69.vercel.app`.
 - Override target with GitHub repository variable `PLAYWRIGHT_BASE_URL`.
+- Required repository secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.

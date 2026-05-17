@@ -96,3 +96,5 @@ Pushes to `main` and pull requests run `.github/workflows/playwright.yml`.
 The workflow installs dependencies on Linux, runs lint, typecheck, build, and a
 Playwright production smoke test against `PLAYWRIGHT_BASE_URL`. Set the
 repository variable `PLAYWRIGHT_BASE_URL` to override the default production URL.
+It also validates that the Supabase repository secrets required by the build are
+present before the checks run.
