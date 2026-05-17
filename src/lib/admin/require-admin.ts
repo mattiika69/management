@@ -1,6 +1,6 @@
 import "server-only";
 
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { NextResponse } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -60,12 +60,9 @@ async function loadAdminSession(): Promise<AdminSession> {
 
 export async function requireAdmin(next = "/admin") {
   try {
+    void next;
     return await loadAdminSession();
   } catch (error) {
-    if (error instanceof AdminAccessError && error.status === 401) {
-      redirect(`/login?next=${encodeURIComponent(next)}`);
-    }
-
     if (error instanceof AdminAccessError) {
       notFound();
     }
