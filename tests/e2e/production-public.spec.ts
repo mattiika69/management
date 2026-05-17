@@ -16,20 +16,19 @@ test.describe("production public launch boundaries", () => {
 
     const login = await page.goto("/login", { waitUntil: "domcontentloaded" });
     expect(login?.status()).toBe(200);
-    await expect(
-      page.getByRole("heading", { name: "HyperOptimal" }),
-    ).toBeVisible();
+    expect(page.url()).toContain("/management");
+    await expect(page.getByRole("heading", { name: "Management" })).toBeVisible();
 
     await page.goto("/management", { waitUntil: "domcontentloaded" });
-    expect(page.url()).toContain("/login?next=/management");
+    expect(page.url()).toContain("/management");
 
     const admin = await page.goto("/admin", { waitUntil: "domcontentloaded" });
     expect(admin?.status()).toBe(404);
 
     const adminOverview = await request.get("/api/admin/overview");
-    expect(adminOverview.status()).toBe(401);
+    expect(adminOverview.status()).toBe(403);
 
     const billingPlans = await request.get("/api/billing/plans");
-    expect(billingPlans.status()).toBe(401);
+    expect(billingPlans.ok()).toBe(true);
   });
 });

@@ -10,7 +10,7 @@ export default async function LoginPage({
 }) {
   const { next } = await searchParams;
   if (isAuthBypassEnabled()) {
-    redirect("/");
+    redirect(next?.startsWith("/") ? next : "/management");
   }
 
   return (

@@ -13,19 +13,19 @@ function readBypassEmail() {
 }
 
 export function isAuthBypassEnabled() {
-  if (process.env.VERCEL_ENV?.trim().toLowerCase() === "production") {
+  // Temporary product bypass: keep the app accessible without the login screen
+  // until auth is intentionally re-enabled.
+  if (
+    TRUTHY_VALUES.has(
+      (process.env.REQUIRE_LOGIN_AUTH ?? "")
+        .trim()
+        .toLowerCase(),
+    )
+  ) {
     return false;
   }
 
-  return TRUTHY_VALUES.has(
-    (
-      process.env.DISABLE_LOGIN_AUTH ??
-      process.env.AUTH_BYPASS_ENABLED ??
-      ""
-    )
-      .trim()
-      .toLowerCase(),
-  );
+  return true;
 }
 
 async function findUserByEmail(supabase: SupabaseClient, email: string) {
