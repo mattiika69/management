@@ -5,7 +5,7 @@ import { isAuthBypassEnabled } from "@/lib/supabase/auth-bypass";
 
 export default function UpdatePasswordPage() {
   if (isAuthBypassEnabled()) {
-    redirect("/");
+    redirect("/management");
   }
 
   return (

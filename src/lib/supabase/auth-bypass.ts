@@ -2,7 +2,6 @@ import { randomBytes } from "crypto";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const TRUTHY_VALUES = new Set(["1", "true", "yes", "on"]);
 const DEFAULT_BYPASS_EMAIL = "auth-bypass@hyperoptimal-management.test";
 
 function readBypassEmail() {
@@ -13,18 +12,7 @@ function readBypassEmail() {
 }
 
 export function isAuthBypassEnabled() {
-  // Temporary product bypass: keep the app accessible without the login screen
-  // until auth is intentionally re-enabled.
-  if (
-    TRUTHY_VALUES.has(
-      (process.env.REQUIRE_LOGIN_AUTH ?? "")
-        .trim()
-        .toLowerCase(),
-    )
-  ) {
-    return false;
-  }
-
+  // Temporary product bypass: login is intentionally disabled.
   return true;
 }
 
