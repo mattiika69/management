@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://management-git-main-mattiika69.vercel.app' }}
+  PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://management-mattiika69.vercel.app' }}
 
 jobs:
   smoke:

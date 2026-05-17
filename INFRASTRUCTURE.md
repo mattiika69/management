@@ -224,5 +224,5 @@ Production auth must be restored before customer launch:
 - Triggers: pushes to `main`, pull requests, and manual dispatch.
 - Runner: `ubuntu-latest`.
 - Checks: `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build`, Chromium install, and `npm run test:e2e:public`.
-- Default smoke target: `https://management-git-main-mattiika69.vercel.app`.
+- Default smoke target: `https://management-mattiika69.vercel.app`.
 - Override target with GitHub repository variable `PLAYWRIGHT_BASE_URL`.
