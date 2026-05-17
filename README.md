@@ -19,6 +19,7 @@ Useful checks:
 
 ```sh
 npm run lint
+npm run verify:supabase-admin
 npm run typecheck
 npm run build
 npm run test:e2e:public
@@ -97,4 +98,5 @@ The workflow installs dependencies on Linux, runs lint, typecheck, build, and a
 Playwright production smoke test against `PLAYWRIGHT_BASE_URL`. Set the
 repository variable `PLAYWRIGHT_BASE_URL` to override the default production URL.
 It also validates that the Supabase repository secrets required by the build are
-present before the checks run.
+present before the checks run, and trusted runs verify the MVP admin profile and
+core Supabase tables with the server-only service-role secret.

@@ -35,14 +35,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate Supabase secrets
-        env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Validate public Supabase configuration
         run: |
           test -n "$NEXT_PUBLIC_SUPABASE_URL"
           test -n "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
           test -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY"
+
+      - name: Verify Supabase admin setup
+        if: github.event_name != 'pull_request'
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
           test -n "$SUPABASE_SERVICE_ROLE_KEY"
+          npm run verify:supabase-admin
 
       - name: Lint
         run: npm run lint

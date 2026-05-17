@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "verify:supabase-admin": "node scripts/ci/verify-supabase-admin.mjs",
     "typecheck": "tsc --noEmit --incremental false",
     "lint": "eslint",
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=.ms-playwright playwright test",
