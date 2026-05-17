@@ -4,8 +4,10 @@ import {
   AgentRequestWorkspace,
   type AgentRequestView,
 } from "@/components/agent-request-workspace";
+import { LearningsWorkspace } from "@/components/learnings-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
+import { getLearningItems } from "@/lib/learnings/server";
 import { createClient } from "@/lib/supabase/server";
 import { canManageTeam, getMembershipRole } from "@/lib/team/permissions";
 
@@ -75,7 +77,7 @@ export default async function AgentSettingsPage() {
     redirect("/settings/team");
   }
 
-  const [requestsResult, actionsResult, deploymentsResult] = await Promise.all([
+  const [requestsResult, actionsResult, deploymentsResult, learnings] = await Promise.all([
     supabase
       .from("agent_requests")
       .select("id,request_text,source_provider,risk_level,status,created_at")
@@ -97,6 +99,7 @@ export default async function AgentSettingsPage() {
       .order("created_at", { ascending: false })
       .limit(8)
       .returns<AgentDeployment[]>(),
+    getLearningItems(supabase, organization, 100),
   ]);
 
   if (requestsResult.error) throw new Error(requestsResult.error.message);
@@ -130,6 +133,16 @@ export default async function AgentSettingsPage() {
         </section>
 
         <AgentRequestWorkspace initialRequests={requests} />
+
+        <section className="space-y-4">
+          <div className="mb-5">
+            <h2 className="text-[15px] font-bold text-[#101828]">AI Agent memory</h2>
+            <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
+              Add, edit, and delete the learnings used by the AI Agent.
+            </p>
+          </div>
+          <LearningsWorkspace initialItems={learnings} />
+        </section>
 
         <section className="grid gap-6 xl:grid-cols-[1fr]">
           <div className="settings-card-pad">

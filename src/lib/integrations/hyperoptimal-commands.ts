@@ -5,6 +5,7 @@ import {
   companyContextToText,
   type CompanyContextData,
 } from "@/lib/hyperoptimal/data";
+import { handleAgentConversation } from "@/lib/agent/conversation";
 import {
   normalizeCompanyContext,
   type FunnelStepRow,
@@ -357,38 +358,6 @@ async function listLearnings(supabase: SupabaseClient, organizationId: string) {
       return `${index + 1}. ${item.title}${body}`;
     }),
   ].join("\n");
-}
-
-async function saveLearningFromCommand(
-  supabase: SupabaseClient,
-  connection: IntegrationConnection,
-  rawText: string,
-) {
-  const [rawTitle, ...rawBodyParts] = rawText.split("|");
-  const title = rawTitle.trim();
-  const body = rawBodyParts.join("|").trim();
-
-  if (!title) {
-    return "Add a title after /agent.";
-  }
-
-  const { error } = await supabase.from("learning_items").insert({
-    tenant_id: connection.organization_id,
-    organization_id: connection.organization_id,
-    title,
-    body,
-    category: "general",
-    source_provider: connection.provider,
-    source_label: connection.provider === "slack" ? "Slack" : "Telegram",
-    source_channel_id: connection.external_channel_id,
-    source_user_id: connection.external_user_id,
-    sync_status: "synced",
-    created_by_user_id: connection.created_by,
-    updated_by_user_id: connection.created_by,
-  });
-
-  if (error) throw new Error(error.message);
-  return "AI agent memory saved.";
 }
 
 async function listAgentRequests(
@@ -780,10 +749,20 @@ export async function handleHyperoptimalCommand(
 
   const learningMatch = text.match(/^(?:remember|memory|agent-memory|learning)\s+([\s\S]+)$/i);
   if (learningMatch) {
+    const result = await handleAgentConversation({
+      supabase,
+      organizationId: connection.organization_id,
+      actorUserId: connection.created_by,
+      provider: connection.provider,
+      message: `remember ${learningMatch[1]}`,
+      sourceLabel: connection.provider === "slack" ? "Slack" : "Telegram",
+      sourceChannelId: connection.external_channel_id,
+      sourceUserId: options.externalUserId ?? connection.external_user_id,
+    });
     return {
-      command: "learning",
-      text: await saveLearningFromCommand(supabase, connection, learningMatch[1]),
-      status: "saved",
+      command: result.command,
+      text: result.text,
+      status: result.status,
     };
   }
 
@@ -837,9 +816,19 @@ export async function handleHyperoptimalCommand(
     };
   }
 
+  const result = await handleAgentConversation({
+    supabase,
+    organizationId: connection.organization_id,
+    actorUserId: connection.created_by,
+    provider: connection.provider,
+    message: text,
+    sourceLabel: connection.provider === "slack" ? "Slack" : "Telegram",
+    sourceChannelId: connection.external_channel_id,
+    sourceUserId: options.externalUserId ?? connection.external_user_id,
+  });
   return {
-    command: "help",
-    text: `Message saved to the integration log. No app data was changed because this was not an explicit command.\n\n${HELP_TEXT}`,
-    status: "ignored",
+    command: result.command,
+    text: result.text,
+    status: result.status,
   };
 }

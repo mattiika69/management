@@ -37,7 +37,7 @@ export type LearningInput = {
   sourceUserId?: string | null;
 };
 
-const learningColumns = [
+export const learningColumns = [
   "id",
   "tenant_id",
   "organization_id",

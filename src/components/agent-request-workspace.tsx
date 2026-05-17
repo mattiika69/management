@@ -18,6 +18,16 @@ type RequestResponse = {
   error?: string;
 };
 
+type ChatResponse = {
+  response?: string;
+  status?: "sent" | "saved" | "failed";
+  savedLearning?: {
+    id: string;
+    title: string;
+  } | null;
+  error?: string;
+};
+
 type EditState = {
   id: string;
   requestText: string;
@@ -72,6 +82,10 @@ export function AgentRequestWorkspace({
   const [edit, setEdit] = useState<EditState>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [chatText, setChatText] = useState("");
+  const [chatResponse, setChatResponse] = useState("");
+  const [chatError, setChatError] = useState("");
+  const [chatSaving, setChatSaving] = useState(false);
 
   async function refreshRequests() {
     const response = await fetch("/api/agent/requests");
@@ -109,6 +123,29 @@ export function AgentRequestWorkspace({
     setRequestText("");
     setRiskLevel("normal");
     setMessage("AI Agent request saved.");
+  }
+
+  async function sendAgentMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setChatSaving(true);
+    setChatError("");
+    setChatResponse("");
+
+    const response = await fetch("/api/agent/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: chatText }),
+    });
+    const body = (await response.json().catch(() => ({}))) as ChatResponse;
+    setChatSaving(false);
+
+    if (!response.ok || !body.response) {
+      setChatError(body.error ?? "AI Agent could not respond.");
+      return;
+    }
+
+    setChatResponse(body.response);
+    setChatText("");
   }
 
   async function updateRequest(event: FormEvent<HTMLFormElement>) {
@@ -162,48 +199,86 @@ export function AgentRequestWorkspace({
 
   return (
     <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-      <form onSubmit={createRequest} className="settings-card-pad">
-        <div className="mb-5">
-          <h2 className="text-[15px] font-bold text-[#101828]">Create request</h2>
-          <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
-            Send work to the AI Agent from the app, Slack, or Telegram.
-          </p>
-        </div>
+      <div className="space-y-6">
+        <form onSubmit={sendAgentMessage} className="settings-card-pad">
+          <div className="mb-5">
+            <h2 className="text-[15px] font-bold text-[#101828]">Ask or save memory</h2>
+            <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
+              The app, Slack, and Telegram use the same AI Agent memory.
+            </p>
+          </div>
 
-        <label className="grid gap-2">
-          <span className="text-[13px] font-semibold text-[#344054]">Request</span>
-          <textarea
-            required
-            value={requestText}
-            onChange={(event) => setRequestText(event.target.value)}
-            className="min-h-[148px] w-full rounded-[7px] border border-[#cfd8e6] bg-white px-3 py-3 text-[13px] font-medium text-[#101828] outline-none transition placeholder:text-[#98a2b3] focus:border-[#2563eb] focus:ring-4 focus:ring-blue-600/10"
-            placeholder="Describe what the AI Agent should do."
-          />
-        </label>
+          <label className="grid gap-2">
+            <span className="text-[13px] font-semibold text-[#344054]">Message</span>
+            <textarea
+              required
+              value={chatText}
+              onChange={(event) => setChatText(event.target.value)}
+              className="min-h-[118px] w-full rounded-[7px] border border-[#cfd8e6] bg-white px-3 py-3 text-[13px] font-medium text-[#101828] outline-none transition placeholder:text-[#98a2b3] focus:border-[#2563eb] focus:ring-4 focus:ring-blue-600/10"
+              placeholder="Ask a question, or say: save Title | What to remember"
+            />
+          </label>
 
-        <label className="mt-4 grid gap-2">
-          <span className="text-[13px] font-semibold text-[#344054]">Risk</span>
-          <select
-            value={riskLevel}
-            onChange={(event) => setRiskLevel(event.target.value as AgentRequestView["risk_level"])}
-            className="settings-field w-full"
-          >
-            <option value="low">Low</option>
-            <option value="normal">Normal</option>
-            <option value="high">High</option>
-          </select>
-        </label>
+          <button type="submit" disabled={chatSaving} className="settings-button-dark mt-5 w-full">
+            {chatSaving ? "Working..." : "Send to AI Agent"}
+          </button>
 
-        <button type="submit" disabled={saving} className="settings-button-dark mt-5 w-full">
-          {saving ? "Saving..." : "Create request"}
-        </button>
+          {chatError ? (
+            <p className="mt-4 text-[12px] font-semibold text-red-600" role="alert">
+              {chatError}
+            </p>
+          ) : null}
 
-        {message ? (
-          <p className="mt-4 text-[12px] font-semibold text-[#667085]" role="status">
-            {message}
-          </p>
-        ) : null}
-      </form>
+          {chatResponse ? (
+            <div className="mt-4 rounded-[8px] border border-[#d9e1ee] bg-[#f8fafc] px-3 py-3 text-[13px] font-medium leading-6 text-[#344054]" role="status">
+              {chatResponse}
+            </div>
+          ) : null}
+        </form>
+
+        <form onSubmit={createRequest} className="settings-card-pad">
+          <div className="mb-5">
+            <h2 className="text-[15px] font-bold text-[#101828]">Create request</h2>
+            <p className="mt-2 text-[13px] font-medium leading-6 text-[#667085]">
+              Send work to the AI Agent from the app, Slack, or Telegram.
+            </p>
+          </div>
+
+          <label className="grid gap-2">
+            <span className="text-[13px] font-semibold text-[#344054]">Request</span>
+            <textarea
+              required
+              value={requestText}
+              onChange={(event) => setRequestText(event.target.value)}
+              className="min-h-[148px] w-full rounded-[7px] border border-[#cfd8e6] bg-white px-3 py-3 text-[13px] font-medium text-[#101828] outline-none transition placeholder:text-[#98a2b3] focus:border-[#2563eb] focus:ring-4 focus:ring-blue-600/10"
+              placeholder="Describe what the AI Agent should do."
+            />
+          </label>
+
+          <label className="mt-4 grid gap-2">
+            <span className="text-[13px] font-semibold text-[#344054]">Risk</span>
+            <select
+              value={riskLevel}
+              onChange={(event) => setRiskLevel(event.target.value as AgentRequestView["risk_level"])}
+              className="settings-field w-full"
+            >
+              <option value="low">Low</option>
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+
+          <button type="submit" disabled={saving} className="settings-button-dark mt-5 w-full">
+            {saving ? "Saving..." : "Create request"}
+          </button>
+
+          {message ? (
+            <p className="mt-4 text-[12px] font-semibold text-[#667085]" role="status">
+              {message}
+            </p>
+          ) : null}
+        </form>
+      </div>
 
       <section className="settings-card overflow-hidden">
         <div className="settings-card-header flex items-center justify-between gap-3">
