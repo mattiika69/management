@@ -9,6 +9,7 @@ type ShellTab = {
 export function AppShell({
   active,
   title,
+  subtitle,
   tabs = [],
   children,
 }: {
@@ -24,9 +25,7 @@ export function AppShell({
         <header className="app-page-header">
           <div className="min-w-0">
             <h1 className="app-page-title">{title}</h1>
-            <p className="app-page-kicker">
-              Member Since March 2026
-            </p>
+            <p className="app-page-kicker">{subtitle}</p>
           </div>
 
           {tabs.length ? (

@@ -20,6 +20,7 @@ export const settingsTabs = [
   { href: "/settings/billing", label: "Billing" },
   { href: "/settings/integrations", label: "Integrations" },
   { href: "/settings/scheduling", label: "Scheduling" },
+  { href: "/settings/agent", label: "Agent" },
   { href: "/settings/slack", label: "Slack" },
   { href: "/settings/telegram", label: "Telegram" },
   { href: "/settings/archive", label: "Archive" },

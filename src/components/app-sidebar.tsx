@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SignOutButton } from "@/components/sign-out-button";
 import {
   normalizeSidebarOrder,
@@ -171,6 +171,7 @@ function SidebarNavItem({
       <Link
         href={item.href}
         prefetch
+        aria-current={active ? "page" : undefined}
         aria-label={item.label}
         className={`ho-sidebar-sub-link ${active ? "active" : ""}`}
       >
@@ -191,6 +192,9 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
   const [openGroupId, setOpenGroupId] = useState<string | null>(() => activeGroupId || initialOpenGroups());
+  const [organizationName, setOrganizationName] = useState("");
+  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
+  const orgDropdownRef = useRef<HTMLDivElement>(null);
   const groups = useMemo(
     () =>
       SIDEBAR_GROUPS.map((group) => ({
@@ -204,14 +208,26 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
     let mounted = true;
     fetch("/api/settings/sidebar-order")
       .then((response) => response.json())
-      .then((body: { order?: string[] }) => {
+      .then((body: { order?: string[]; organizationName?: string }) => {
         if (!mounted) return;
         setItemOrder(normalizeSidebarOrder(body.order));
+        setOrganizationName(typeof body.organizationName === "string" ? body.organizationName : "");
       })
       .catch(() => {});
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!orgDropdownRef.current?.contains(event.target as Node)) {
+        setOrgDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
   async function saveOrder(nextOrder: string[]) {
@@ -268,23 +284,62 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
             ‹
           </button>
         </div>
+        {organizationName ? (
+          <div className="ho-sidebar-org-row" ref={orgDropdownRef}>
+            <span className="ho-sidebar-org-label">Org:</span>
+            <button
+              type="button"
+              className="ho-sidebar-org-button"
+              onClick={() => setOrgDropdownOpen((current) => !current)}
+              aria-expanded={orgDropdownOpen}
+            >
+              <span className="truncate" title={organizationName}>{organizationName}</span>
+              <svg
+                className={`ho-sidebar-org-chevron ${orgDropdownOpen ? "open" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {orgDropdownOpen ? (
+              <div className="ho-sidebar-org-menu">
+                <button
+                  type="button"
+                  className="ho-sidebar-org-menu-item active"
+                  onClick={() => setOrgDropdownOpen(false)}
+                >
+                  <span className="ho-sidebar-org-avatar" aria-hidden="true">
+                    {organizationName.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="truncate">{organizationName}</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <nav className="ho-sidebar-sections" aria-label="Primary navigation">
         <div className="ho-sidebar-grouped-nav">
-          {groups.map((group) => (
+          {groups.map((group) => {
+            const isOpen = !group.href && openGroupId === group.id;
+
+            return (
             <section key={group.id} className={`ho-sidebar-group ${group.id === "settings" ? "with-divider" : ""}`}>
               {group.label ? (
                 <div>
                   <GroupHeader
                     group={group}
                     isActive={group.id === activeGroupId}
-                    isOpen={openGroupId === group.id}
+                    isOpen={isOpen}
                     onToggle={() => setOpenGroupId((current) => (current === group.id ? null : group.id))}
                   />
                 </div>
               ) : null}
-              {!group.href && openGroupId === group.id ? (
+              {!group.href && isOpen ? (
                 <div className="ho-sidebar-child-nav">
                   {group.items.map((item) => (
                     <SidebarNavItem
@@ -301,7 +356,8 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                 </div>
               ) : null}
             </section>
-          ))}
+            );
+          })}
         </div>
       </nav>
     </aside>

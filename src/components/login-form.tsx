@@ -108,16 +108,6 @@ export function LoginForm({ next = "/" }: { next?: string }) {
           {message}
         </p>
       ) : null}
-
-      <p className="mt-6 text-center text-[15px] text-[#727c91]">
-        Don&apos;t have an account?{" "}
-        <Link
-          className="font-medium text-[#2563ff]"
-          href={`/signup?next=${encodeURIComponent(nextPath)}`}
-        >
-          Sign up
-        </Link>
-      </p>
     </form>
   );
 }

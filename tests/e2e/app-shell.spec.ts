@@ -8,7 +8,6 @@ test.describe("app shell", () => {
     await expect(sidebar).toBeVisible();
     await expect(sidebar).toHaveCSS("width", "220px");
     await expect(sidebar).toHaveCSS("background-image", /linear-gradient/);
-    await expect(sidebar.getByText("Org:", { exact: true })).toHaveCount(0);
 
     await expect(page.locator(".app-page-title")).toHaveText("Management");
     await expect(page.locator(".app-page-title")).toHaveCSS("font-size", "19px");
@@ -26,6 +25,7 @@ test.describe("app shell", () => {
     await expect(overview).toBeVisible();
     await expect(overview).toHaveCSS("font-size", "12px");
     await expect(overview).toHaveCSS("min-height", "24px");
+    await expect(overview).toHaveAttribute("aria-current", "page");
 
     const dragHandle = sidebar.locator(".ho-sidebar-drag-handle").first();
     await expect(dragHandle).toBeVisible();
@@ -34,5 +34,6 @@ test.describe("app shell", () => {
     await parent.click();
     await expect(sidebar.getByRole("link", { name: "Job Descriptions" })).toBeVisible();
     await expect(sidebar.getByRole("link", { name: "Screening" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Overview" })).toHaveCount(0);
   });
 });

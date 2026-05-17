@@ -165,5 +165,20 @@ export async function listWorkspacePeople(
     if (!people.has(person.key)) people.set(person.key, person);
   }
 
+  if (!people.size) {
+    const displayName =
+      (currentUser.user_metadata?.name as string | undefined) ||
+      (currentUser.user_metadata?.full_name as string | undefined);
+    const fallback = personFromProfile({
+      userId: currentUser.id,
+      role: "member",
+      email: currentUser.email,
+      displayName,
+    });
+    if (!isInternalBypassPerson({ name: fallback.name, email: currentUser.email })) {
+      people.set(fallback.key, fallback);
+    }
+  }
+
   return Array.from(people.values());
 }
