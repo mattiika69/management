@@ -15,7 +15,7 @@ env:
 
 jobs:
   smoke:
-    name: Production public smoke
+    name: Build and production public smoke
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -32,11 +32,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
       - name: Install Chromium
         run: PLAYWRIGHT_BROWSERS_PATH=.ms-playwright npx playwright install --with-deps chromium
 
       - name: Run Playwright smoke tests
-        run: PLAYWRIGHT_BROWSERS_PATH=.ms-playwright npx playwright test tests/e2e/production-public.spec.ts
+        run: npm run test:e2e:public
 
       - name: Upload Playwright report
         if: failure()

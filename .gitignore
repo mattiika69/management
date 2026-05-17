@@ -5,6 +5,7 @@
 .vercel/
 node_modules/
 .npm-cache/
+tsconfig.tsbuildinfo
 .ms-playwright/
 .claude/
 .management-push-work/

@@ -6,8 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit --incremental false",
     "lint": "eslint",
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=.ms-playwright playwright test",
+    "test:e2e:public": "PLAYWRIGHT_BROWSERS_PATH=.ms-playwright playwright test tests/e2e/production-public.spec.ts",
     "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=.ms-playwright playwright install chromium"
   },
   "dependencies": {

@@ -217,3 +217,12 @@ Production auth must be restored before customer launch:
 - Slack app credentials, scopes, event subscription URL, and interaction URL
 - Telegram bot token, bot username, webhook secret, and webhook registration
 - Production auth switch from bypass mode to real Supabase auth
+
+## GitHub Actions Verification
+
+- Workflow: `.github/workflows/playwright.yml`
+- Triggers: pushes to `main`, pull requests, and manual dispatch.
+- Runner: `ubuntu-latest`.
+- Checks: `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build`, Chromium install, and `npm run test:e2e:public`.
+- Default smoke target: `https://management-git-main-mattiika69.vercel.app`.
+- Override target with GitHub repository variable `PLAYWRIGHT_BASE_URL`.

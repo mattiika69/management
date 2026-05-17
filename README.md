@@ -15,6 +15,15 @@ state.
 3. Install dependencies with `npm install`.
 4. Run `npm run dev`.
 
+Useful checks:
+
+```sh
+npm run lint
+npm run typecheck
+npm run build
+npm run test:e2e:public
+```
+
 ## Account and admin
 
 Core account routes are included:
@@ -80,3 +89,10 @@ Then deploy with:
 ```sh
 vercel --prod
 ```
+
+## GitHub Actions
+
+Pushes to `main` and pull requests run `.github/workflows/playwright.yml`.
+The workflow installs dependencies on Linux, runs lint, typecheck, build, and a
+Playwright production smoke test against `PLAYWRIGHT_BASE_URL`. Set the
+repository variable `PLAYWRIGHT_BASE_URL` to override the default production URL.
