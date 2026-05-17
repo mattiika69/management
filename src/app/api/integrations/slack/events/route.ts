@@ -63,7 +63,12 @@ export async function POST(request: Request) {
     payload,
   });
 
-  const result = await handleHyperoptimalCommand(supabase, connection, payload.event.text ?? "");
+  const result = await handleHyperoptimalCommand(
+    supabase,
+    connection,
+    payload.event.text ?? "",
+    { externalUserId: payload.event.user },
+  );
   const botToken =
     (await loadIntegrationSecret(supabase, connection.organization_id, "slack", "bot_token")) ??
     process.env.SLACK_BOT_TOKEN ??

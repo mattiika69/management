@@ -127,7 +127,12 @@ export async function POST(request: Request) {
     payload,
   });
 
-  const result = await handleHyperoptimalCommand(supabase, connection, payload.message?.text ?? "");
+  const result = await handleHyperoptimalCommand(
+    supabase,
+    connection,
+    payload.message?.text ?? "",
+    { externalUserId: telegramUserId },
+  );
   const response = await postTelegramMessage(chatId, result.text);
 
   await saveIntegrationMessage(supabase, {

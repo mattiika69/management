@@ -17,11 +17,21 @@ type CommandResult = {
   status?: "saved" | "sent" | "failed" | "ignored";
 };
 
+type CommandOptions = {
+  externalUserId?: string | null;
+};
+
 const HELP_TEXT = [
   "HyperOptimal Management commands:",
   "/context - read the AI Context Document summary",
-  "/agent - read saved AI agent memory",
-  "/agent Title | What future work should remember - save AI agent memory",
+  "/agent request What you need done - create an AI Agent request",
+  "/agent edit request-id Updated request - edit a pending AI Agent request",
+  "/agent approve request-id - approve a pending AI Agent request",
+  "/agent cancel request-id - cancel an AI Agent request",
+  "/agent show request-id - read one AI Agent request",
+  "/agent status - read recent AI Agent requests",
+  "/memory - read saved AI Agent memory",
+  "/remember Title | What future work should remember - save AI Agent memory",
   "/outputs - read recent saved outputs",
   "/set context companyName Example Co - update one AI Context Document field",
 ].join("\n");
@@ -51,6 +61,105 @@ type CommandContextRow = {
   status: "draft" | "confirmed" | "archived";
   data: CompanyContextData;
 };
+
+type IntegrationActorRole = "owner" | "admin" | "member" | "viewer";
+
+type AgentRequestRow = {
+  id: string;
+  status: string;
+  risk_level: string;
+  request_text: string;
+  created_at: string;
+  source_provider?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+function shortId(value: string) {
+  return value.slice(0, 8);
+}
+
+function parseAgentRequest(rawText: string) {
+  const riskPrefix = rawText.match(/^(low|normal|high)\s*:\s*([\s\S]+)$/i);
+  if (riskPrefix) {
+    return {
+      requestText: riskPrefix[2].trim(),
+      riskLevel: riskPrefix[1].toLowerCase() as "low" | "normal" | "high",
+    };
+  }
+
+  const riskLevel = /\b(delete|remove|deploy|production|billing|stripe|secret|permission|role)\b/i.test(rawText)
+    ? "high"
+    : "normal";
+
+  return {
+    requestText: rawText.trim(),
+    riskLevel,
+  };
+}
+
+function canUseAgent(role: IntegrationActorRole | null) {
+  return role === "owner" || role === "admin";
+}
+
+function isConnectionActor(
+  connection: IntegrationConnection,
+  externalUserId?: string | null,
+) {
+  return !connection.external_user_id || connection.external_user_id === externalUserId;
+}
+
+async function getIntegrationActorRole(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+) {
+  if (!connection.created_by) return null;
+
+  const { data: tenantMembership, error: tenantError } = await supabase
+    .from("tenant_memberships")
+    .select("role")
+    .eq("tenant_id", connection.organization_id)
+    .eq("user_id", connection.created_by)
+    .is("archived_at", null)
+    .maybeSingle<{ role: IntegrationActorRole }>();
+
+  if (tenantError) throw new Error(tenantError.message);
+  if (tenantMembership?.role) return tenantMembership.role;
+
+  const { data: legacyMembership, error: legacyError } = await supabase
+    .from("organization_memberships")
+    .select("role")
+    .eq("organization_id", connection.organization_id)
+    .eq("user_id", connection.created_by)
+    .maybeSingle<{ role: IntegrationActorRole }>();
+
+  if (legacyError) throw new Error(legacyError.message);
+  return legacyMembership?.role ?? null;
+}
+
+async function auditIntegrationAgentAction(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  action: string,
+  targetId: string,
+  metadata: Record<string, unknown> = {},
+) {
+  await supabase.from("admin_audit_log").insert({
+    tenant_id: connection.organization_id,
+    actor_user_id: connection.created_by,
+    action,
+    target_table: "agent_requests",
+    target_id: targetId,
+    metadata: {
+      source: "integration",
+      provider: connection.provider,
+      connectionId: connection.id,
+      externalTeamId: connection.external_team_id,
+      externalChannelId: connection.external_channel_id,
+      externalUserId: connection.external_user_id,
+      ...metadata,
+    },
+  });
+}
 
 async function loadCompanyContext(
   supabase: SupabaseClient,
@@ -282,6 +391,280 @@ async function saveLearningFromCommand(
   return "AI agent memory saved.";
 }
 
+async function listAgentRequests(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  options: CommandOptions,
+) {
+  const role = await getIntegrationActorRole(supabase, connection);
+  if (!canUseAgent(role) || !isConnectionActor(connection, options.externalUserId)) {
+    return "Owner or admin access is required to use the AI Agent from Slack or Telegram.";
+  }
+
+  const { data, error } = await supabase
+    .from("agent_requests")
+    .select("id,status,risk_level,request_text,created_at")
+    .eq("tenant_id", connection.organization_id)
+    .order("created_at", { ascending: false })
+    .limit(5)
+    .returns<AgentRequestRow[]>();
+
+  if (error) throw new Error(error.message);
+  if (!data?.length) return "No AI Agent requests yet.";
+
+  return [
+    "Recent AI Agent requests",
+    ...data.map((request) => {
+      const created = new Date(request.created_at).toLocaleString();
+      return `${shortId(request.id)}: ${request.status} (${request.risk_level}) - ${request.request_text} - ${created}`;
+    }),
+  ].join("\n");
+}
+
+async function loadAgentRequestByPrefix(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  prefix: string,
+) {
+  const normalizedPrefix = prefix.trim().toLowerCase();
+  if (!/^[0-9a-f-]{4,36}$/i.test(normalizedPrefix)) {
+    return { error: "Use the request id shown in /agent status." };
+  }
+
+  const { data, error } = await supabase
+    .from("agent_requests")
+    .select("id,status,risk_level,request_text,created_at,source_provider,metadata")
+    .eq("tenant_id", connection.organization_id)
+    .order("created_at", { ascending: false })
+    .limit(100)
+    .returns<AgentRequestRow[]>();
+
+  if (error) throw new Error(error.message);
+
+  const matches = (data ?? []).filter((request) =>
+    request.id.toLowerCase().startsWith(normalizedPrefix),
+  );
+
+  if (!matches.length) return { error: `No AI Agent request matched ${prefix}.` };
+  if (matches.length > 1) return { error: `Multiple requests match ${prefix}. Use more of the id.` };
+  return { request: matches[0] };
+}
+
+async function showAgentRequestFromCommand(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  requestId: string,
+  options: CommandOptions,
+) {
+  const role = await getIntegrationActorRole(supabase, connection);
+  if (!canUseAgent(role) || !isConnectionActor(connection, options.externalUserId)) {
+    return "Owner or admin access is required to read AI Agent requests from Slack or Telegram.";
+  }
+
+  const result = await loadAgentRequestByPrefix(supabase, connection, requestId);
+  if (result.error) return result.error;
+  const request = result.request;
+  if (!request) return "AI Agent request was not found.";
+
+  return [
+    `AI Agent request ${shortId(request.id)}`,
+    `Status: ${request.status}`,
+    `Risk: ${request.risk_level}`,
+    `Source: ${request.source_provider ?? "web"}`,
+    `Request: ${request.request_text}`,
+  ].join("\n");
+}
+
+async function createAgentRequestFromCommand(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  rawText: string,
+  options: CommandOptions,
+) {
+  const role = await getIntegrationActorRole(supabase, connection);
+  if (!canUseAgent(role) || !isConnectionActor(connection, options.externalUserId)) {
+    return "Owner or admin access is required to create AI Agent requests from Slack or Telegram.";
+  }
+
+  const { requestText, riskLevel } = parseAgentRequest(rawText);
+  if (!requestText) {
+    return "Add the work you want after /agent request.";
+  }
+
+  const { data, error } = await supabase
+    .from("agent_requests")
+    .insert({
+      tenant_id: connection.organization_id,
+      requested_by_user_id: connection.created_by,
+      source_provider: connection.provider,
+      request_text: requestText,
+      risk_level: riskLevel,
+      status: "pending",
+      metadata: {
+        source: "integration_command",
+        provider: connection.provider,
+        connectionId: connection.id,
+        externalTeamId: connection.external_team_id,
+        externalChannelId: connection.external_channel_id,
+        externalUserId: options.externalUserId ?? connection.external_user_id,
+      },
+    })
+    .select("id,status,risk_level,request_text,created_at")
+    .single<AgentRequestRow>();
+
+  if (error) throw new Error(error.message);
+
+  await auditIntegrationAgentAction(
+    supabase,
+    connection,
+    "agent.request.created_from_integration",
+    data.id,
+    { riskLevel },
+  );
+
+  const approvalNote = riskLevel === "high"
+    ? " High-risk requests stay pending until approved in Settings > AI Agent."
+    : " Review it in Settings > AI Agent.";
+
+  return `AI Agent request created: ${shortId(data.id)} (${data.status}, ${data.risk_level}).${approvalNote}`;
+}
+
+async function editAgentRequestFromCommand(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  requestId: string,
+  rawText: string,
+  options: CommandOptions,
+) {
+  const role = await getIntegrationActorRole(supabase, connection);
+  if (!canUseAgent(role) || !isConnectionActor(connection, options.externalUserId)) {
+    return "Owner or admin access is required to edit AI Agent requests from Slack or Telegram.";
+  }
+
+  const { requestText, riskLevel } = parseAgentRequest(rawText);
+  if (!requestText) return "Add the updated request after /agent edit request-id.";
+
+  const lookup = await loadAgentRequestByPrefix(supabase, connection, requestId);
+  if (lookup.error) return lookup.error;
+  const request = lookup.request;
+  if (!request) return "AI Agent request was not found.";
+  if (!["pending", "approved"].includes(request.status)) {
+    return `Request ${shortId(request.id)} is ${request.status} and cannot be edited from chat.`;
+  }
+
+  const { data, error } = await supabase
+    .from("agent_requests")
+    .update({
+      request_text: requestText,
+      risk_level: riskLevel,
+      status: request.status === "approved" ? "pending" : request.status,
+      metadata: {
+        ...(request.metadata ?? {}),
+        lastEditedFrom: connection.provider,
+        lastEditedByExternalUserId: options.externalUserId ?? connection.external_user_id,
+        lastEditedAt: new Date().toISOString(),
+      },
+    })
+    .eq("id", request.id)
+    .eq("tenant_id", connection.organization_id)
+    .select("id,status,risk_level,request_text,created_at")
+    .single<AgentRequestRow>();
+
+  if (error) throw new Error(error.message);
+
+  await auditIntegrationAgentAction(
+    supabase,
+    connection,
+    "agent.request.edited_from_integration",
+    data.id,
+    { riskLevel },
+  );
+
+  return `Updated AI Agent request ${shortId(data.id)}. Status: ${data.status}.`;
+}
+
+async function approveAgentRequestFromCommand(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  requestId: string,
+  options: CommandOptions,
+) {
+  const role = await getIntegrationActorRole(supabase, connection);
+  if (!canUseAgent(role) || !isConnectionActor(connection, options.externalUserId)) {
+    return "Owner or admin access is required to approve AI Agent requests from Slack or Telegram.";
+  }
+
+  const lookup = await loadAgentRequestByPrefix(supabase, connection, requestId);
+  if (lookup.error) return lookup.error;
+  const request = lookup.request;
+  if (!request) return "AI Agent request was not found.";
+  if (request.status !== "pending") {
+    return `Request ${shortId(request.id)} is ${request.status}, so it cannot be approved.`;
+  }
+
+  const { error } = await supabase
+    .from("agent_requests")
+    .update({ status: "approved" })
+    .eq("id", request.id)
+    .eq("tenant_id", connection.organization_id);
+
+  if (error) throw new Error(error.message);
+
+  await supabase.from("agent_approvals").insert({
+    tenant_id: connection.organization_id,
+    request_id: request.id,
+    approved_by_user_id: connection.created_by,
+    status: "approved",
+    notes: `${connection.provider} approval`,
+  });
+
+  await auditIntegrationAgentAction(
+    supabase,
+    connection,
+    "agent.request.approved_from_integration",
+    request.id,
+  );
+
+  return `Approved AI Agent request ${shortId(request.id)}.`;
+}
+
+async function cancelAgentRequestFromCommand(
+  supabase: SupabaseClient,
+  connection: IntegrationConnection,
+  requestId: string,
+  options: CommandOptions,
+) {
+  const role = await getIntegrationActorRole(supabase, connection);
+  if (!canUseAgent(role) || !isConnectionActor(connection, options.externalUserId)) {
+    return "Owner or admin access is required to cancel AI Agent requests from Slack or Telegram.";
+  }
+
+  const lookup = await loadAgentRequestByPrefix(supabase, connection, requestId);
+  if (lookup.error) return lookup.error;
+  const request = lookup.request;
+  if (!request) return "AI Agent request was not found.";
+  if (["completed", "cancelled"].includes(request.status)) {
+    return `Request ${shortId(request.id)} is already ${request.status}.`;
+  }
+
+  const { error } = await supabase
+    .from("agent_requests")
+    .update({ status: "cancelled" })
+    .eq("id", request.id)
+    .eq("tenant_id", connection.organization_id);
+
+  if (error) throw new Error(error.message);
+
+  await auditIntegrationAgentAction(
+    supabase,
+    connection,
+    "agent.request.cancelled_from_integration",
+    request.id,
+  );
+
+  return `Cancelled AI Agent request ${shortId(request.id)}.`;
+}
+
 async function formatOutputs(supabase: SupabaseClient, organizationId: string) {
   const { data, error } = await supabase
     .from("funnel_ai_outputs")
@@ -301,6 +684,7 @@ export async function handleHyperoptimalCommand(
   supabase: SupabaseClient,
   connection: IntegrationConnection,
   rawText: string,
+  options: CommandOptions = {},
 ): Promise<CommandResult> {
   const text = normalizeCommand(rawText);
   if (!text || text === "help") return { command: "help", text: HELP_TEXT };
@@ -313,11 +697,88 @@ export async function handleHyperoptimalCommand(
     return { command: "context", text: summary || "No AI Context Document content saved yet." };
   }
 
-  if (lower === "agent" || lower === "agent-memory" || lower === "learning" || lower === "learnings") {
+  if (lower === "agent" || lower === "agent help" || lower === "ai agent") {
+    return { command: "agent_help", text: HELP_TEXT };
+  }
+
+  if (lower === "agent status" || lower === "agent requests" || lower === "ai status") {
+    return { command: "agent_status", text: await listAgentRequests(supabase, connection, options) };
+  }
+
+  const agentShowMatch = text.match(/^(?:agent|ai)\s+(?:show|read|view)\s+(\S+)$/i);
+  if (agentShowMatch) {
+    return {
+      command: "agent_show",
+      text: await showAgentRequestFromCommand(supabase, connection, agentShowMatch[1], options),
+    };
+  }
+
+  const agentEditMatch = text.match(/^(?:agent|ai)\s+edit\s+(\S+)\s+([\s\S]+)$/i);
+  if (agentEditMatch) {
+    return {
+      command: "agent_edit",
+      text: await editAgentRequestFromCommand(
+        supabase,
+        connection,
+        agentEditMatch[1],
+        agentEditMatch[2],
+        options,
+      ),
+      status: "saved",
+    };
+  }
+
+  const agentApproveMatch = text.match(/^(?:agent|ai)\s+approve\s+(\S+)$/i);
+  if (agentApproveMatch) {
+    return {
+      command: "agent_approve",
+      text: await approveAgentRequestFromCommand(
+        supabase,
+        connection,
+        agentApproveMatch[1],
+        options,
+      ),
+      status: "saved",
+    };
+  }
+
+  const agentCancelMatch = text.match(/^(?:agent|ai)\s+cancel\s+(\S+)$/i);
+  if (agentCancelMatch) {
+    return {
+      command: "agent_cancel",
+      text: await cancelAgentRequestFromCommand(
+        supabase,
+        connection,
+        agentCancelMatch[1],
+        options,
+      ),
+      status: "saved",
+    };
+  }
+
+  const agentRequestMatch = text.match(/^(?:agent|ai)\s+(?:request|task|run|do)\s+([\s\S]+)$/i);
+  if (agentRequestMatch) {
+    return {
+      command: "agent_request",
+      text: await createAgentRequestFromCommand(supabase, connection, agentRequestMatch[1], options),
+      status: "saved",
+    };
+  }
+
+  const directAgentMatch = text.match(/^(?:agent|ai)\s+([\s\S]+)$/i);
+  if (directAgentMatch) {
+    return {
+      command: "agent_request",
+      text: await createAgentRequestFromCommand(supabase, connection, directAgentMatch[1], options),
+      status: "saved",
+    };
+  }
+
+  if (lower === "memory" || lower === "agent-memory" || lower === "learning" || lower === "learnings") {
     return { command: "learnings", text: await listLearnings(supabase, connection.organization_id) };
   }
 
-  const learningMatch = text.match(/^(?:agent|agent-memory|learning)\s+([\s\S]+)$/i);
+  const learningMatch = text.match(/^(?:remember|memory|agent-memory|learning)\s+([\s\S]+)$/i);
   if (learningMatch) {
     return {
       command: "learning",

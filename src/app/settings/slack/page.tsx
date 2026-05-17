@@ -50,7 +50,7 @@ export default async function SlackSettingsPage() {
               <div>
                 <h2 className="text-[18px] font-bold text-[#101828]">Slack</h2>
                 <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
-                  Connect Slack so learnings and workspace updates can move through team channels.
+                  Connect Slack so the AI Agent can receive approved workspace commands from team channels.
                 </p>
               </div>
             </div>
@@ -65,7 +65,7 @@ export default async function SlackSettingsPage() {
 
           <section className="mt-6 overflow-hidden rounded-[9px] border border-[#d9e1ee]">
             <div className="settings-card-header">
-              <h3 className="text-[13px] font-bold text-[#101828]">Workspaces</h3>
+              <h3 className="text-[13px] font-bold text-[#101828]">Connected workspaces</h3>
             </div>
             {data?.length ? (
               data.map((connection) => (

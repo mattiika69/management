@@ -1,18 +1,13 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import {
+  AgentRequestWorkspace,
+  type AgentRequestView,
+} from "@/components/agent-request-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canManageTeam, getMembershipRole } from "@/lib/team/permissions";
-
-type AgentRequest = {
-  id: string;
-  request_text: string;
-  source_provider: string | null;
-  risk_level: string;
-  status: string;
-  created_at: string;
-};
 
 type AgentAction = {
   id: string;
@@ -86,8 +81,8 @@ export default async function AgentSettingsPage() {
       .select("id,request_text,source_provider,risk_level,status,created_at")
       .eq("tenant_id", organization.id)
       .order("created_at", { ascending: false })
-      .limit(8)
-      .returns<AgentRequest[]>(),
+      .limit(20)
+      .returns<AgentRequestView[]>(),
     supabase
       .from("agent_actions")
       .select("id,action_type,status,created_at")
@@ -134,35 +129,9 @@ export default async function AgentSettingsPage() {
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="settings-card-pad">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="text-[15px] font-bold text-[#101828]">Recent requests</h2>
-              <span className="text-[12px] font-semibold text-[#667085]">{requests.length}</span>
-            </div>
-            {requests.length ? (
-              <div className="space-y-3">
-                {requests.map((request) => (
-                  <article key={request.id} className="rounded-[7px] border border-[#d9e1ee] bg-white p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="min-w-0 text-[13px] font-bold text-[#101828]">
-                        {request.request_text}
-                      </p>
-                      <StatusBadge value={request.status} />
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-3 text-[12px] font-medium text-[#667085]">
-                      <span className="capitalize">{request.source_provider ?? "web"}</span>
-                      <span className="capitalize">Risk: {request.risk_level}</span>
-                      <span>{formatDate(request.created_at)}</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <EmptyState label="No agent requests yet." />
-            )}
-          </div>
+        <AgentRequestWorkspace initialRequests={requests} />
 
+        <section className="grid gap-6 xl:grid-cols-[1fr]">
           <div className="settings-card-pad">
             <div className="mb-5 flex items-center justify-between gap-3">
               <h2 className="text-[15px] font-bold text-[#101828]">Recent actions</h2>

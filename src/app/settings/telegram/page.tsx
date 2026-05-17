@@ -46,7 +46,7 @@ export default async function TelegramSettingsPage() {
             <div>
               <h2 className="text-[18px] font-bold text-[#101828]">Telegram</h2>
               <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
-                Connect Telegram so workspace updates can be sent and received from approved chats.
+                Connect Telegram so the AI Agent can receive approved workspace commands from connected chats.
               </p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default async function TelegramSettingsPage() {
 
         <section className="settings-card overflow-hidden">
           <div className="settings-card-header">
-            <h2 className="text-[13px] font-bold text-[#101828]">Connected Chats</h2>
+            <h2 className="text-[13px] font-bold text-[#101828]">Connected chats</h2>
           </div>
           {data?.length ? (
             data.map((connection) => (

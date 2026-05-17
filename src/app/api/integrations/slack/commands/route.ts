@@ -46,7 +46,9 @@ export async function POST(request: Request) {
     payload: Object.fromEntries(form),
   });
 
-  const result = await handleHyperoptimalCommand(supabase, connection, text);
+  const result = await handleHyperoptimalCommand(supabase, connection, text, {
+    externalUserId: userId,
+  });
 
   await saveIntegrationMessage(supabase, {
     connection,
