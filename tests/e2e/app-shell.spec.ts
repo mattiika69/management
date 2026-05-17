@@ -8,6 +8,8 @@ test.describe("app shell", () => {
     await expect(sidebar).toBeVisible();
     await expect(sidebar).toHaveCSS("width", "220px");
     await expect(sidebar).toHaveCSS("background-image", /linear-gradient/);
+    await expect(sidebar.getByText("Org:", { exact: true })).toHaveCount(0);
+    await expect(sidebar.getByText("Most Viewed", { exact: true })).toHaveCount(0);
 
     await expect(page.locator(".app-page-title")).toHaveText("Management");
     await expect(page.locator(".app-page-title")).toHaveCSS("font-size", "19px");

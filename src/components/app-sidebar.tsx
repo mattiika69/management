@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SignOutButton } from "@/components/sign-out-button";
 import {
   normalizeSidebarOrder,
@@ -192,9 +192,6 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
   const [itemOrder, setItemOrder] = useState(() => normalizeSidebarOrder(SIDEBAR_ITEM_IDS));
   const [draggingId, setDraggingId] = useState("");
   const [openGroupId, setOpenGroupId] = useState<string | null>(() => activeGroupId || initialOpenGroups());
-  const [organizationName, setOrganizationName] = useState("");
-  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false);
-  const orgDropdownRef = useRef<HTMLDivElement>(null);
   const groups = useMemo(
     () =>
       SIDEBAR_GROUPS.map((group) => ({
@@ -208,26 +205,14 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
     let mounted = true;
     fetch("/api/settings/sidebar-order")
       .then((response) => response.json())
-      .then((body: { order?: string[]; organizationName?: string }) => {
+      .then((body: { order?: string[] }) => {
         if (!mounted) return;
         setItemOrder(normalizeSidebarOrder(body.order));
-        setOrganizationName(typeof body.organizationName === "string" ? body.organizationName : "");
       })
       .catch(() => {});
     return () => {
       mounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      if (!orgDropdownRef.current?.contains(event.target as Node)) {
-        setOrgDropdownOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
   async function saveOrder(nextOrder: string[]) {
@@ -284,42 +269,6 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
             ‹
           </button>
         </div>
-        {organizationName ? (
-          <div className="ho-sidebar-org-row" ref={orgDropdownRef}>
-            <span className="ho-sidebar-org-label">Org:</span>
-            <button
-              type="button"
-              className="ho-sidebar-org-button"
-              onClick={() => setOrgDropdownOpen((current) => !current)}
-              aria-expanded={orgDropdownOpen}
-            >
-              <span className="truncate" title={organizationName}>{organizationName}</span>
-              <svg
-                className={`ho-sidebar-org-chevron ${orgDropdownOpen ? "open" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {orgDropdownOpen ? (
-              <div className="ho-sidebar-org-menu">
-                <button
-                  type="button"
-                  className="ho-sidebar-org-menu-item active"
-                  onClick={() => setOrgDropdownOpen(false)}
-                >
-                  <span className="ho-sidebar-org-avatar" aria-hidden="true">
-                    {organizationName.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="truncate">{organizationName}</span>
-                </button>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
       <nav className="ho-sidebar-sections" aria-label="Primary navigation">
