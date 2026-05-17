@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 function safeNextPath(next: string) {
@@ -13,6 +14,7 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const router = useRouter();
 
   async function signUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,7 +38,7 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -51,9 +53,18 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
     });
 
     setLoading(false);
-    setMessage(
-      error ? error.message : "Check your email to confirm your account.",
-    );
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    if (data.session) {
+      router.push(nextPath);
+      router.refresh();
+      return;
+    }
+
+    setMessage("Account created. Sign in to continue.");
   }
 
   return (

@@ -18,11 +18,11 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://management-swart-iota.vercel.app"
+site_url = "https://management-mattiika69.vercel.app"
 additional_redirect_urls = [
+  "https://management-mattiika69.vercel.app/auth/callback",
   "https://management-swart-iota.vercel.app/auth/callback",
-  "https://funnel-omega-rouge.vercel.app/auth/callback",
-  "https://funnel-*-mattiika69.vercel.app/auth/callback",
+  "https://management-*-mattiika69.vercel.app/auth/callback",
   "http://localhost:3000/auth/callback",
   "http://localhost:3000/**"
 ]
@@ -39,7 +39,7 @@ token_verifications = 30
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = true
+enable_confirmations = false
 secure_password_change = false
 max_frequency = "1m"
 otp_length = 8

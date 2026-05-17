@@ -1,5 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-
 const requiredEnv = [
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
@@ -11,16 +9,24 @@ for (const key of requiredEnv) {
   }
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "");
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+async function rest(path) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    headers: {
+      apikey: serviceRoleKey,
+      authorization: `Bearer ${serviceRoleKey}`,
     },
-  },
-);
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`${response.status} ${response.statusText}: ${text}`);
+  }
+
+  return response.json();
+}
 
 const requiredTables = [
   "user_profiles",
@@ -34,22 +40,15 @@ const requiredTables = [
 ];
 
 for (const table of requiredTables) {
-  const { error } = await supabase.from(table).select("*", { count: "exact", head: true });
-  if (error) {
+  try {
+    await rest(`${table}?select=*&limit=1`);
+  } catch (error) {
     throw new Error(`Required Supabase table check failed for ${table}: ${error.message}`);
   }
 }
 
-const { data: admins, error: adminError } = await supabase
-  .from("user_profiles")
-  .select("email,is_admin")
-  .eq("is_admin", true);
-
-if (adminError) {
-  throw new Error(`Admin profile check failed: ${adminError.message}`);
-}
-
-const adminEmails = (admins ?? [])
+const admins = await rest("user_profiles?select=email,is_admin&is_admin=eq.true");
+const adminEmails = admins
   .map((profile) => profile.email?.toLowerCase())
   .filter(Boolean);
 
