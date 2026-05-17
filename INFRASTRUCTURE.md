@@ -198,7 +198,8 @@ Telegram is implemented but blocked until these are added in Vercel:
 
 Production auth must be restored before customer launch:
 
-- Set `DISABLE_LOGIN_AUTH=false` or remove it from Production.
+- Remove or set these to `false`/empty in Production: `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, and `AUTH_BYPASS_USER_ID`.
+- The code ignores auth bypass automatically when `VERCEL_ENV=production`; the Production env vars should still be removed so the dashboard state is unambiguous.
 
 ## APIs We Have
 

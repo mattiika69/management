@@ -13,6 +13,10 @@ function readBypassEmail() {
 }
 
 export function isAuthBypassEnabled() {
+  if (process.env.VERCEL_ENV?.trim().toLowerCase() === "production") {
+    return false;
+  }
+
   return TRUTHY_VALUES.has(
     (
       process.env.DISABLE_LOGIN_AUTH ??
