@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -30,9 +31,13 @@ const emptyForm = {
 export function CalendarSettings({
   initialCalendars,
   canManage,
+  googleReady = false,
+  microsoftReady = false,
 }: {
   initialCalendars: CalendarConnectionRow[];
   canManage: boolean;
+  googleReady?: boolean;
+  microsoftReady?: boolean;
 }) {
   const [calendars, setCalendars] = useState(initialCalendars);
   const [form, setForm] = useState(emptyForm);
@@ -93,7 +98,21 @@ export function CalendarSettings({
     <section className="settings-page">
       <div className="mt-6 grid gap-6 xl:grid-cols-[380px_1fr]">
         <form onSubmit={addCalendar} className="settings-card-pad">
-          <h2 className="text-[15px] font-bold text-gray-950">Add Calendar</h2>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-[15px] font-bold text-gray-950">Add Calendar</h2>
+            <div className="flex flex-wrap justify-end gap-2">
+              {googleReady ? (
+                <Link prefetch={false} href="/api/calendars/google/oauth/start?returnTo=/settings/integrations" className="settings-button-outline">
+                  Google
+                </Link>
+              ) : null}
+              {microsoftReady ? (
+                <Link prefetch={false} href="/api/calendars/microsoft/oauth/start?returnTo=/settings/integrations" className="settings-button-outline">
+                  Outlook
+                </Link>
+              ) : null}
+            </div>
+          </div>
           <div className="mt-4 grid gap-3">
             <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
               Provider

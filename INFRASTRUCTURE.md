@@ -36,6 +36,7 @@ Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from 
 - V1 credit billing: generated workspace assets can spend credits; Stripe credit checkout and webhook ledger writes exist.
 - Data persistence: AI context, management, screening, meetings, training, learning, AI outputs, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
 - Page shell: app pages use the shared sidebar and Settings tabs, with AI Context, Employees, Team, Pods, Calendars, Zoom, Billing, Integrations, Scheduling, Slack, Telegram, Archive, and Usage under Settings.
+- Calendar and Zoom connections: Google Calendar, Outlook Calendar, and Zoom OAuth routes exist; provider tokens are stored in encrypted service-only records, calendar invites can send through Resend with `.ics` attachments, and Zoom recording metadata can sync into Supabase.
 
 ## Organization, User, And RLS Architecture Source Of Truth
 
@@ -114,6 +115,9 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 - `employees`
 - `calendar_connections`
 - `zoom_connections`
+- `connected_account_tokens`
+- `calendar_invites`
+- `zoom_recordings`
 - `meetings`
 - `meeting_attendees`
 - `meeting_agenda_items`
@@ -153,8 +157,8 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 | Management | `POST /api/management`, `GET/POST /api/management/job-descriptions`, `GET/POST /api/management/hiring`, `GET/POST /api/management/training`, `POST/PATCH/DELETE /api/management/training/items` |
 | Meetings | `POST /api/meetings` |
 | Employees | `GET/POST /api/employees`, `PATCH/DELETE /api/employees/[id]` |
-| Calendars | `GET/POST /api/calendars`, `PATCH/DELETE /api/calendars/[id]` |
-| Zoom | `GET/POST /api/zoom`, `PATCH/DELETE /api/zoom/[id]` |
+| Calendars | `GET/POST /api/calendars`, `PATCH/DELETE /api/calendars/[id]`, `GET /api/calendars/google/oauth/start`, `GET /api/calendars/google/oauth/callback`, `GET /api/calendars/microsoft/oauth/start`, `GET /api/calendars/microsoft/oauth/callback`, `POST /api/calendar/invites` |
+| Zoom | `GET/POST /api/zoom`, `PATCH/DELETE /api/zoom/[id]`, `GET /api/zoom/oauth/start`, `GET /api/zoom/oauth/callback`, `POST /api/zoom/recordings/sync` |
 | Billing | `POST /api/billing/checkout`, `POST /api/billing/credits/checkout`, `POST /api/stripe/webhook` |
 | Email | `POST /api/email/send` |
 | SMS | `POST /api/sms/send` |
@@ -172,6 +176,7 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 - Claude: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`
 - Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
 - Roezan: `ROEZAN_API_KEY`
+- Integration encryption: `INTEGRATION_SECRET_KEY` is recommended for provider token encryption. The server can fall back to the service-role secret, but a dedicated key is preferred before launch.
 
 ## Environment Variables Still Needed
 
@@ -196,6 +201,17 @@ Telegram is implemented but blocked until these are added in Vercel:
 - `TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_WEBHOOK_SECRET`
 
+Calendar and Zoom OAuth are implemented but blocked until these are added in Vercel:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `MICROSOFT_CLIENT_ID`
+- `MICROSOFT_CLIENT_SECRET`
+- `MICROSOFT_TENANT_ID` optional, defaults to `common`
+- `ZOOM_CLIENT_ID`
+- `ZOOM_CLIENT_SECRET`
+- `INTEGRATION_SECRET_KEY`
+
 Production auth must be restored before customer launch:
 
 - Remove or set these to `false`/empty in Production: `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, and `AUTH_BYPASS_USER_ID`.
@@ -216,6 +232,9 @@ Production auth must be restored before customer launch:
 - Stripe live/test keys, webhook secret, price ID, and webhook endpoint registration
 - Slack app credentials, scopes, event subscription URL, and interaction URL
 - Telegram bot token, bot username, webhook secret, and webhook registration
+- Google Calendar OAuth app credentials and redirect URL registration
+- Microsoft Calendar OAuth app credentials and redirect URL registration
+- Zoom OAuth app credentials, recording scopes, meeting scopes, and redirect URL registration
 - Production auth switch from bypass mode to real Supabase auth
 
 ## GitHub Actions Verification

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -24,14 +25,17 @@ const emptyForm = {
 export function ZoomSettings({
   initialZoomConnections,
   canManage,
+  oauthReady = false,
 }: {
   initialZoomConnections: ZoomConnectionRow[];
   canManage: boolean;
+  oauthReady?: boolean;
 }) {
   const [connections, setConnections] = useState(initialZoomConnections);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState("");
 
   async function addZoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,11 +87,36 @@ export function ZoomSettings({
     setConnections((current) => current.filter((connection) => connection.id !== id));
   }
 
+  async function syncRecordings(connection: ZoomConnectionRow) {
+    if (!canManage) return;
+    setSyncing(connection.id);
+    setMessage("");
+    const response = await fetch("/api/zoom/recordings/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zoomConnectionId: connection.id }),
+    });
+    const body = (await response.json().catch(() => ({}))) as { syncedCount?: number; error?: string };
+    setSyncing("");
+    if (!response.ok) {
+      setMessage(body.error ?? "Recordings could not be synced.");
+      return;
+    }
+    setMessage(`Synced ${body.syncedCount ?? 0} recording${body.syncedCount === 1 ? "" : "s"}.`);
+  }
+
   return (
     <section className="settings-page">
       <div className="mt-6 grid gap-6 xl:grid-cols-[380px_1fr]">
         <form onSubmit={addZoom} className="settings-card-pad">
-          <h2 className="text-[15px] font-bold text-gray-950">Add Zoom Account</h2>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-[15px] font-bold text-gray-950">Add Zoom Account</h2>
+            {oauthReady ? (
+              <Link prefetch={false} href="/api/zoom/oauth/start?returnTo=/settings/zoom" className="settings-button-outline">
+                Connect Zoom
+              </Link>
+            ) : null}
+          </div>
           <div className="mt-4 grid gap-3">
             <label className="grid gap-1 text-[11px] font-semibold uppercase text-gray-600">
               Name
@@ -117,7 +146,7 @@ export function ZoomSettings({
         </form>
 
         <section className="settings-card overflow-hidden">
-          <div className="settings-table-head grid grid-cols-[1fr_0.8fr_0.8fr_0.7fr_112px] gap-3 border-b border-[#ebe3d8] px-4 py-3">
+          <div className="settings-table-head grid grid-cols-[1fr_0.7fr_0.8fr_0.7fr_160px] gap-3 border-b border-[#ebe3d8] px-4 py-3">
             <span>Zoom</span>
             <span>Duration</span>
             <span>Recordings</span>
@@ -126,7 +155,7 @@ export function ZoomSettings({
           </div>
           {connections.length ? (
             connections.map((connection) => (
-              <div key={connection.id} className="grid grid-cols-[1fr_0.8fr_0.8fr_0.7fr_112px] gap-3 border-b border-gray-100 px-4 py-3 text-[12px] text-gray-700 last:border-b-0">
+              <div key={connection.id} className="grid grid-cols-[1fr_0.7fr_0.8fr_0.7fr_160px] gap-3 border-b border-gray-100 px-4 py-3 text-[12px] text-gray-700 last:border-b-0">
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-gray-950">{connection.display_name}</p>
                   <p className="truncate text-[11px] text-gray-500">{connection.account_email}</p>
@@ -135,6 +164,9 @@ export function ZoomSettings({
                 <span>{connection.cloud_recording_sync ? "On" : "Off"}</span>
                 <span>{connection.sync_enabled ? "On" : "Paused"}</span>
                 <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => syncRecordings(connection)} disabled={syncing === connection.id} className="text-[11px] font-semibold text-blue-700 disabled:text-gray-400">
+                    {syncing === connection.id ? "Syncing" : "Sync"}
+                  </button>
                   <button type="button" onClick={() => toggleZoom(connection)} className="text-[11px] font-semibold text-blue-700">
                     {connection.sync_enabled ? "Pause" : "Resume"}
                   </button>

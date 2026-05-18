@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { ZoomSettings, type ZoomConnectionRow } from "@/components/zoom-settings";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
+import { oauthProviderReady } from "@/lib/oauth/provider-oauth";
 import { createClient } from "@/lib/supabase/server";
 import { canManageTeam, getMembershipRole } from "@/lib/team/permissions";
 
@@ -30,7 +31,11 @@ export default async function ZoomSettingsPage() {
 
   return (
     <AppShell active="/settings/zoom" title="Zoom" subtitle="Manage Zoom accounts." tabs={settingsTabs}>
-      <ZoomSettings initialZoomConnections={data ?? []} canManage={canManageTeam(membershipRole)} />
+      <ZoomSettings
+        initialZoomConnections={data ?? []}
+        canManage={canManageTeam(membershipRole)}
+        oauthReady={oauthProviderReady("zoom")}
+      />
     </AppShell>
   );
 }

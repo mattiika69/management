@@ -6,6 +6,7 @@ import { TelegramLinkPanel } from "@/components/telegram-link-panel";
 import { ZoomSettings, type ZoomConnectionRow } from "@/components/zoom-settings";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
+import { oauthProviderReady } from "@/lib/oauth/provider-oauth";
 import { createClient } from "@/lib/supabase/server";
 import { canManageTeam, getMembershipRole } from "@/lib/team/permissions";
 
@@ -112,11 +113,20 @@ export default async function IntegrationsSettingsPage() {
         </div>
 
         <div id="calendars">
-          <CalendarSettings initialCalendars={calendarsResult.data ?? []} canManage={canManage} />
+          <CalendarSettings
+            initialCalendars={calendarsResult.data ?? []}
+            canManage={canManage}
+            googleReady={oauthProviderReady("google_calendar")}
+            microsoftReady={oauthProviderReady("microsoft_calendar")}
+          />
         </div>
 
         <div id="zoom">
-          <ZoomSettings initialZoomConnections={zoomResult.data ?? []} canManage={canManage} />
+          <ZoomSettings
+            initialZoomConnections={zoomResult.data ?? []}
+            canManage={canManage}
+            oauthReady={oauthProviderReady("zoom")}
+          />
         </div>
 
         <ConnectCard

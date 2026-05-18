@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { CalendarInviteForm, type CalendarInviteCalendar, type CalendarInviteZoom } from "@/components/calendar-invite-form";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { listWorkspacePeople } from "@/lib/operations/people";
+import { oauthProviderReady } from "@/lib/oauth/provider-oauth";
 import { createClient } from "@/lib/supabase/server";
 
 type EmployeeRow = {
@@ -15,10 +18,19 @@ type EmployeeRow = {
 };
 
 type CalendarRow = {
+  id: string;
   account_email: string;
   display_name: string;
   provider: string;
   sync_enabled: boolean;
+};
+
+type ZoomRow = {
+  id: string;
+  display_name: string;
+  account_email: string;
+  sync_enabled: boolean;
+  cloud_recording_sync: boolean;
 };
 
 function roleLabel(role: string | null) {
@@ -49,7 +61,7 @@ export default async function CalendarSettingsPage() {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const [employeesResult, calendarsResult] = await Promise.all([
+  const [employeesResult, calendarsResult, zoomResult] = await Promise.all([
     supabase
       .from("employees")
       .select("id,user_id,full_name,email,role_title,calendar_email")
@@ -59,14 +71,22 @@ export default async function CalendarSettingsPage() {
       .returns<EmployeeRow[]>(),
     supabase
       .from("calendar_connections")
-      .select("account_email,display_name,provider,sync_enabled")
+      .select("id,account_email,display_name,provider,sync_enabled")
       .eq("tenant_id", organization.id)
       .is("archived_at", null)
       .returns<CalendarRow[]>(),
+    supabase
+      .from("zoom_connections")
+      .select("id,display_name,account_email,sync_enabled,cloud_recording_sync")
+      .eq("tenant_id", organization.id)
+      .is("archived_at", null)
+      .order("created_at", { ascending: false })
+      .returns<ZoomRow[]>(),
   ]);
 
   if (employeesResult.error) throw new Error(employeesResult.error.message);
   if (calendarsResult.error) throw new Error(calendarsResult.error.message);
+  if (zoomResult.error) throw new Error(zoomResult.error.message);
 
   const workspacePeople = await listWorkspacePeople(supabase, organization.id, user);
   const peopleByKey = new Map(
@@ -101,6 +121,8 @@ export default async function CalendarSettingsPage() {
     (calendarsResult.data ?? []).map((calendar) => [calendar.account_email.toLowerCase(), calendar]),
   );
   const employees = Array.from(peopleByKey.values()).sort((a, b) => a.full_name.localeCompare(b.full_name));
+  const googleReady = oauthProviderReady("google_calendar");
+  const microsoftReady = oauthProviderReady("microsoft_calendar");
 
   return (
     <AppShell
@@ -110,6 +132,11 @@ export default async function CalendarSettingsPage() {
       tabs={settingsTabs}
     >
       <section className="settings-page">
+        <CalendarInviteForm
+          calendars={(calendarsResult.data ?? []) as CalendarInviteCalendar[]}
+          zoomConnections={(zoomResult.data ?? []) as CalendarInviteZoom[]}
+        />
+
         <div className="settings-title-rule">
           <h2 className="text-lg font-bold text-[#101828]">Calendars</h2>
         </div>
@@ -147,12 +174,24 @@ export default async function CalendarSettingsPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" className="app-button-secondary h-9 px-3 text-[11px]">
-                      Connect Google
-                    </button>
-                    <button type="button" className="app-button-secondary h-9 px-3 text-[11px]">
-                      Connect Outlook
-                    </button>
+                    {googleReady ? (
+                      <Link prefetch={false} href="/api/calendars/google/oauth/start?returnTo=/settings/calendars" className="app-button-secondary h-9 px-3 text-[11px]">
+                        Connect Google
+                      </Link>
+                    ) : (
+                      <button type="button" className="app-button-secondary h-9 px-3 text-[11px]" disabled>
+                        Connect Google
+                      </button>
+                    )}
+                    {microsoftReady ? (
+                      <Link prefetch={false} href="/api/calendars/microsoft/oauth/start?returnTo=/settings/calendars" className="app-button-secondary h-9 px-3 text-[11px]">
+                        Connect Outlook
+                      </Link>
+                    ) : (
+                      <button type="button" className="app-button-secondary h-9 px-3 text-[11px]" disabled>
+                        Connect Outlook
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="inline-flex h-9 items-center justify-center rounded-[7px] border border-red-200 bg-white px-3 text-[11px] font-semibold text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
