@@ -22,6 +22,9 @@ function isActiveItem(pathname: string, search: string, href: string) {
   const target = parseHref(href);
 
   if (target.search) {
+    if (target.pathname === "/management" && target.search === "?view=checklist" && !search) {
+      return pathname === "/management";
+    }
     return pathname === target.pathname && search === target.search;
   }
 
@@ -45,11 +48,12 @@ function activeGroupIdFor(pathname: string, search: string) {
   if (activeItem) return activeItem.groupId;
   if (pathname === "/settings" || pathname.startsWith("/settings/")) return "settings";
   if (pathname === "/learn" || pathname.startsWith("/learn/")) return "training";
-  if (pathname === "/meetings" || pathname.startsWith("/meetings/")) return "management";
   if (pathname === "/management/training" || pathname.startsWith("/management/training/")) return "training";
   if (
     pathname === "/management/hiring" ||
     pathname.startsWith("/management/hiring/") ||
+    pathname === "/management/interviews" ||
+    pathname.startsWith("/management/interviews/") ||
     pathname === "/management/job-descriptions" ||
     pathname.startsWith("/management/job-descriptions/")
   ) {

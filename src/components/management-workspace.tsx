@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { OperationsTabs } from "@/components/operations-ui";
 import { addDays, formatMonthDay, formatWeekRange } from "@/lib/operations/dates";
 import type {
   ManagementData,
@@ -23,14 +22,6 @@ type ManagementView =
   | "progress"
   | "management-diamond"
   | "team-ratings";
-
-const managementTabs: Array<{ id: ManagementView; label: string; href: string }> = [
-  { id: "checklist", label: "Checklist", href: "/management?view=checklist" },
-  { id: "start-stop-keep", label: "Start/Stop/Keep", href: "/management?view=start-stop-keep" },
-  { id: "progress", label: "Progress", href: "/management?view=progress" },
-  { id: "management-diamond", label: "Management Diamond", href: "/management?view=management-diamond" },
-  { id: "team-ratings", label: "Team Ratings", href: "/management?view=team-ratings" },
-];
 
 const reviewFields = {
   startStopKeep: "start_stop_keep_complete",
@@ -251,7 +242,6 @@ export function ManagementWorkspace({
 
   return (
     <div className="text-[12px] text-[#475467]">
-      <OperationsTabs tabs={managementTabs} active={activeView} />
       {!people.length ? (
         <SectionCard className="p-5">
           <h2 className="text-[15px] font-bold text-[#101828]">No team members yet</h2>

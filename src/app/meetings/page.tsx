@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { MeetingsWorkspace } from "@/components/meetings-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
-import { managementTabs } from "@/lib/hyperoptimal/navigation";
 import { getMeetingsData } from "@/lib/operations/meetings";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,7 +37,6 @@ export default async function MeetingsPage({
       active="/meetings"
       title="Meetings"
       subtitle="Meetings"
-      tabs={managementTabs}
     >
       <MeetingsWorkspace
         data={data}

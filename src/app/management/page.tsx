@@ -39,20 +39,22 @@ export default async function ManagementPage({
 
   const params = searchParams ? await searchParams : {};
   const activeView = readParam(params.view) || "checklist";
+  const safeActiveView = views.has(activeView) ? activeView : "checklist";
+  const activeTab = managementTabs.find((tab) => tab.href.includes(`view=${safeActiveView}`))?.href ?? managementTabs[0].href;
   const weekStart = readParam(params.week);
   const organization = await getOrCreateDefaultOrganization(supabase, user);
   const data = await getManagementData(supabase, organization, user, weekStart);
 
   return (
     <AppShell
-      active="/management"
+      active={activeTab}
       title="Management"
       subtitle="Management"
       tabs={managementTabs}
     >
       <ManagementWorkspace
         data={data}
-        activeView={views.has(activeView) ? (activeView as Parameters<typeof ManagementWorkspace>[0]["activeView"]) : "checklist"}
+        activeView={safeActiveView as Parameters<typeof ManagementWorkspace>[0]["activeView"]}
       />
     </AppShell>
   );

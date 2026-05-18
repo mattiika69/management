@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ManagementEcosystemWorkspace } from "@/components/management-ecosystem-workspace";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
-import { managementTabs } from "@/lib/hyperoptimal/navigation";
+import { hiringTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 type JobDescriptionRow = {
@@ -39,8 +39,8 @@ export default async function JobDescriptionsPage() {
     <AppShell
       active="/management/job-descriptions"
       title="Job Descriptions"
-      subtitle="Management role definitions."
-      tabs={managementTabs}
+      subtitle="Hiring"
+      tabs={hiringTabs}
     >
       <ManagementEcosystemWorkspace
         title="New Job Description"
