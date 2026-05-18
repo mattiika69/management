@@ -2,41 +2,103 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 function safeNextPath(next: string) {
   return next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
-export function LoginForm({ next = "/" }: { next?: string }) {
-  const [message, setMessage] = useState("");
+function noticeMessage(notice: string | undefined) {
+  if (notice === "invite-link-invalid") {
+    return "This invite link is missing the access token. Ask the sender for a fresh invite.";
+  }
+  if (notice === "invite-auth-failed") {
+    return "The invite sign-in link could not be verified. Sign in with the invited email, then open the invite again.";
+  }
+  if (notice === "auth-callback-failed") {
+    return "That sign-in link could not be verified. Try signing in with your email and password.";
+  }
+  if (notice === "login-required") {
+    return "Sign in to continue.";
+  }
+  return "";
+}
+
+function authErrorMessage(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("invalid login credentials")) {
+    return "Email or password is incorrect. Try again or reset your password.";
+  }
+  if (lower.includes("email not confirmed")) {
+    return "Please confirm your email before signing in.";
+  }
+  if (lower.includes("email rate limit")) {
+    return "Too many attempts. Wait a moment, then try again.";
+  }
+  if (lower.includes("network") || lower.includes("fetch")) {
+    return "We could not reach the login service. Check your connection and try again.";
+  }
+  return message || "Sign in failed. Please try again.";
+}
+
+export function LoginForm({ next = "/", notice }: { next?: string; notice?: string }) {
+  const [message, setMessage] = useState(noticeMessage(notice));
+  const [messageType, setMessageType] = useState<"info" | "error">(
+    noticeMessage(notice) ? "error" : "info",
+  );
+  const [showResetHelp, setShowResetHelp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
   const nextPath = safeNextPath(next);
 
   async function signInWithPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
+    setMessageType("info");
+    setShowResetHelp(false);
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
     const supabase = createClient();
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    setLoading(false);
-
-    if (error) {
-      setMessage(error.message);
+    let result: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
+    try {
+      result = await supabase.auth.signInWithPassword({ email, password });
+    } catch {
+      setLoading(false);
+      setMessageType("error");
+      setMessage("We could not reach the login service. Check your connection and try again.");
+      setShowResetHelp(false);
       return;
     }
 
-    router.push(nextPath);
-    router.refresh();
+    const { data, error } = result;
+
+    if (error) {
+      setLoading(false);
+      setMessageType("error");
+      setMessage(authErrorMessage(error.message));
+      setShowResetHelp(true);
+      return;
+    }
+
+    if (!data.session) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setLoading(false);
+        setMessageType("error");
+        setMessage("Sign in did not finish. Try again or reset your password.");
+        setShowResetHelp(true);
+        return;
+      }
+    }
+
+    window.location.assign(nextPath);
   }
 
   return (
@@ -104,9 +166,22 @@ export function LoginForm({ next = "/" }: { next?: string }) {
       </button>
 
       {message ? (
-        <p className="mt-4 text-center text-sm text-[#2563ff]" role="status">
-          {message}
-        </p>
+        <div
+          className={`mt-4 rounded-[7px] border px-4 py-3 text-center text-sm font-medium ${
+            messageType === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-blue-200 bg-blue-50 text-[#2563ff]"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <p>{message}</p>
+          {showResetHelp ? (
+            <Link className="mt-2 inline-block text-[#2563ff]" href="/reset-password">
+              Reset password
+            </Link>
+          ) : null}
+        </div>
       ) : null}
     </form>
   );

@@ -12,8 +12,14 @@ function readBypassEmail() {
 }
 
 export function isAuthBypassEnabled() {
-  // Temporary product bypass: login is intentionally disabled.
-  return true;
+  if (process.env.REQUIRE_LOGIN_AUTH === "true") {
+    return false;
+  }
+
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+  );
 }
 
 async function findUserByEmail(supabase: SupabaseClient, email: string) {

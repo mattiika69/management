@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createSessionClient } from "@/lib/supabase/server";
 import { hashInvitationToken } from "@/lib/team/invitations";
 
 type AcceptPayload = {
@@ -11,7 +11,7 @@ type InvitationRow = {
   id: string;
   organization_id: string;
   email: string;
-  role: "admin" | "member";
+  role: "admin" | "member" | "viewer";
   accepted_at: string | null;
   revoked_at: string | null;
   expires_at: string;
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invitation token is required." }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  const supabase = await createSessionClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

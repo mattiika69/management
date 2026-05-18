@@ -36,9 +36,9 @@ export function TeamInvitationActions({ invitationId }: { invitationId: string }
         type="button"
         onClick={cancelInvite}
         disabled={status === "loading"}
-        className="text-sm font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+        className="settings-button-dark h-9 px-4"
       >
-        {status === "loading" ? "Cancelling..." : "Cancel"}
+        {status === "loading" ? "Revoking..." : "Revoke"}
       </button>
       {message ? (
         <p className="mt-2 text-sm text-red-700" role="status">

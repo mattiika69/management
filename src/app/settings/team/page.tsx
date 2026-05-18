@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { TeamMemberActions } from "@/components/team-member-actions";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -24,6 +25,7 @@ type Invitation = {
   role: string;
   expires_at: string;
   created_at: string;
+  email_delivery_status: "pending" | "sent" | "failed";
 };
 
 function readParam(value: string | string[] | undefined) {
@@ -75,9 +77,10 @@ export default async function TeamSettingsPage({
   const inviteStatus = readParam(params.invite);
 
   const { data: memberships, error: membershipsError } = await supabase
-    .from("organization_memberships")
+    .from("tenant_memberships")
     .select("user_id,role,created_at")
-    .eq("organization_id", organization.id)
+    .eq("tenant_id", organization.id)
+    .is("archived_at", null)
     .order("created_at", { ascending: true })
     .returns<Membership[]>();
 
@@ -89,9 +92,9 @@ export default async function TeamSettingsPage({
 
   const { data: invitations, error: invitationsError } = canManage
     ? await supabase
-        .from("organization_invitations")
-        .select("id,email,role,expires_at,created_at")
-        .eq("organization_id", organization.id)
+        .from("tenant_invitations")
+        .select("id,email,role,expires_at,created_at,email_delivery_status")
+        .eq("tenant_id", organization.id)
         .is("accepted_at", null)
         .is("revoked_at", null)
         .order("created_at", { ascending: false })
@@ -109,41 +112,58 @@ export default async function TeamSettingsPage({
       subtitle={`Manage workspace settings for ${organization.name}.`}
       tabs={settingsTabs}
     >
-      <section className="settings-page">
+      <section className="w-full">
         {inviteStatus === "accepted" ? (
           <div className="mb-5 rounded-[8px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
             Invitation accepted. You now have access to this workspace.
           </div>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_324px]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <section className="settings-card-pad">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-[22px] font-bold text-[#101828]">Team</h2>
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#155dfc]">Team</p>
+                <h2 className="text-[20px] font-bold text-[#101828]">Members</h2>
                 <p className="mt-2 text-[13px] font-medium text-[#667085]">
                   Manage who can access this workspace.
                 </p>
               </div>
               <span className="rounded-[5px] border border-[#d9e1ee] bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#667085]">
-                Your role: {membershipRole}
+                {membershipRole}
               </span>
             </div>
 
             <div className="mt-6 overflow-hidden rounded-[6px] border border-[#d9e1ee]">
-              <div className="settings-table-head hidden grid-cols-[1fr_140px_140px] gap-3 px-4 py-3 md:grid">
+              <div
+                className={`settings-table-head hidden gap-3 px-4 py-3 md:grid ${
+                  canManage
+                    ? "md:grid-cols-[minmax(0,1fr)_120px_120px_210px]"
+                    : "md:grid-cols-[minmax(0,1fr)_140px_140px]"
+                }`}
+              >
                 <span>Email</span>
                 <span>Role</span>
                 <span>Joined</span>
+                {canManage ? <span>Actions</span> : null}
               </div>
               {(memberships ?? []).map((membership) => (
                 <div
                   key={membership.user_id}
-                  className="grid gap-2 border-t border-[#e4e7ec] px-4 py-4 text-[13px] md:grid-cols-[1fr_140px_140px] md:gap-3"
+                  className={`grid gap-2 border-t border-[#e4e7ec] px-4 py-4 text-[13px] md:gap-3 ${
+                    canManage
+                      ? "md:grid-cols-[minmax(0,1fr)_120px_120px_210px]"
+                      : "md:grid-cols-[minmax(0,1fr)_140px_140px]"
+                  }`}
                 >
-                  <span className="min-w-0 truncate text-[#171717]">
-                    {memberEmails.get(membership.user_id)}
-                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-[#171717]">
+                      {memberEmails.get(membership.user_id)}
+                    </p>
+                    {membership.user_id === user.id ? (
+                      <p className="mt-1 text-[11px] font-medium text-[#667085]">You</p>
+                    ) : null}
+                  </div>
                   <span className="capitalize text-[#667085]">
                     <span className="md:hidden">Role: </span>
                     {membership.role}
@@ -152,6 +172,13 @@ export default async function TeamSettingsPage({
                     <span className="md:hidden">Joined: </span>
                     {formatDate(membership.created_at)}
                   </span>
+                  {canManage ? (
+                    <TeamMemberActions
+                      userId={membership.user_id}
+                      currentUserId={user.id}
+                      role={membership.role}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -171,7 +198,8 @@ export default async function TeamSettingsPage({
 
         {canManage ? (
           <section className="settings-card-pad mt-6">
-            <h2 className="text-[22px] font-bold text-[#101828]">Pending invites</h2>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#155dfc]">Pending</p>
+            <h2 className="text-[20px] font-bold text-[#101828]">Invitations</h2>
             <div className="mt-5 space-y-3">
               {(invitations ?? []).length ? (
                 invitations?.map((invitation) => (
@@ -180,12 +208,17 @@ export default async function TeamSettingsPage({
                     className="flex flex-wrap items-center justify-between gap-4 rounded-[7px] border border-[#d9e1ee] px-4 py-3 text-[13px]"
                   >
                     <div>
-                      <p className="font-medium text-[#171717]">{invitation.email}</p>
+                      <p className="font-bold text-[#171717]">{invitation.email}</p>
                       <p className="mt-1 text-[#667085]">
-                        {invitation.role} invite expires {formatDate(invitation.expires_at)}
+                        {invitation.email_delivery_status === "sent" ? "email sent" : invitation.email_delivery_status === "failed" ? "email not sent" : "pending"} · expires {formatDate(invitation.expires_at)}
                       </p>
                     </div>
-                    <TeamInvitationActions invitationId={invitation.id} />
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-[2px] border border-[#d9d0c3] bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#667085]">
+                        {invitation.role}
+                      </span>
+                      <TeamInvitationActions invitationId={invitation.id} />
+                    </div>
                   </div>
                 ))
               ) : (

@@ -59,6 +59,8 @@ export function buildTeamInviteEmail({
                 <p style="margin:0 0 28px;">
                   <a href="${safeInviteUrl}" style="display:inline-block;background:#ef4b25;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 18px;font-weight:700;">Accept invite</a>
                 </p>
+                <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#8a7f73;">If the button does not open, paste this link into your browser:</p>
+                <p style="margin:0 0 20px;font-size:13px;line-height:1.6;word-break:break-all;color:#4b5563;">${safeInviteUrl}</p>
                 <p style="margin:0;font-size:13px;line-height:1.6;color:#8a7f73;">If you were not expecting this invitation, you can ignore this email.</p>
               </td>
             </tr>

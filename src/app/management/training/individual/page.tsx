@@ -1,5 +1,5 @@
-import { TrainingRoutePage } from "../training-route-page";
+import { redirect } from "next/navigation";
 
-export default async function IndividualTrainingPage() {
-  return TrainingRoutePage({ active: "/management/training/individual", title: "Individual" });
+export default function IndividualTrainingRedirect() {
+  redirect("/management/training/individuals");
 }

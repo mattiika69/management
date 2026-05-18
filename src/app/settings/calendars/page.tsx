@@ -47,6 +47,7 @@ function isInternalBypassPerson(input: { name?: string | null; email?: string | 
 function providerLabel(provider: string) {
   if (provider === "google") return "Google";
   if (provider === "microsoft") return "Outlook";
+  if (provider === "nylas") return "Nylas";
   return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
@@ -123,6 +124,7 @@ export default async function CalendarSettingsPage() {
   const employees = Array.from(peopleByKey.values()).sort((a, b) => a.full_name.localeCompare(b.full_name));
   const googleReady = oauthProviderReady("google_calendar");
   const microsoftReady = oauthProviderReady("microsoft_calendar");
+  const nylasReady = oauthProviderReady("nylas");
 
   return (
     <AppShell
@@ -190,6 +192,15 @@ export default async function CalendarSettingsPage() {
                     ) : (
                       <button type="button" className="app-button-secondary h-9 px-3 text-[11px]" disabled>
                         Connect Outlook
+                      </button>
+                    )}
+                    {nylasReady ? (
+                      <Link prefetch={false} href="/api/calendars/nylas/oauth/start?returnTo=/settings/calendars" className="app-button-secondary h-9 px-3 text-[11px]">
+                        Connect Nylas
+                      </Link>
+                    ) : (
+                      <button type="button" className="app-button-secondary h-9 px-3 text-[11px]" disabled>
+                        Connect Nylas
                       </button>
                     )}
                     <button

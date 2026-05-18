@@ -9,11 +9,13 @@ export default async function SignupPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  if (isAuthBypassEnabled()) {
+  const inviteNext = next?.startsWith("/invite/") && !next.startsWith("//");
+
+  if (isAuthBypassEnabled() && !inviteNext) {
     redirect("/management");
   }
 
-  if (!next?.startsWith("/invite/")) {
+  if (!inviteNext) {
     redirect("/login");
   }
 

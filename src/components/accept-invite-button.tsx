@@ -21,6 +21,11 @@ export function AcceptInviteButton({ token }: { token: string }) {
     });
     const body = (await response.json()) as { error?: string };
 
+    if (response.status === 401) {
+      window.location.assign(`/login?next=${encodeURIComponent(`/invite/${token}`)}&notice=login-required`);
+      return;
+    }
+
     if (!response.ok) {
       setStatus("error");
       setMessage(body.error ?? "Could not accept invitation.");

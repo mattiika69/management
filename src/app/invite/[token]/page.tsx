@@ -1,13 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AcceptInviteButton } from "@/components/accept-invite-button";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createSessionClient } from "@/lib/supabase/server";
 import { hashInvitationToken } from "@/lib/team/invitations";
 
 type RouteProps = {
   params: Promise<{
     token: string;
+  }>;
+  searchParams?: Promise<{
+    code?: string | string[];
+    error?: string | string[];
   }>;
 };
 
@@ -29,6 +34,14 @@ function authHref(path: string, token: string) {
   return `${path}?next=${encodeURIComponent(`/invite/${token}`)}`;
 }
 
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+async function currentTimestamp() {
+  return Date.now();
+}
+
 function InviteShell({ children }: { children: ReactNode }) {
   return (
     <main className="min-h-screen bg-[#f7f7f2] px-6 py-10">
@@ -45,8 +58,24 @@ function InviteShell({ children }: { children: ReactNode }) {
   );
 }
 
-export default async function InvitePage({ params }: RouteProps) {
+export default async function InvitePage({ params, searchParams }: RouteProps) {
   const { token } = await params;
+  const query = searchParams ? await searchParams : {};
+  const code = firstParam(query.code);
+  const error = firstParam(query.error);
+
+  if (code) {
+    redirect(
+      `/auth/callback?code=${encodeURIComponent(code)}&next=${encodeURIComponent(`/invite/${token}`)}`,
+    );
+  }
+
+  if (error) {
+    redirect(
+      `/login?next=${encodeURIComponent(`/invite/${token}`)}&notice=invite-auth-failed`,
+    );
+  }
+
   const admin = createAdminClient();
   const tokenHash = hashInvitationToken(token);
   const { data: invitation } = await admin
@@ -87,7 +116,27 @@ export default async function InvitePage({ params }: RouteProps) {
     );
   }
 
-  const supabase = await createClient();
+  const now = await currentTimestamp();
+  if (new Date(invitation.expires_at).getTime() < now) {
+    return (
+      <InviteShell>
+        <h1 className="mt-5 text-3xl font-bold text-[#171717]">
+          Invite expired
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-[#5d5d55]">
+          Ask a workspace admin to send a new invitation to {invitation.email}.
+        </p>
+        <Link
+          href="/login"
+          className="mt-6 inline-block border border-[#0f766e] px-5 py-3 text-sm font-semibold text-[#0f766e]"
+        >
+          Back to login
+        </Link>
+      </InviteShell>
+    );
+  }
+
+  const supabase = await createSessionClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

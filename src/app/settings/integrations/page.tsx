@@ -118,6 +118,7 @@ export default async function IntegrationsSettingsPage() {
             canManage={canManage}
             googleReady={oauthProviderReady("google_calendar")}
             microsoftReady={oauthProviderReady("microsoft_calendar")}
+            nylasReady={oauthProviderReady("nylas")}
           />
         </div>
 

@@ -10,6 +10,7 @@ import {
   postTelegramMessage,
   verifyTelegramRequest,
 } from "@/lib/integrations/telegram";
+import { normalizeTelegramUsername } from "@/lib/integrations/telegram-username";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type TelegramUpdate = {
@@ -18,7 +19,7 @@ type TelegramUpdate = {
     message_id?: number;
     text?: string;
     chat?: { id?: number | string };
-    from?: { id?: number | string };
+    from?: { id?: number | string; username?: string };
   };
 };
 
@@ -33,6 +34,7 @@ type LinkCodeRow = {
 async function connectTelegramCode(
   chatId: string,
   telegramUserId: string | undefined,
+  telegramUsername: string | undefined,
   text: string | undefined,
 ) {
   const match = text?.match(/^\/start\s+([A-F0-9]+)$/i);
@@ -55,13 +57,15 @@ async function connectTelegramCode(
     .from("telegram_link_codes")
     .update({ used_at: new Date().toISOString() })
     .eq("id", code.id);
+  const displayUsername = normalizeTelegramUsername(telegramUsername);
   const connection = await upsertIntegrationConnection(supabase, {
     organizationId: code.organization_id,
     provider: "telegram",
     externalChannelId: chatId,
     externalUserId: telegramUserId,
-    displayName: `Telegram ${chatId}`,
+    displayName: displayUsername || `Telegram ${chatId}`,
     createdBy: code.user_id,
+    config: displayUsername ? { telegram_username: displayUsername } : {},
   });
   const response = await postTelegramMessage(
     chatId,
@@ -103,7 +107,12 @@ export async function POST(request: Request) {
     if (duplicate) return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  const connected = await connectTelegramCode(chatId, telegramUserId, payload.message?.text);
+  const connected = await connectTelegramCode(
+    chatId,
+    telegramUserId,
+    payload.message?.from?.username,
+    payload.message?.text,
+  );
   if (connected?.handled) {
     return NextResponse.json({ ok: true });
   }

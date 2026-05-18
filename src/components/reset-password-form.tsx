@@ -18,12 +18,22 @@ export function ResetPasswordForm() {
     const supabase = createClient();
     const origin = window.location.origin;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/callback?next=/update-password`,
-    });
+    let errorMessage = "";
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/auth/callback?next=/update-password`,
+      });
+      errorMessage = error?.message ?? "";
+    } catch {
+      errorMessage = "We could not reach the password reset service.";
+    }
 
     setLoading(false);
-    setMessage(error ? error.message : "Check your email for a reset link.");
+    setMessage(
+      errorMessage
+        ? `${errorMessage} Try again in a moment.`
+        : "If that email has an account, a reset link is on the way.",
+    );
   }
 
   return (

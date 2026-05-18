@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ConnectedAccountProvider = "google_calendar" | "microsoft_calendar" | "zoom";
+export type ConnectedAccountProvider = "google_calendar" | "microsoft_calendar" | "nylas" | "zoom";
 
 type TokenInput = {
   tenantId: string;

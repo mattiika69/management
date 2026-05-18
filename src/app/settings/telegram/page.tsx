@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { TelegramLinkPanel } from "@/components/telegram-link-panel";
+import { TelegramUsernameForm } from "@/components/telegram-username-form";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,9 @@ type Connection = {
   id: string;
   display_name: string | null;
   external_channel_id: string | null;
+  config: {
+    telegram_username?: string;
+  } | null;
 };
 
 export default async function TelegramSettingsPage() {
@@ -24,7 +28,7 @@ export default async function TelegramSettingsPage() {
   const organization = await getOrCreateDefaultOrganization(supabase, user);
   const { data, error } = await supabase
     .from("integration_connections")
-    .select("id,display_name,external_channel_id")
+    .select("id,display_name,external_channel_id,config")
     .eq("organization_id", organization.id)
     .eq("provider", "telegram")
     .is("revoked_at", null)
@@ -66,11 +70,27 @@ export default async function TelegramSettingsPage() {
           </div>
           {data?.length ? (
             data.map((connection) => (
-              <div key={connection.id} className="flex items-center justify-between gap-4 border-b border-[#e4e7ec] px-4 py-4 last:border-b-0">
-                <span className="text-[13px] font-bold text-[#101828]">
-                  {connection.display_name ?? connection.external_channel_id ?? "Telegram chat"}
-                </span>
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">Connected</span>
+              <div
+                key={connection.id}
+                className="grid gap-4 border-b border-[#e4e7ec] px-4 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]"
+              >
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-0 truncate text-[13px] font-bold text-[#101828]">
+                      {connection.display_name ?? connection.external_channel_id ?? "Telegram chat"}
+                    </span>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                      Connected
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[12px] font-medium text-[#667085]">
+                    Messages from this chat can work with the AI Agent.
+                  </p>
+                </div>
+                <TelegramUsernameForm
+                  connectionId={connection.id}
+                  initialUsername={connection.config?.telegram_username ?? connection.display_name}
+                />
               </div>
             ))
           ) : (

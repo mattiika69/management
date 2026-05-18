@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
-import { getResend, getResendFromEmail } from "@/lib/resend/server";
+import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type EmailPayload = {
   to?: string;
@@ -11,85 +11,79 @@ type EmailPayload = {
 };
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as EmailPayload;
-  const to = payload.to?.trim().toLowerCase();
-  const subject = payload.subject?.trim();
-  const text = payload.text?.trim();
-  const html = payload.html?.trim();
-
-  if (!to || !subject || (!text && !html)) {
-    return NextResponse.json(
-      { error: "To, subject, and text or html are required." },
-      { status: 400 },
-    );
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
-  }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const { data: emailMessage, error: insertError } = await supabase
-    .from("email_messages")
-    .insert({
-      organization_id: organization.id,
-      created_by: user.id,
-      to_email: to,
-      subject,
-      text_body: text,
-      html_body: html,
-      metadata: { source: "api" },
-    })
-    .select("id")
-    .single<{ id: string }>();
-
-  if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 400 });
-  }
-
   try {
+    const payload = (await request.json()) as EmailPayload;
+    const to = normalizeEmail(payload.to);
+    const subject = payload.subject?.trim();
+    const text = payload.text?.trim();
+    const html = payload.html?.trim();
+
+    if (!to || !subject || (!text && !html)) {
+      return NextResponse.json(
+        { error: "A valid recipient, subject, and message body are required." },
+        { status: 400 },
+      );
+    }
+
+    const context = await requireTenantContext(await createClient());
     const resend = getResend();
     const from = getResendFromEmail();
-    const email = html
-      ? { from, to, subject, html }
-      : { from, to, subject, text: text ?? "" };
-    const result = await resend.emails.send(email);
 
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
-
-    const { error: updateError } = await supabase
+    const { data: emailMessage, error: insertError } = await context.supabase
       .from("email_messages")
-      .update({
-        status: "sent",
-        external_message_id: result.data?.id,
-        metadata: { source: "api", provider_response: result.data },
+      .insert({
+        organization_id: context.tenant.id,
+        tenant_id: context.tenant.id,
+        created_by: context.user.id,
+        to_email: to,
+        subject,
+        text_body: text,
+        html_body: html,
+        metadata: { source: "api" },
       })
-      .eq("id", emailMessage.id);
+      .select("id")
+      .single<{ id: string }>();
 
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 400 });
+    if (insertError) throw new Error(insertError.message);
+
+    try {
+      const result = await resend.emails.send({
+        from,
+        to,
+        subject,
+        text: text ?? "",
+        ...(html ? { html } : {}),
+      });
+
+      if (result.error) throw new Error(result.error.message);
+
+      const { error: updateError } = await context.supabase
+        .from("email_messages")
+        .update({
+          status: "sent",
+          external_message_id: result.data?.id,
+          metadata: { source: "api", provider_response: result.data },
+        })
+        .eq("id", emailMessage.id);
+
+      if (updateError) throw new Error(updateError.message);
+
+      return NextResponse.json({ ok: true, id: result.data?.id });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Email send failed.";
+
+      await context.supabase
+        .from("email_messages")
+        .update({
+          status: "failed",
+          error_message: message,
+          metadata: { source: "api", error: message },
+        })
+        .eq("id", emailMessage.id);
+
+      return NextResponse.json({ error: message }, { status: 500 });
     }
-
-    return NextResponse.json({ ok: true, id: result.data?.id });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Email send failed.";
-
-    await supabase
-      .from("email_messages")
-      .update({
-        status: "failed",
-        error_message: message,
-        metadata: { source: "api", error: message },
-      })
-      .eq("id", emailMessage.id);
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return jsonError(error);
   }
 }

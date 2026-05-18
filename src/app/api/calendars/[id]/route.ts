@@ -16,7 +16,7 @@ type CalendarPayload = {
   status?: string;
 };
 
-const providers = new Set(["google", "microsoft", "apple", "caldav", "other"]);
+const providers = new Set(["google", "microsoft", "nylas", "apple", "caldav", "other"]);
 const directions = new Set(["two_way", "import_only", "export_only"]);
 const statuses = new Set(["connected", "needs_reauth", "paused"]);
 

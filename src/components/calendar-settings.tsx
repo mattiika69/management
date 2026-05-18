@@ -33,11 +33,13 @@ export function CalendarSettings({
   canManage,
   googleReady = false,
   microsoftReady = false,
+  nylasReady = false,
 }: {
   initialCalendars: CalendarConnectionRow[];
   canManage: boolean;
   googleReady?: boolean;
   microsoftReady?: boolean;
+  nylasReady?: boolean;
 }) {
   const [calendars, setCalendars] = useState(initialCalendars);
   const [form, setForm] = useState(emptyForm);
@@ -111,6 +113,11 @@ export function CalendarSettings({
                   Outlook
                 </Link>
               ) : null}
+              {nylasReady ? (
+                <Link prefetch={false} href="/api/calendars/nylas/oauth/start?returnTo=/settings/integrations" className="settings-button-outline">
+                  Nylas
+                </Link>
+              ) : null}
             </div>
           </div>
           <div className="mt-4 grid gap-3">
@@ -119,6 +126,7 @@ export function CalendarSettings({
               <select className="settings-field w-full normal-case" value={form.provider} onChange={(event) => setForm({ ...form, provider: event.target.value })}>
                 <option value="google">Google</option>
                 <option value="microsoft">Microsoft</option>
+                <option value="nylas">Nylas</option>
                 <option value="apple">Apple</option>
                 <option value="caldav">CalDAV</option>
                 <option value="other">Other</option>

@@ -24,7 +24,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: "training-onboarding", label: "Onboarding", href: "/management/training", groupId: "training" },
   { id: "training-sops", label: "SOPs", href: "/management/training/sops", groupId: "training" },
   { id: "training-master-library", label: "Master Library", href: "/management/training/master-library", groupId: "training" },
-  { id: "training-individual", label: "Individual", href: "/management/training/individual", groupId: "training" },
+  { id: "training-individuals", label: "Individuals", href: "/management/training/individuals", groupId: "training" },
 ];
 
 export const SIDEBAR_GROUPS: SidebarGroup[] = [
@@ -47,7 +47,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     id: "training",
     label: "Training",
-    itemIds: ["training-onboarding", "training-sops", "training-master-library", "training-individual"],
+    itemIds: ["training-onboarding", "training-sops", "training-master-library", "training-individuals"],
   },
   {
     id: "settings",

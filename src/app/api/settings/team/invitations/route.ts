@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
-import { getResend, getResendFromEmail } from "@/lib/resend/server";
+import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
 import { createClient } from "@/lib/supabase/server";
 import { buildTeamInviteEmail } from "@/lib/team/email";
 import {
@@ -26,7 +26,7 @@ function appOrigin(request: Request) {
 
 export async function POST(request: Request) {
   const payload = (await request.json()) as InvitePayload;
-  const email = payload.email?.trim().toLowerCase();
+  const email = normalizeEmail(payload.email);
   const role = payload.role?.trim() ?? "member";
 
   if (!email || !isTeamRole(role)) {
@@ -122,6 +122,7 @@ export async function POST(request: Request) {
     .from("email_messages")
     .insert({
       organization_id: organization.id,
+      tenant_id: organization.id,
       created_by: user.id,
       to_email: email,
       subject,
@@ -169,9 +170,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
 
+    await supabase
+      .from("tenant_invitations")
+      .update({ email_delivery_status: "sent" })
+      .eq("id", invitation.id);
+
     return NextResponse.json({ ok: true, id: invitation.id });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Invitation email failed.";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invitation email failed.";
 
     await supabase
       .from("email_messages")
@@ -186,6 +192,16 @@ export async function POST(request: Request) {
       })
       .eq("id", emailMessage.id);
 
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    await supabase
+      .from("tenant_invitations")
+      .update({ email_delivery_status: "failed", email_error_message: message })
+      .eq("id", invitation.id);
+
+      return NextResponse.json({
+        ok: true,
+        id: invitation.id,
+        emailSent: false,
+        message: "Invite saved, email not sent.",
+      });
+    }
 }

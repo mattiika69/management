@@ -1,5 +1,11 @@
 import { randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getNylasApiBaseUrl,
+  getNylasApiKey,
+  getNylasClientId,
+  nylasFetchJson,
+} from "@/lib/nylas/server";
 import { auditAction, type TenantContext } from "@/lib/tenant-context";
 import {
   decryptSecret,
@@ -14,7 +20,7 @@ import {
 export const OAUTH_STATE_COOKIE = "hom_provider_oauth_state";
 export const OAUTH_RETURN_COOKIE = "hom_provider_oauth_return";
 
-export type OAuthProvider = "google_calendar" | "microsoft_calendar" | "zoom";
+export type OAuthProvider = "google_calendar" | "microsoft_calendar" | "nylas" | "zoom";
 
 type TokenResponse = {
   access_token?: string;
@@ -22,6 +28,8 @@ type TokenResponse = {
   expires_in?: number;
   token_type?: string;
   scope?: string;
+  grant_id?: string;
+  email?: string;
   error?: string;
   error_description?: string;
 };
@@ -37,6 +45,19 @@ type MicrosoftProfile = {
   displayName?: string;
   mail?: string | null;
   userPrincipalName?: string | null;
+};
+
+type NylasGrant = {
+  data?: {
+    id?: string;
+    grant_id?: string;
+    email?: string;
+    provider?: string;
+  };
+  id?: string;
+  grant_id?: string;
+  email?: string;
+  provider?: string;
 };
 
 type ZoomProfile = {
@@ -70,6 +91,9 @@ export function oauthProviderReady(provider: OAuthProvider) {
   if (provider === "microsoft_calendar") {
     return Boolean(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET);
   }
+  if (provider === "nylas") {
+    return Boolean(process.env.NYLAS_CLIENT_ID && process.env.NYLAS_API_KEY);
+  }
   return Boolean(process.env.ZOOM_CLIENT_ID && process.env.ZOOM_CLIENT_SECRET);
 }
 
@@ -101,6 +125,16 @@ export function oauthAuthorizeUrl(provider: OAuthProvider, origin: string, state
     return url;
   }
 
+  if (provider === "nylas") {
+    const url = new URL(`${getNylasApiBaseUrl()}/v3/connect/auth`);
+    url.searchParams.set("client_id", getNylasClientId());
+    url.searchParams.set("redirect_uri", `${origin}/api/calendars/nylas/oauth/callback`);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("access_type", "offline");
+    url.searchParams.set("state", state);
+    return url;
+  }
+
   const clientId = process.env.ZOOM_CLIENT_ID;
   if (!clientId) throw new Error("Zoom is not available.");
   const url = new URL("https://zoom.us/oauth/authorize");
@@ -113,9 +147,13 @@ export function oauthAuthorizeUrl(provider: OAuthProvider, origin: string, state
 
 async function fetchJson<T>(url: string, init: RequestInit) {
   const response = await fetch(url, init);
-  const body = (await response.json().catch(() => ({}))) as T & { error?: string; message?: string };
+  const body = (await response.json().catch(() => ({}))) as T & {
+    error?: string | { message?: string };
+    message?: string;
+  };
   if (!response.ok) {
-    throw new Error(body.error || body.message || "Provider request failed.");
+    const errorMessage = typeof body.error === "string" ? body.error : body.error?.message;
+    throw new Error(errorMessage || body.message || "Provider request failed.");
   }
   return body;
 }
@@ -152,6 +190,20 @@ async function exchangeCode(provider: OAuthProvider, code: string, origin: strin
         client_secret: clientSecret,
         redirect_uri: `${origin}/api/calendars/microsoft/oauth/callback`,
         grant_type: "authorization_code",
+      }),
+    });
+  }
+
+  if (provider === "nylas") {
+    return fetchJson<TokenResponse>(`${getNylasApiBaseUrl()}/v3/connect/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code,
+        client_id: getNylasClientId(),
+        client_secret: getNylasApiKey(),
+        grant_type: "authorization_code",
+        redirect_uri: `${origin}/api/calendars/nylas/oauth/callback`,
       }),
     });
   }
@@ -207,7 +259,7 @@ async function refreshToken(supabase: SupabaseClient, token: Awaited<ReturnType<
         grant_type: "refresh_token",
       }),
     });
-  } else {
+  } else if (token.provider === "zoom") {
     const clientId = process.env.ZOOM_CLIENT_ID;
     const clientSecret = process.env.ZOOM_CLIENT_SECRET;
     if (!clientId || !clientSecret) throw new Error("Zoom is not available.");
@@ -222,6 +274,8 @@ async function refreshToken(supabase: SupabaseClient, token: Awaited<ReturnType<
         grant_type: "refresh_token",
       }),
     });
+  } else {
+    throw new Error("Connection needs to be reconnected.");
   }
 
   if (!response.access_token) throw new Error("Provider did not return an access token.");
@@ -252,36 +306,54 @@ export async function getProviderAccessToken(
 export async function connectCalendarProvider(
   admin: SupabaseClient,
   context: TenantContext,
-  provider: "google_calendar" | "microsoft_calendar",
+  provider: "google_calendar" | "microsoft_calendar" | "nylas",
   code: string,
   origin: string,
 ) {
   const token = await exchangeCode(provider, code, origin);
-  if (!token.access_token) throw new Error("Provider did not return an access token.");
+  if (!token.access_token && !token.grant_id) {
+    throw new Error("Provider did not return a usable connection token.");
+  }
 
   let accountEmail: string | undefined;
   let accountId: string | undefined;
   let displayName: string | undefined;
+  let providerName: string | undefined;
 
   if (provider === "google_calendar") {
+    if (!token.access_token) throw new Error("Provider did not return an access token.");
     const profile = await fetchJson<GoogleProfile>("https://www.googleapis.com/oauth2/v3/userinfo", {
       headers: { Authorization: `Bearer ${token.access_token}` },
     });
     accountEmail = profile.email?.trim().toLowerCase();
     accountId = profile.sub;
     displayName = profile.name || accountEmail || "Google Calendar";
-  } else {
+  } else if (provider === "microsoft_calendar") {
+    if (!token.access_token) throw new Error("Provider did not return an access token.");
     const profile = await fetchJson<MicrosoftProfile>("https://graph.microsoft.com/v1.0/me", {
       headers: { Authorization: `Bearer ${token.access_token}` },
     });
     accountEmail = (profile.mail || profile.userPrincipalName)?.trim().toLowerCase();
     accountId = profile.id;
     displayName = profile.displayName || accountEmail || "Outlook Calendar";
+  } else {
+    const grantId = token.grant_id;
+    if (!grantId) throw new Error("Nylas did not return a grant id.");
+    accountId = grantId;
+    accountEmail = token.email?.trim().toLowerCase();
+    if (!accountEmail) {
+      const grant = await nylasFetchJson<NylasGrant>(`/v3/grants/${grantId}`);
+      const data = grant.data ?? grant;
+      accountEmail = data.email?.trim().toLowerCase();
+      providerName = data.provider;
+    }
+    displayName = accountEmail || "Nylas Calendar";
   }
 
   if (!accountEmail) throw new Error("Provider account email was not available.");
 
-  const calendarProvider = provider === "google_calendar" ? "google" : "microsoft";
+  const calendarProvider =
+    provider === "google_calendar" ? "google" : provider === "microsoft_calendar" ? "microsoft" : "nylas";
   const { data: existing, error: findError } = await admin
     .from("calendar_connections")
     .select("id")
@@ -304,7 +376,7 @@ export async function connectCalendarProvider(
     include_events: true,
     include_tasks: false,
     status: "connected",
-    metadata: { scope: token.scope ?? null },
+    metadata: { scope: token.scope ?? null, nylas_provider: providerName ?? null },
     created_by_user_id: context.user.id,
     updated_by_user_id: context.user.id,
     archived_at: null,
@@ -316,13 +388,16 @@ export async function connectCalendarProvider(
   const { data: connection, error } = await query;
   if (error) throw new Error(error.message);
 
+  const storedAccessToken = token.access_token ?? token.grant_id ?? accountId;
+  if (!storedAccessToken) throw new Error("Provider did not return a storable connection token.");
+
   await saveConnectedAccountToken(admin, {
     tenantId: context.tenant.id,
     provider,
     connectionId: connection.id,
     accountEmail,
     accountId: accountId ?? null,
-    accessToken: token.access_token,
+    accessToken: storedAccessToken,
     refreshToken: token.refresh_token ?? null,
     tokenType: token.token_type ?? null,
     scope: token.scope ?? null,

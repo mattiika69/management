@@ -18,15 +18,13 @@ export const trainingTabs = [
   { href: "/management/training", label: "Onboarding" },
   { href: "/management/training/sops", label: "SOPs" },
   { href: "/management/training/master-library", label: "Master Library" },
-  { href: "/management/training/individual", label: "Individual" },
+  { href: "/management/training/individuals", label: "Individuals" },
 ];
 
 export const settingsTabs = [
   { href: "/settings/account", label: "Account" },
   { href: "/settings/ai-context-docs", label: "AI Context" },
-  { href: "/settings/employees", label: "Employees" },
   { href: "/settings/team", label: "Team" },
-  { href: "/settings/pods", label: "Pods" },
   { href: "/settings/calendars", label: "Calendars" },
   { href: "/settings/zoom", label: "Zoom" },
   { href: "/settings/billing", label: "Billing" },

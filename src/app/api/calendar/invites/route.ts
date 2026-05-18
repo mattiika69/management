@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildIcsInvite, createConnectedCalendarEvent, createZoomMeeting } from "@/lib/calendar/invites";
-import { getResend, getResendFromEmail } from "@/lib/resend/server";
+import { getResend, getResendFromEmail, normalizeEmailList } from "@/lib/resend/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { auditAction, jsonError, requireTenantContext } from "@/lib/tenant-context";
@@ -23,6 +23,7 @@ type CalendarConnection = {
   provider: string;
   account_email: string;
   display_name: string;
+  provider_account_id: string | null;
 };
 
 type ZoomConnection = {
@@ -30,21 +31,8 @@ type ZoomConnection = {
   cloud_recording_sync: boolean;
 };
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function parseRecipients(value: unknown) {
-  if (!Array.isArray(value)) return [];
-  return Array.from(
-    new Set(
-      value
-        .map((email) => cleanText(email).toLowerCase())
-        .filter((email) => emailPattern.test(email)),
-    ),
-  );
 }
 
 function parseDate(value: unknown) {
@@ -92,7 +80,7 @@ export async function POST(request: Request) {
     const description = cleanText(payload.description);
     const timezone = cleanText(payload.timezone) || "America/New_York";
     const location = cleanText(payload.location);
-    const recipientEmails = parseRecipients(payload.recipientEmails);
+    const recipientEmails = normalizeEmailList(payload.recipientEmails);
     const startAt = parseDate(payload.startAt);
     const endAt = parseDate(payload.endAt);
 
@@ -114,7 +102,7 @@ export async function POST(request: Request) {
       calendarConnectionId
         ? admin
             .from("calendar_connections")
-            .select("id,provider,account_email,display_name")
+            .select("id,provider,account_email,display_name,provider_account_id")
             .eq("id", calendarConnectionId)
             .eq("tenant_id", context.tenant.id)
             .is("archived_at", null)
@@ -134,6 +122,8 @@ export async function POST(request: Request) {
     if (calendarResult.error) throw new Error(calendarResult.error.message);
     if (zoomResult.error) throw new Error(zoomResult.error.message);
 
+    const from = getResendFromEmail();
+    const resend = getResend();
     let meetingUrl: string | null = null;
     let zoomMeetingId: string | null = null;
     if (payload.createZoomMeeting && zoomResult.data?.id) {
@@ -175,7 +165,6 @@ export async function POST(request: Request) {
 
     if (inviteError) throw new Error(inviteError.message);
 
-    const from = getResendFromEmail();
     const organizerEmail = calendarResult.data?.account_email || context.user.email || extractEmail(from);
     let providerEvent: Awaited<ReturnType<typeof createConnectedCalendarEvent>> = null;
     let providerEventError: string | null = null;
@@ -185,6 +174,7 @@ export async function POST(request: Request) {
           tenantId: context.tenant.id,
           connectionId: calendarResult.data.id,
           provider: calendarResult.data.provider,
+          providerAccountId: calendarResult.data.provider_account_id,
           title,
           description,
           startAt,
@@ -213,7 +203,6 @@ export async function POST(request: Request) {
       recipientEmails,
     });
 
-    const resend = getResend();
     const html = emailHtml({ title, description, startAt, endAt, timezone, location, meetingUrl });
     const text = [
       description || "You have been invited to a meeting.",
@@ -229,6 +218,7 @@ export async function POST(request: Request) {
         .from("email_messages")
         .insert({
           organization_id: context.tenant.id,
+          tenant_id: context.tenant.id,
           created_by: context.user.id,
           to_email: to,
           subject: title,

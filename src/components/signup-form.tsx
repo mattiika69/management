@@ -2,11 +2,24 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 function safeNextPath(next: string) {
   return next.startsWith("/") && !next.startsWith("//") ? next : "/get-started";
+}
+
+function signupErrorMessage(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("already registered") || lower.includes("already exists")) {
+    return "That email already has an account. Sign in instead.";
+  }
+  if (lower.includes("password")) {
+    return "Use a stronger password, then try again.";
+  }
+  if (lower.includes("rate limit")) {
+    return "Too many attempts. Wait a moment, then try again.";
+  }
+  return message || "Account creation failed. Please try again.";
 }
 
 export function SignupForm({ next = "/get-started" }: { next?: string }) {
@@ -14,7 +27,6 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const router = useRouter();
 
   async function signUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,33 +50,41 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
       return;
     }
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
-        data: {
-          organization_name: organizationName,
-          first_name: firstName,
-          last_name: lastName,
-          name: [firstName, lastName].filter(Boolean).join(" "),
+    let result: Awaited<ReturnType<typeof supabase.auth.signUp>>;
+    try {
+      result = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+          data: {
+            organization_name: organizationName,
+            first_name: firstName,
+            last_name: lastName,
+            name: [firstName, lastName].filter(Boolean).join(" "),
+          },
         },
-      },
-    });
+      });
+    } catch {
+      setLoading(false);
+      setMessage("We could not reach the signup service. Check your connection and try again.");
+      return;
+    }
+
+    const { data, error } = result;
 
     setLoading(false);
     if (error) {
-      setMessage(error.message);
+      setMessage(signupErrorMessage(error.message));
       return;
     }
 
     if (data.session) {
-      router.push(nextPath);
-      router.refresh();
+      window.location.assign(nextPath);
       return;
     }
 
-    setMessage("Account created. Sign in to continue.");
+    setMessage("Account created. Check your email if a confirmation link is required, then sign in.");
   }
 
   return (

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getNylasCalendarId, nylasFetchJson } from "@/lib/nylas/server";
 import { getProviderAccessToken } from "@/lib/oauth/provider-oauth";
 
 export type CalendarInviteInput = {
@@ -87,6 +88,7 @@ export async function createConnectedCalendarEvent(
     tenantId: string;
     connectionId?: string | null;
     provider?: string | null;
+    providerAccountId?: string | null;
   },
 ) {
   if (!input.connectionId || !input.provider) return null;
@@ -146,6 +148,28 @@ export async function createConnectedCalendarEvent(
       },
     );
     return { id: event.id ?? null, url: event.webLink ?? null };
+  }
+
+  if (input.provider === "nylas") {
+    if (!input.providerAccountId) throw new Error("Nylas connection needs to be reconnected.");
+    const event = await nylasFetchJson<{ data?: { id?: string; html_link?: string; ical_uid?: string } }>(
+      `/v3/grants/${encodeURIComponent(input.providerAccountId)}/events?calendar_id=${encodeURIComponent(getNylasCalendarId())}`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          title: input.title,
+          description: descriptionWithLink(input),
+          location: input.location || input.meetingUrl || "",
+          when: {
+            start_time: Math.floor(new Date(input.startAt).getTime() / 1000),
+            end_time: Math.floor(new Date(input.endAt).getTime() / 1000),
+            timezone: input.timezone,
+          },
+          participants: input.recipientEmails.map((email) => ({ email, status: "noreply" })),
+        }),
+      },
+    );
+    return { id: event.data?.id ?? event.data?.ical_uid ?? null, url: event.data?.html_link ?? null };
   }
 
   return null;

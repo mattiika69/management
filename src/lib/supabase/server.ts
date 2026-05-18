@@ -5,12 +5,8 @@ import {
   isAuthBypassEnabled,
 } from "@/lib/supabase/auth-bypass";
 
-export async function createClient() {
+async function createCookieClient() {
   const cookieStore = await cookies();
-
-  if (isAuthBypassEnabled()) {
-    return createAuthBypassClient();
-  }
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -34,4 +30,16 @@ export async function createClient() {
       },
     },
   );
+}
+
+export async function createClient() {
+  if (isAuthBypassEnabled()) {
+    return createAuthBypassClient();
+  }
+
+  return createCookieClient();
+}
+
+export async function createSessionClient() {
+  return createCookieClient();
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getResend, getResendFromEmail } from "@/lib/resend/server";
+import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { buildTeamInviteEmail } from "@/lib/team/email";
 import {
@@ -16,10 +17,76 @@ type InvitePayload = {
   role?: string;
 };
 
+type InvitationRow = {
+  id: string;
+};
+
+type InviteDelivery = {
+  sent: boolean;
+  provider: "resend" | "supabase" | null;
+  externalMessageId?: string;
+  providerResponse?: unknown;
+  errorMessage?: string;
+};
+
+async function sendInviteEmail(input: {
+  email: string;
+  subject: string;
+  text: string;
+  html: string;
+  inviteUrl: string;
+}): Promise<InviteDelivery> {
+  try {
+    const result = await getResend().emails.send({
+      from: getResendFromEmail(),
+      to: input.email,
+      subject: input.subject,
+      text: input.text,
+      html: input.html,
+    });
+
+    if (result.error) throw new Error(result.error.message);
+
+    return {
+      sent: true,
+      provider: "resend",
+      externalMessageId: result.data?.id,
+      providerResponse: result.data,
+    };
+  } catch (resendError) {
+    const resendMessage = resendError instanceof Error ? resendError.message : "Resend delivery failed.";
+
+    try {
+      const { error } = await createAdminClient().auth.admin.inviteUserByEmail(
+        input.email,
+        { redirectTo: input.inviteUrl },
+      );
+
+      if (error) throw new Error(error.message);
+
+      return {
+        sent: true,
+        provider: "supabase",
+        externalMessageId: "supabase-auth-invite",
+      };
+    } catch (supabaseError) {
+      const supabaseMessage = supabaseError instanceof Error
+        ? supabaseError.message
+        : "Supabase invite delivery failed.";
+
+      return {
+        sent: false,
+        provider: null,
+        errorMessage: `${resendMessage} ${supabaseMessage}`.trim(),
+      };
+    }
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as InvitePayload;
-    const email = payload.email?.trim().toLowerCase();
+    const email = normalizeEmail(payload.email);
     const role = payload.role?.trim() ?? "member";
 
     if (!email || !isTeamRole(role)) {
@@ -49,23 +116,44 @@ export async function POST(request: Request) {
     const token = createInvitationToken();
     const tokenHash = hashInvitationToken(token);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: invitation, error: invitationError } = await supabase
+    const { data: existingInvitation, error: existingError } = await supabase
       .from("organization_invitations")
-      .upsert(
-        {
-          organization_id: context.tenant.id,
-          email,
-          role,
-          token_hash: tokenHash,
-          invited_by: context.user.id,
-          expires_at: expiresAt,
-          revoked_at: null,
-          accepted_at: null,
-        },
-        { onConflict: "token_hash" },
-      )
       .select("id")
-      .single<{ id: string }>();
+      .eq("organization_id", context.tenant.id)
+      .eq("email", email)
+      .is("accepted_at", null)
+      .is("revoked_at", null)
+      .maybeSingle<InvitationRow>();
+
+    if (existingError) throw new Error(existingError.message);
+
+    const invitationQuery = existingInvitation
+      ? supabase
+          .from("organization_invitations")
+          .update({
+            role,
+            token_hash: tokenHash,
+            invited_by: context.user.id,
+            expires_at: expiresAt,
+          })
+          .eq("id", existingInvitation.id)
+          .eq("organization_id", context.tenant.id)
+          .select("id")
+          .single<InvitationRow>()
+      : supabase
+          .from("organization_invitations")
+          .insert({
+            organization_id: context.tenant.id,
+            email,
+            role,
+            token_hash: tokenHash,
+            invited_by: context.user.id,
+            expires_at: expiresAt,
+          })
+          .select("id")
+          .single<InvitationRow>();
+
+    const { data: invitation, error: invitationError } = await invitationQuery;
 
     if (invitationError) throw new Error(invitationError.message);
 
@@ -106,20 +194,21 @@ export async function POST(request: Request) {
 
     if (emailInsertError) throw new Error(emailInsertError.message);
 
-    try {
-      const result = await getResend().emails.send({
-        from: getResendFromEmail(),
-        to: email,
-        subject,
-        text,
-        html,
-      });
+    const delivery = await sendInviteEmail({ email, subject, text, html, inviteUrl });
 
-      if (result.error) throw new Error(result.error.message);
-
+    if (delivery.sent) {
       await supabase
         .from("email_messages")
-        .update({ status: "sent", external_message_id: result.data?.id })
+        .update({
+          status: "sent",
+          external_message_id: delivery.externalMessageId,
+          metadata: {
+            source: "team_invitation",
+            invitation_id: invitation.id,
+            delivery_provider: delivery.provider,
+            provider_response: delivery.providerResponse,
+          },
+        })
         .eq("id", emailMessage.id);
 
       await supabase
@@ -127,20 +216,33 @@ export async function POST(request: Request) {
         .update({ email_delivery_status: "sent" })
         .eq("id", invitation.id);
 
-      return NextResponse.json({ ok: true, id: invitation.id });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Invitation email failed.";
-      await supabase
-        .from("email_messages")
-        .update({ status: "failed", error_message: message })
-        .eq("id", emailMessage.id);
-      await supabase
-        .from("tenant_invitations")
-        .update({ email_delivery_status: "failed", email_error_message: message })
-        .eq("id", invitation.id);
-
-      return NextResponse.json({ error: message }, { status: 500 });
+      return NextResponse.json({ ok: true, id: invitation.id, emailSent: true });
     }
+
+    const message = delivery.errorMessage ?? "Invitation email could not be sent.";
+    await supabase
+      .from("email_messages")
+      .update({
+        status: "failed",
+        error_message: message,
+        metadata: {
+          source: "team_invitation",
+          invitation_id: invitation.id,
+          error: message,
+        },
+      })
+      .eq("id", emailMessage.id);
+    await supabase
+      .from("tenant_invitations")
+      .update({ email_delivery_status: "failed", email_error_message: message })
+      .eq("id", invitation.id);
+
+    return NextResponse.json({
+      ok: true,
+      id: invitation.id,
+      emailSent: false,
+      message: "Invite saved, email not sent.",
+    });
   } catch (error) {
     return jsonError(error);
   }
