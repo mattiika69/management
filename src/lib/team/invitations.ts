@@ -17,5 +17,5 @@ export function hashInvitationToken(token: string) {
 export function buildInviteUrl(origin: string, token: string) {
   const safeOrigin = origin.replace(/\/$/, "");
   const safeToken = encodeURIComponent(token);
-  return `${safeOrigin}/invite/accept?token=${safeToken}`;
+  return `${safeOrigin}/invite/${safeToken}`;
 }

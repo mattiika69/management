@@ -27,6 +27,8 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const nextPath = safeNextPath(next);
+  const isInviteSignup = nextPath.startsWith("/invite/");
 
   async function signUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,7 +44,6 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
     const supabase = createClient();
     const origin = window.location.origin;
-    const nextPath = safeNextPath(next);
 
     if (password !== confirmPassword) {
       setLoading(false);
@@ -101,19 +102,21 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
         </p>
       </div>
 
-      <label className="mb-4 block">
-        <span className="mb-2 block text-[15px] font-medium text-[#334155]">
-          Organization Name
-        </span>
-        <input
-          required
-          name="organizationName"
-          type="text"
-          autoComplete="organization"
-          className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-white px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
-          placeholder="Your company name"
-        />
-      </label>
+      {isInviteSignup ? null : (
+        <label className="mb-4 block">
+          <span className="mb-2 block text-[15px] font-medium text-[#334155]">
+            Organization Name
+          </span>
+          <input
+            required
+            name="organizationName"
+            type="text"
+            autoComplete="organization"
+            className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-white px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
+            placeholder="Your company name"
+          />
+        </label>
+      )}
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <label className="block">
@@ -238,7 +241,7 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
         Already have an account?{" "}
         <Link
           className="font-medium text-[#2563ff]"
-          href={`/login?next=${encodeURIComponent(safeNextPath(next))}`}
+          href={`/login?next=${encodeURIComponent(nextPath)}`}
         >
           Sign in
         </Link>

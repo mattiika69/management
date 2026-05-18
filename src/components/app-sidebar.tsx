@@ -186,7 +186,7 @@ function SidebarNavItem({
   );
 }
 
-export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }) {
+export function AppSidebar() {
   const pathname = usePathname() ?? "";
   const searchParams = useSearchParams();
   const query = searchParams.toString();
@@ -303,7 +303,7 @@ export function AppSidebar({ authBypassEnabled }: { authBypassEnabled: boolean }
                       onDrop={handleDrop}
                     />
                   ))}
-                  {group.id === "settings" && !authBypassEnabled ? (
+                  {group.id === "settings" ? (
                     <SignOutButton className="ho-sidebar-sub-link ho-sidebar-sign-out" />
                   ) : null}
                 </div>

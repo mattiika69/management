@@ -18,10 +18,8 @@ function shouldRenderAppChrome(pathname: string) {
 }
 
 export function AppChrome({
-  authBypassEnabled,
   children,
 }: {
-  authBypassEnabled: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname() ?? "";
@@ -37,7 +35,7 @@ export function AppChrome({
           <aside className="ho-side-nav" />
         }
       >
-        <AppSidebar key={pathname} authBypassEnabled={authBypassEnabled} />
+        <AppSidebar key={pathname} />
       </Suspense>
       <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
         {children}

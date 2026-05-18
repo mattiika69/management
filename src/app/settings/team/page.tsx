@@ -40,6 +40,17 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function roleLabel(role: string) {
+  const labels: Record<string, string> = {
+    owner: "Owner",
+    admin: "Admin",
+    member: "Member",
+    viewer: "Viewer",
+  };
+
+  return labels[role] ?? role;
+}
+
 async function loadMemberEmails(memberships: Membership[]) {
   try {
     const admin = createAdminClient();
@@ -130,7 +141,7 @@ export default async function TeamSettingsPage({
                 </p>
               </div>
               <span className="rounded-[5px] border border-[#d9e1ee] bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#667085]">
-                {membershipRole}
+                {roleLabel(membershipRole)}
               </span>
             </div>
 
@@ -166,7 +177,7 @@ export default async function TeamSettingsPage({
                   </div>
                   <span className="capitalize text-[#667085]">
                     <span className="md:hidden">Role: </span>
-                    {membership.role}
+                    {roleLabel(membership.role)}
                   </span>
                   <span className="text-[#667085]">
                     <span className="md:hidden">Joined: </span>
@@ -215,7 +226,7 @@ export default async function TeamSettingsPage({
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="rounded-[2px] border border-[#d9d0c3] bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#667085]">
-                        {invitation.role}
+                        {roleLabel(invitation.role)}
                       </span>
                       <TeamInvitationActions invitationId={invitation.id} />
                     </div>

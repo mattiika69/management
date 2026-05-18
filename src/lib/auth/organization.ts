@@ -135,20 +135,27 @@ export async function getOrCreateDefaultOrganization(
     return activeProfileOrganization;
   }
 
-  const { data: ownedOrganization, error: ownedSelectError } = await supabase
-    .from("organizations")
-    .select("id,name,slug,owner_id")
-    .eq("owner_id", user.id)
+  const { data: tenantMembership, error: tenantMembershipError } = await supabase
+    .from("tenant_memberships")
+    .select("tenant_id")
+    .eq("user_id", user.id)
+    .is("archived_at", null)
     .order("created_at", { ascending: true })
     .limit(1)
-    .maybeSingle<Organization>();
+    .maybeSingle<{ tenant_id: string }>();
 
-  if (ownedSelectError) {
-    throw new Error(ownedSelectError.message);
+  if (tenantMembershipError) {
+    throw new Error(tenantMembershipError.message);
   }
 
-  if (ownedOrganization) {
-    return ownedOrganization;
+  const tenantMemberOrganization = await findAccessibleOrganization(
+    supabase,
+    user,
+    tenantMembership?.tenant_id ?? null,
+  );
+
+  if (tenantMemberOrganization) {
+    return tenantMemberOrganization;
   }
 
   const { data: membership, error: membershipError } = await supabase
@@ -169,6 +176,22 @@ export async function getOrCreateDefaultOrganization(
 
   if (memberOrganization) {
     return memberOrganization;
+  }
+
+  const { data: ownedOrganization, error: ownedSelectError } = await supabase
+    .from("organizations")
+    .select("id,name,slug,owner_id")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle<Organization>();
+
+  if (ownedSelectError) {
+    throw new Error(ownedSelectError.message);
+  }
+
+  if (ownedOrganization) {
+    return ownedOrganization;
   }
 
   const { data: createdOrganization, error: insertError } = await supabase

@@ -12,11 +12,23 @@ function readBypassEmail() {
 }
 
 export function isAuthBypassEnabled() {
+  if (
+    process.env.VERCEL_ENV === "production" ||
+    process.env.NODE_ENV === "production"
+  ) {
+    return false;
+  }
+
   if (process.env.REQUIRE_LOGIN_AUTH === "true") {
     return false;
   }
 
+  const bypassRequested =
+    process.env.AUTH_BYPASS_ENABLED === "true" ||
+    process.env.DISABLE_LOGIN_AUTH === "true";
+
   return Boolean(
+    bypassRequested &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   );

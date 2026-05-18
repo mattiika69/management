@@ -38,6 +38,10 @@ function authHref(path: string, token: string) {
   return `${path}?next=${encodeURIComponent(`/invite/${token}`)}`;
 }
 
+function logoutHref(token: string) {
+  return `/logout?next=${encodeURIComponent(`/invite/${token}`)}`;
+}
+
 function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -217,10 +221,10 @@ export default async function InvitePage({ params, searchParams }: RouteProps) {
           {user.email}.
         </p>
         <Link
-          href={authHref("/login", token)}
+          href={logoutHref(token)}
           className="mt-6 inline-block border border-[#0f766e] px-5 py-3 text-sm font-semibold text-[#0f766e]"
         >
-          Use another account
+          Sign out and use invited email
         </Link>
       </InviteShell>
     );

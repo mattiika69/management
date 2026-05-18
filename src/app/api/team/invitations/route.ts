@@ -27,7 +27,7 @@ type AdminClient = ReturnType<typeof createAdminClient>;
 
 type InviteDelivery = {
   sent: boolean;
-  provider: "resend" | "supabase" | null;
+  provider: "resend" | null;
   externalMessageId?: string;
   providerResponse?: unknown;
   errorMessage?: string;
@@ -59,31 +59,11 @@ async function sendInviteEmail(input: {
     };
   } catch (resendError) {
     const resendMessage = resendError instanceof Error ? resendError.message : "Resend delivery failed.";
-
-    try {
-      const { error } = await createAdminClient().auth.admin.inviteUserByEmail(
-        input.email,
-        { redirectTo: input.inviteUrl },
-      );
-
-      if (error) throw new Error(error.message);
-
-      return {
-        sent: true,
-        provider: "supabase",
-        externalMessageId: "supabase-auth-invite",
-      };
-    } catch (supabaseError) {
-      const supabaseMessage = supabaseError instanceof Error
-        ? supabaseError.message
-        : "Supabase invite delivery failed.";
-
-      return {
-        sent: false,
-        provider: null,
-        errorMessage: `${resendMessage} ${supabaseMessage}`.trim(),
-      };
-    }
+    return {
+      sent: false,
+      provider: null,
+      errorMessage: resendMessage,
+    };
   }
 }
 

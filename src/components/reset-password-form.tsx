@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 export function ResetPasswordForm() {
   const [message, setMessage] = useState("");
@@ -15,25 +14,24 @@ export function ResetPasswordForm() {
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
-    const supabase = createClient();
-    const origin = window.location.origin;
-
-    let errorMessage = "";
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/auth/callback?next=/update-password`,
+      const response = await fetch("/api/auth/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-      errorMessage = error?.message ?? "";
-    } catch {
-      errorMessage = "We could not reach the password reset service.";
-    }
 
-    setLoading(false);
-    setMessage(
-      errorMessage
-        ? `${errorMessage} Try again in a moment.`
-        : "If that email has an account, a reset link is on the way.",
-    );
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error || "Password reset email could not be sent.");
+      }
+
+      setMessage("If that email has an account, a reset link is on the way.");
+    } catch {
+      setMessage("We could not send the reset link. Check the email and try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
