@@ -25,7 +25,7 @@ export function buildTeamInviteEmail({
   inviterEmail,
   role,
 }: InviteEmailInput) {
-  const subject = `You have been invited to ${organizationName}`;
+  const subject = "You're invited to a new workspace";
   const safeInviteUrl = escapeHtml(inviteUrl);
   const safeOrganizationName = escapeHtml(organizationName);
   const safeInviterEmail = escapeHtml(inviterEmail);
