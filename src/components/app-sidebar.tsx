@@ -99,7 +99,7 @@ function GroupHeader({
   }
 
   return (
-    <div className={`ho-sidebar-parent-block ${isOpen ? "parent-open" : ""} ${isActive ? "parent-active" : ""}`}>
+    <div className={`ho-sidebar-parent-block ${isOpen ? "parent-open" : ""}`}>
       <div className="ho-sidebar-parent-row">
         <button
           type="button"

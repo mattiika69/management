@@ -437,12 +437,6 @@ textarea {
   text-decoration: none;
 }
 
-.ho-sidebar-parent-block.parent-active .ho-sidebar-parent-link {
-  border-color: rgba(96, 165, 250, 0.62);
-  background: rgba(37, 99, 235, 0.16);
-  color: #dbeafe;
-}
-
 .ho-sidebar-direct-link {
   display: flex;
   min-height: 21px;
