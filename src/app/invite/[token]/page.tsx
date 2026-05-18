@@ -26,6 +26,10 @@ type Invitation = {
   expires_at: string;
 };
 
+type TenantInvitation = Omit<Invitation, "organization_id"> & {
+  tenant_id: string;
+};
+
 type Organization = {
   name: string;
 };
@@ -40,6 +44,43 @@ function firstParam(value: string | string[] | undefined) {
 
 async function currentTimestamp() {
   return Date.now();
+}
+
+async function findInvitation(tokenHash: string) {
+  const admin = createAdminClient();
+  const { data: tenantInvitation, error: tenantError } = await admin
+    .from("tenant_invitations")
+    .select("id,tenant_id,email,role,accepted_at,revoked_at,expires_at")
+    .eq("token_hash", tokenHash)
+    .maybeSingle<TenantInvitation>();
+
+  if (tenantError) {
+    throw new Error(tenantError.message);
+  }
+
+  if (tenantInvitation) {
+    return {
+      id: tenantInvitation.id,
+      organization_id: tenantInvitation.tenant_id,
+      email: tenantInvitation.email,
+      role: tenantInvitation.role,
+      accepted_at: tenantInvitation.accepted_at,
+      revoked_at: tenantInvitation.revoked_at,
+      expires_at: tenantInvitation.expires_at,
+    } satisfies Invitation;
+  }
+
+  const { data: organizationInvitation, error: organizationError } = await admin
+    .from("organization_invitations")
+    .select("id,organization_id,email,role,accepted_at,revoked_at,expires_at")
+    .eq("token_hash", tokenHash)
+    .maybeSingle<Invitation>();
+
+  if (organizationError) {
+    throw new Error(organizationError.message);
+  }
+
+  return organizationInvitation;
 }
 
 function InviteShell({ children }: { children: ReactNode }) {
@@ -76,13 +117,8 @@ export default async function InvitePage({ params, searchParams }: RouteProps) {
     );
   }
 
-  const admin = createAdminClient();
   const tokenHash = hashInvitationToken(token);
-  const { data: invitation } = await admin
-    .from("organization_invitations")
-    .select("id,organization_id,email,role,accepted_at,revoked_at,expires_at")
-    .eq("token_hash", tokenHash)
-    .maybeSingle<Invitation>();
+  const invitation = await findInvitation(tokenHash);
 
   if (!invitation) {
     return (
@@ -95,6 +131,7 @@ export default async function InvitePage({ params, searchParams }: RouteProps) {
     );
   }
 
+  const admin = createAdminClient();
   const { data: organization } = await admin
     .from("organizations")
     .select("name")

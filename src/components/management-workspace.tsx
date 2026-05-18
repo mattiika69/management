@@ -799,12 +799,8 @@ function TeamRatingsView({
       </div>
       <SectionCard className="mb-4 flex min-h-[52px] items-center justify-between px-4">
         <WeekButton weekStart={weekStart} />
-        <div className="flex items-center gap-2 text-[12px] font-semibold text-[#667085]">
+        <div className="text-[12px] font-semibold text-[#667085]">
           <span>0/{people.length} rated</span>
-          <span>Pod:</span>
-          <select className="app-field min-w-[110px]">
-            <option>All Pods</option>
-          </select>
         </div>
       </SectionCard>
       <SectionCard className="overflow-hidden">

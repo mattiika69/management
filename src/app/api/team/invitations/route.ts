@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -10,7 +11,7 @@ import {
   isTeamRole,
 } from "@/lib/team/invitations";
 import { canManageTeam } from "@/lib/team/permissions";
-import { auditAction, jsonError, requireTenantContext } from "@/lib/tenant-context";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type InvitePayload = {
   email?: string;
@@ -20,6 +21,9 @@ type InvitePayload = {
 type InvitationRow = {
   id: string;
 };
+
+type TenantContext = Awaited<ReturnType<typeof requireTenantContext>>;
+type AdminClient = ReturnType<typeof createAdminClient>;
 
 type InviteDelivery = {
   sent: boolean;
@@ -83,6 +87,161 @@ async function sendInviteEmail(input: {
   }
 }
 
+async function auditTeamAction(
+  admin: AdminClient,
+  context: TenantContext,
+  action: string,
+  input: {
+    targetTable: string;
+    targetId: string;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  const { error } = await admin.from("admin_audit_log").insert({
+    tenant_id: context.tenant.id,
+    actor_user_id: context.user.id,
+    action,
+    target_table: input.targetTable,
+    target_id: input.targetId,
+    metadata: input.metadata ?? {},
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+async function ensureInvitedEmailIsNotMember(
+  admin: AdminClient,
+  context: TenantContext,
+  email: string,
+) {
+  const { data: profile, error: profileError } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("email", email)
+    .maybeSingle<{ user_id: string }>();
+
+  if (profileError) throw new Error(profileError.message);
+  if (!profile) return;
+
+  const { data: tenantMembership, error: tenantMembershipError } = await admin
+    .from("tenant_memberships")
+    .select("user_id")
+    .eq("tenant_id", context.tenant.id)
+    .eq("user_id", profile.user_id)
+    .is("archived_at", null)
+    .maybeSingle<{ user_id: string }>();
+
+  if (tenantMembershipError) throw new Error(tenantMembershipError.message);
+
+  if (tenantMembership) {
+    throw new Error("That email is already a member of this workspace.");
+  }
+
+  const { data: organizationMembership, error: organizationMembershipError } = await admin
+    .from("organization_memberships")
+    .select("user_id")
+    .eq("organization_id", context.tenant.id)
+    .eq("user_id", profile.user_id)
+    .maybeSingle<{ user_id: string }>();
+
+  if (organizationMembershipError) throw new Error(organizationMembershipError.message);
+
+  if (organizationMembership) {
+    throw new Error("That email is already a member of this workspace.");
+  }
+}
+
+async function findOpenInvitation(
+  admin: AdminClient,
+  context: TenantContext,
+  email: string,
+) {
+  const { data: tenantInvitation, error: tenantError } = await admin
+    .from("tenant_invitations")
+    .select("id")
+    .eq("tenant_id", context.tenant.id)
+    .eq("email", email)
+    .is("accepted_at", null)
+    .is("revoked_at", null)
+    .maybeSingle<InvitationRow>();
+
+  if (tenantError) throw new Error(tenantError.message);
+  if (tenantInvitation) return tenantInvitation;
+
+  const { data: organizationInvitation, error: organizationError } = await admin
+    .from("organization_invitations")
+    .select("id")
+    .eq("organization_id", context.tenant.id)
+    .eq("email", email)
+    .is("accepted_at", null)
+    .is("revoked_at", null)
+    .maybeSingle<InvitationRow>();
+
+  if (organizationError) throw new Error(organizationError.message);
+  return organizationInvitation;
+}
+
+async function upsertInvitationRows(
+  admin: AdminClient,
+  context: TenantContext,
+  input: {
+    id: string;
+    email: string;
+    role: string;
+    tokenHash: string;
+    expiresAt: string;
+  },
+) {
+  const { data: organizationInvitation, error: organizationError } = await admin
+    .from("organization_invitations")
+    .upsert(
+      {
+        id: input.id,
+        organization_id: context.tenant.id,
+        email: input.email,
+        role: input.role,
+        token_hash: input.tokenHash,
+        invited_by: context.user.id,
+        accepted_by: null,
+        accepted_at: null,
+        revoked_at: null,
+        expires_at: input.expiresAt,
+      },
+      { onConflict: "id" },
+    )
+    .select("id")
+    .single<InvitationRow>();
+
+  if (organizationError) throw new Error(organizationError.message);
+
+  const { data: tenantInvitation, error: tenantError } = await admin
+    .from("tenant_invitations")
+    .upsert(
+      {
+        id: input.id,
+        tenant_id: context.tenant.id,
+        email: input.email,
+        role: input.role,
+        token_hash: input.tokenHash,
+        invited_by_user_id: context.user.id,
+        accepted_by_user_id: null,
+        accepted_at: null,
+        revoked_at: null,
+        email_delivery_status: "pending",
+        email_error_message: null,
+        expires_at: input.expiresAt,
+        metadata: { source: "settings_team" },
+      },
+      { onConflict: "id" },
+    )
+    .select("id")
+    .single<InvitationRow>();
+
+  if (tenantError) throw new Error(tenantError.message);
+
+  return tenantInvitation ?? organizationInvitation;
+}
+
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as InvitePayload;
@@ -113,51 +272,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const admin = createAdminClient();
+    await ensureInvitedEmailIsNotMember(admin, context, email);
+
     const token = createInvitationToken();
     const tokenHash = hashInvitationToken(token);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: existingInvitation, error: existingError } = await supabase
-      .from("organization_invitations")
-      .select("id")
-      .eq("organization_id", context.tenant.id)
-      .eq("email", email)
-      .is("accepted_at", null)
-      .is("revoked_at", null)
-      .maybeSingle<InvitationRow>();
+    const existingInvitation = await findOpenInvitation(admin, context, email);
+    const invitation = await upsertInvitationRows(admin, context, {
+      id: existingInvitation?.id ?? randomUUID(),
+      email,
+      role,
+      tokenHash,
+      expiresAt,
+    });
 
-    if (existingError) throw new Error(existingError.message);
-
-    const invitationQuery = existingInvitation
-      ? supabase
-          .from("organization_invitations")
-          .update({
-            role,
-            token_hash: tokenHash,
-            invited_by: context.user.id,
-            expires_at: expiresAt,
-          })
-          .eq("id", existingInvitation.id)
-          .eq("organization_id", context.tenant.id)
-          .select("id")
-          .single<InvitationRow>()
-      : supabase
-          .from("organization_invitations")
-          .insert({
-            organization_id: context.tenant.id,
-            email,
-            role,
-            token_hash: tokenHash,
-            invited_by: context.user.id,
-            expires_at: expiresAt,
-          })
-          .select("id")
-          .single<InvitationRow>();
-
-    const { data: invitation, error: invitationError } = await invitationQuery;
-
-    if (invitationError) throw new Error(invitationError.message);
-
-    await auditAction(context, "team.invitation.created", {
+    await auditTeamAction(admin, context, "team.invitation.created", {
       targetTable: "organization_invitations",
       targetId: invitation.id,
       metadata: { email, role },
@@ -174,7 +304,7 @@ export async function POST(request: Request) {
       role,
     });
 
-    const { data: emailMessage, error: emailInsertError } = await supabase
+    const { data: emailMessage, error: emailInsertError } = await admin
       .from("email_messages")
       .insert({
         organization_id: context.tenant.id,
@@ -197,7 +327,7 @@ export async function POST(request: Request) {
     const delivery = await sendInviteEmail({ email, subject, text, html, inviteUrl });
 
     if (delivery.sent) {
-      await supabase
+      const { error: emailUpdateError } = await admin
         .from("email_messages")
         .update({
           status: "sent",
@@ -211,16 +341,20 @@ export async function POST(request: Request) {
         })
         .eq("id", emailMessage.id);
 
-      await supabase
+      if (emailUpdateError) throw new Error(emailUpdateError.message);
+
+      const { error: deliveryUpdateError } = await admin
         .from("tenant_invitations")
         .update({ email_delivery_status: "sent" })
         .eq("id", invitation.id);
+
+      if (deliveryUpdateError) throw new Error(deliveryUpdateError.message);
 
       return NextResponse.json({ ok: true, id: invitation.id, emailSent: true });
     }
 
     const message = delivery.errorMessage ?? "Invitation email could not be sent.";
-    await supabase
+    const { error: failedEmailUpdateError } = await admin
       .from("email_messages")
       .update({
         status: "failed",
@@ -232,10 +366,15 @@ export async function POST(request: Request) {
         },
       })
       .eq("id", emailMessage.id);
-    await supabase
+
+    if (failedEmailUpdateError) throw new Error(failedEmailUpdateError.message);
+
+    const { error: failedDeliveryUpdateError } = await admin
       .from("tenant_invitations")
       .update({ email_delivery_status: "failed", email_error_message: message })
       .eq("id", invitation.id);
+
+    if (failedDeliveryUpdateError) throw new Error(failedDeliveryUpdateError.message);
 
     return NextResponse.json({
       ok: true,
@@ -265,15 +404,40 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Invitation id is required." }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const admin = createAdminClient();
+    const { data: invitation, error: invitationSelectError } = await admin
+      .from("tenant_invitations")
+      .select("id")
+      .eq("id", body.id)
+      .eq("tenant_id", context.tenant.id)
+      .is("accepted_at", null)
+      .is("revoked_at", null)
+      .maybeSingle<InvitationRow>();
+
+    if (invitationSelectError) throw new Error(invitationSelectError.message);
+
+    if (!invitation) {
+      return NextResponse.json({ error: "Invitation not found." }, { status: 404 });
+    }
+
+    const revokedAt = new Date().toISOString();
+    const { error: organizationError } = await admin
       .from("organization_invitations")
-      .update({ revoked_at: new Date().toISOString() })
+      .update({ revoked_at: revokedAt })
       .eq("id", body.id)
       .eq("organization_id", context.tenant.id);
 
-    if (error) throw new Error(error.message);
+    if (organizationError) throw new Error(organizationError.message);
 
-    await auditAction(context, "team.invitation.cancelled", {
+    const { error: tenantError } = await admin
+      .from("tenant_invitations")
+      .update({ revoked_at: revokedAt })
+      .eq("id", body.id)
+      .eq("tenant_id", context.tenant.id);
+
+    if (tenantError) throw new Error(tenantError.message);
+
+    await auditTeamAction(admin, context, "team.invitation.cancelled", {
       targetTable: "organization_invitations",
       targetId: body.id,
     });
