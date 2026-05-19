@@ -28,14 +28,14 @@ Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from 
 ## Current Platform Capabilities
 
 - Auth: Supabase auth pages and callback routes exist for signup, login, reset password, and update password.
-- Temporary auth bypass: `DISABLE_LOGIN_AUTH`/`AUTH_BYPASS_ENABLED` can be configured for local or preview-only login bypass. Production code ignores bypass unless `ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE=true` is deliberately set.
+- Temporary auth bypass: `DISABLE_LOGIN_AUTH`/`AUTH_BYPASS_ENABLED` can be configured for local or preview-only login bypass. Production code always ignores auth bypass when `VERCEL_ENV=production` or `NODE_ENV=production`.
 - Multi-tenancy: canonical tenant tables are present and synced with compatibility organization tables; persistent app tables are tenant-scoped with organization compatibility columns where legacy product code still uses them.
 - RLS: migrations enable row-level security and member policies on app data tables.
 - Team members: Settings > Team supports member listing and invitations.
 - Stripe billing: database tables and checkout route exist.
 - V1 credit billing: generated workspace assets can spend credits; Stripe credit checkout and webhook ledger writes exist.
 - Data persistence: AI context, management, screening, meetings, training, learning, AI outputs, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
-- Page shell: app pages use the shared sidebar and Settings tabs, with AI Context, Employees, Team, Pods, Calendars, Zoom, Billing, Integrations, Scheduling, Slack, Telegram, Archive, and Usage under Settings.
+- Page shell: app pages use the shared sidebar and Settings tabs, with Profile, AI Context, Team, Billing, Integrations, Sending, Scheduling, Slack, Telegram, Agent, Learn, and Help under Settings.
 - Calendar and Zoom connections: Google Calendar, Outlook Calendar, and Zoom OAuth routes exist; provider tokens are stored in encrypted service-only records, calendar invites can send through Resend with `.ics` attachments, and Zoom recording metadata can sync into Supabase.
 
 ## Organization, User, And RLS Architecture Source Of Truth
@@ -215,8 +215,8 @@ Calendar and Zoom OAuth are implemented but blocked until these are added in Ver
 Production auth must stay enforced before customer launch:
 
 - Remove or set these to `false`/empty in Production: `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, and `AUTH_BYPASS_USER_ID`.
-- The code ignores auth bypass automatically when `VERCEL_ENV=production` or `NODE_ENV=production` unless `ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE=true` is deliberately set.
-- Do not set `ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE=true` for a customer launch.
+- The code ignores auth bypass automatically when `VERCEL_ENV=production` or `NODE_ENV=production`.
+- There is no production override for auth bypass. Customer launch environments must use real Supabase Auth.
 
 ## APIs We Have
 

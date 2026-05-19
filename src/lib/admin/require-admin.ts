@@ -19,6 +19,16 @@ export type AdminSession = {
   profile: AdminProfile;
 };
 
+function allowedAdminEmails() {
+  const configured = process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "";
+  const emails = configured
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  return emails.length > 0 ? emails : ["matt@1000xleads.com"];
+}
+
 export class AdminAccessError extends Error {
   constructor(
     message: string,
@@ -51,7 +61,13 @@ async function loadAdminSession(): Promise<AdminSession> {
     throw new Error(profileError.message);
   }
 
-  if (!profile?.is_admin) {
+  const userEmail = user.email?.toLowerCase() ?? "";
+  const profileEmail = profile?.email?.toLowerCase() ?? "";
+  const isAllowedAdminEmail = allowedAdminEmails().some(
+    (email) => email === userEmail || email === profileEmail,
+  );
+
+  if (!profile?.is_admin || !isAllowedAdminEmail) {
     throw new AdminAccessError("Admin access is required.", 403);
   }
 
@@ -81,10 +97,6 @@ export function adminJsonError(error: unknown) {
       { error: error.status === 401 ? "Authentication is required." : "Forbidden." },
       { status: error.status },
     );
-  }
-
-  if (error instanceof Error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ error: "Unexpected error." }, { status: 500 });

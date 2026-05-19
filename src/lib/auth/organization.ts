@@ -1,6 +1,11 @@
+import "server-only";
+
 import { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { isAuthBypassUser } from "@/lib/supabase/auth-bypass";
+import {
+  isAuthBypassEnabled,
+  isAuthBypassUser,
+} from "@/lib/supabase/auth-bypass";
 
 type Organization = {
   id: string;
@@ -100,7 +105,7 @@ export async function getOrCreateDefaultOrganization(
 ) {
   const bypassTenantId = process.env.AUTH_BYPASS_TENANT_ID?.trim();
 
-  if (bypassTenantId && isAuthBypassUser(user)) {
+  if (bypassTenantId && isAuthBypassEnabled() && isAuthBypassUser(user)) {
     const { data: bypassOrganization, error: bypassError } = await supabase
       .from("organizations")
       .select("id,name,slug,owner_id")

@@ -189,7 +189,10 @@ async function grantCreditCheckout(
 export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    return NextResponse.json({ error: "STRIPE_WEBHOOK_SECRET is not configured." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Stripe webhook is not configured." },
+      { status: 500 },
+    );
   }
 
   const stripe = getStripe();
@@ -202,9 +205,9 @@ export async function POST(request: Request) {
   let event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Invalid Stripe webhook." },
+      { error: "Invalid Stripe webhook." },
       { status: 400 },
     );
   }
@@ -237,9 +240,9 @@ export async function POST(request: Request) {
     }
 
     await markBillingEventProcessed(admin, event.id, tenantId);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Stripe webhook processing failed." },
+      { error: "Stripe webhook processing failed." },
       { status: 500 },
     );
   }

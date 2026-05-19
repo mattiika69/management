@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { getStripe } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
+import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -15,12 +16,11 @@ export async function POST(request: Request) {
 
   const priceId =
     process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
-  const appUrl = siteUrl.replace(/\/$/, "");
+  const appUrl = canonicalSiteOrigin(request);
 
   if (!priceId) {
     return NextResponse.json(
-      { error: "STRIPE_ONBOARDING_PRICE_ID is not configured." },
+      { error: "Billing is not available right now." },
       { status: 500 },
     );
   }
@@ -35,7 +35,10 @@ export async function POST(request: Request) {
     .maybeSingle<{ stripe_customer_id: string }>();
 
   if (customerSelectError) {
-    return NextResponse.json({ error: customerSelectError.message }, { status: 400 });
+    return NextResponse.json(
+      { error: "Billing customer could not be loaded." },
+      { status: 500 },
+    );
   }
 
   let customerId = existingCustomer?.stripe_customer_id;
@@ -58,7 +61,10 @@ export async function POST(request: Request) {
     });
 
     if (customerInsertError) {
-      return NextResponse.json({ error: customerInsertError.message }, { status: 400 });
+      return NextResponse.json(
+        { error: "Billing customer could not be saved." },
+        { status: 500 },
+      );
     }
   }
 

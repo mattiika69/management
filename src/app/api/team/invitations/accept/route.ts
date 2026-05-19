@@ -49,7 +49,11 @@ async function findInvitation(
     .maybeSingle<TenantInvitationRow>();
 
   if (tenantError) {
-    return { invitation: null, source: null, error: tenantError.message };
+    return {
+      invitation: null,
+      source: null,
+      error: "Invitation could not be verified.",
+    };
   }
 
   if (tenantInvitation) {
@@ -77,7 +81,7 @@ async function findInvitation(
   return {
     invitation: organizationInvitation,
     source: organizationInvitation ? "organization_invitations" : null,
-    error: organizationError?.message ?? null,
+    error: organizationError ? "Invitation could not be verified." : null,
   };
 }
 
@@ -102,7 +106,7 @@ async function markInvitationAccepted(
     .is("revoked_at", null);
 
   if (organizationUpdate.error) {
-    return organizationUpdate.error.message;
+    return "Invitation could not be accepted.";
   }
 
   const tenantUpdate = await admin
@@ -116,7 +120,7 @@ async function markInvitationAccepted(
     .is("accepted_at", null)
     .is("revoked_at", null);
 
-  return tenantUpdate.error?.message ?? null;
+  return tenantUpdate.error ? "Invitation could not be accepted." : null;
 }
 
 async function saveActiveOrganization(
@@ -134,7 +138,7 @@ async function saveActiveOrganization(
     .maybeSingle<UserProfile>();
 
   if (profileError) {
-    return profileError.message;
+    return "Workspace could not be saved.";
   }
 
   const metadata = {
@@ -153,7 +157,7 @@ async function saveActiveOrganization(
       { onConflict: "user_id" },
     );
 
-  return error?.message ?? null;
+  return error ? "Workspace could not be saved." : null;
 }
 
 export async function POST(request: Request) {
@@ -221,7 +225,10 @@ export async function POST(request: Request) {
     .maybeSingle<{ role: string }>();
 
   if (membershipSelectError) {
-    return NextResponse.json({ error: membershipSelectError.message }, { status: 400 });
+    return NextResponse.json(
+      { error: "Workspace membership could not be verified." },
+      { status: 400 },
+    );
   }
 
   if (!existingMembership) {
@@ -234,7 +241,10 @@ export async function POST(request: Request) {
       });
 
     if (membershipInsertError) {
-      return NextResponse.json({ error: membershipInsertError.message }, { status: 400 });
+      return NextResponse.json(
+        { error: "Workspace membership could not be saved." },
+        { status: 400 },
+      );
     }
   } else if (existingMembership.role !== invitation.role) {
     const { error: membershipUpdateError } = await admin
@@ -244,7 +254,10 @@ export async function POST(request: Request) {
       .eq("user_id", user.id);
 
     if (membershipUpdateError) {
-      return NextResponse.json({ error: membershipUpdateError.message }, { status: 400 });
+      return NextResponse.json(
+        { error: "Workspace membership could not be updated." },
+        { status: 400 },
+      );
     }
   }
 
@@ -261,7 +274,10 @@ export async function POST(request: Request) {
     );
 
   if (tenantMembershipError) {
-    return NextResponse.json({ error: tenantMembershipError.message }, { status: 400 });
+    return NextResponse.json(
+      { error: "Workspace membership could not be saved." },
+      { status: 400 },
+    );
   }
 
   const acceptedAt = new Date().toISOString();

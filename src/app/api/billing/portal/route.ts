@@ -7,6 +7,7 @@ import {
   requireTenantContext,
 } from "@/lib/tenant-context";
 import { createClient } from "@/lib/supabase/server";
+import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 export async function POST(request: Request) {
   try {
@@ -22,10 +23,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No billing account found." }, { status: 404 });
     }
 
-    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+    const origin = canonicalSiteOrigin(request);
     const session = await getStripe().billingPortal.sessions.create({
       customer: customer.stripe_customer_id,
-      return_url: `${origin.replace(/\/$/, "")}/settings/billing`,
+      return_url: `${origin}/settings/billing`,
     });
 
     await auditAction(context, "billing.portal.created", {

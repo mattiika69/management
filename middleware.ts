@@ -87,10 +87,7 @@ function isMiddlewareBypassEnabled() {
     return false;
   }
 
-  if (
-    (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") &&
-    process.env.ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE !== "true"
-  ) {
+  if (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") {
     return false;
   }
 

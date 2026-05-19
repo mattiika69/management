@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { getStripe } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
+import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 type Payload = {
   pack?: string;
@@ -19,7 +20,10 @@ export async function POST(request: Request) {
   const priceId = process.env[pack.envKey] || (pack.fallbackEnvKey ? process.env[pack.fallbackEnvKey] : "");
 
   if (!priceId) {
-    return NextResponse.json({ error: `${pack.envKey} is not configured.` }, { status: 500 });
+    return NextResponse.json(
+      { error: "Credit checkout is not available right now." },
+      { status: 500 },
+    );
   }
 
   const supabase = await createClient();
@@ -33,8 +37,7 @@ export async function POST(request: Request) {
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
   const stripe = getStripe();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
-  const appUrl = siteUrl.replace(/\/$/, "");
+  const appUrl = canonicalSiteOrigin(request);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

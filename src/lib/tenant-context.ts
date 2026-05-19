@@ -30,7 +30,10 @@ export function jsonError(error: unknown) {
   }
 
   if (error instanceof Error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json(
+      { error: "Request could not be completed." },
+      { status: 400 },
+    );
   }
 
   return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
@@ -57,7 +60,7 @@ export async function requireTenantContext(
     .maybeSingle<{ role: TenantContext["role"] }>();
 
   if (error) {
-    throw new HttpError(error.message);
+    throw new HttpError("Workspace access could not be verified.", 403);
   }
 
   if (membership?.role) {
@@ -72,7 +75,7 @@ export async function requireTenantContext(
     .maybeSingle<{ role: TenantContext["role"] }>();
 
   if (legacyError) {
-    throw new HttpError(legacyError.message);
+    throw new HttpError("Workspace access could not be verified.", 403);
   }
 
   if (!legacyMembership?.role) {

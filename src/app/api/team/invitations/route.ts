@@ -17,7 +17,7 @@ import {
   isTeamRole,
 } from "@/lib/team/invitations";
 import { canManageTeam } from "@/lib/team/permissions";
-import { jsonError, requireTenantContext } from "@/lib/tenant-context";
+import { HttpError, jsonError, requireTenantContext } from "@/lib/tenant-context";
 import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 type InvitePayload = {
@@ -121,7 +121,7 @@ async function ensureInvitedEmailIsNotMember(
   if (tenantMembershipError) throw new Error(tenantMembershipError.message);
 
   if (tenantMembership) {
-    throw new Error("That email is already a member of this workspace.");
+    throw new HttpError("That email is already a member of this workspace.");
   }
 
   const { data: organizationMembership, error: organizationMembershipError } = await admin
@@ -134,7 +134,7 @@ async function ensureInvitedEmailIsNotMember(
   if (organizationMembershipError) throw new Error(organizationMembershipError.message);
 
   if (organizationMembership) {
-    throw new Error("That email is already a member of this workspace.");
+    throw new HttpError("That email is already a member of this workspace.");
   }
 }
 
