@@ -18,12 +18,16 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://management-mattiika69.vercel.app"
+site_url = "https://management-swart-iota.vercel.app"
 additional_redirect_urls = [
   "https://management-mattiika69.vercel.app/auth/callback",
+  "https://management-mattiika69.vercel.app/update-password",
   "https://management-swart-iota.vercel.app/auth/callback",
+  "https://management-swart-iota.vercel.app/update-password",
   "https://management-*-mattiika69.vercel.app/auth/callback",
+  "https://management-*-mattiika69.vercel.app/update-password",
   "http://localhost:3000/auth/callback",
+  "http://localhost:3000/update-password",
   "http://localhost:3000/**"
 ]
 jwt_expiry = 3600
@@ -51,8 +55,8 @@ host = "smtp.resend.com"
 port = 465
 user = "resend"
 pass = "env(RESEND_API_KEY)"
-admin_email = "onboarding@resend.dev"
-sender_name = "HyperOptimal Management"
+admin_email = "team@hyperoptimal.com"
+sender_name = "HyperOptimal"
 
 [auth.email.template.confirmation]
 subject = "Confirm your HyperOptimal Management account"
@@ -67,7 +71,7 @@ subject = "Reset your HyperOptimal Management password"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.invite]
-subject = "You have been invited to HyperOptimal Management"
+subject = "You're invited to a new workspace"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.email_change]

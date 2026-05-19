@@ -8,10 +8,18 @@ type PasswordResetPayload = {
 };
 
 function siteOrigin(request: Request) {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    new URL(request.url).origin
-  );
+  const requestOrigin = new URL(request.url).origin;
+  const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+
+  if (
+    configuredOrigin &&
+    !configuredOrigin.includes("localhost") &&
+    !configuredOrigin.includes("127.0.0.1")
+  ) {
+    return configuredOrigin;
+  }
+
+  return requestOrigin;
 }
 
 function actionLinkFromGenerateLink(data: unknown) {
@@ -28,7 +36,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  const redirectTo = `${siteOrigin(request)}/auth/callback?next=${encodeURIComponent("/update-password")}`;
+  const redirectTo = `${siteOrigin(request)}/update-password`;
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,
