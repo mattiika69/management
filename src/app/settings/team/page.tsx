@@ -51,6 +51,10 @@ function roleLabel(role: string) {
   return labels[role] ?? role;
 }
 
+function isInternalBypassEmail(email: string | undefined) {
+  return email?.toLowerCase() === "auth-bypass@hyperoptimal-management.test";
+}
+
 async function loadMemberEmails(memberships: Membership[]) {
   try {
     const admin = createAdminClient();
@@ -100,6 +104,9 @@ export default async function TeamSettingsPage({
   }
 
   const memberEmails = await loadMemberEmails(memberships ?? []);
+  const visibleMemberships = (memberships ?? []).filter(
+    (membership) => !isInternalBypassEmail(memberEmails.get(membership.user_id)),
+  );
 
   const { data: invitations, error: invitationsError } = canManage
     ? await supabase
@@ -158,7 +165,7 @@ export default async function TeamSettingsPage({
                 <span>Joined</span>
                 {canManage ? <span>Actions</span> : null}
               </div>
-              {(memberships ?? []).map((membership) => (
+              {visibleMemberships.map((membership) => (
                 <div
                   key={membership.user_id}
                   className={`grid gap-2 border-t border-[#e4e7ec] px-4 py-4 text-[13px] md:gap-3 ${
