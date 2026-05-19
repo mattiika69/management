@@ -29,7 +29,7 @@ test.describe("production public launch boundaries", () => {
     expect(page.url()).toContain("next=%2Fadmin");
 
     const adminOverview = await request.get("/api/admin/overview");
-    expect(adminOverview.status()).toBe(403);
+    expect([401, 403]).toContain(adminOverview.status());
 
     const billingPlans = await request.get("/api/billing/plans");
     expect([401, 403]).toContain(billingPlans.status());

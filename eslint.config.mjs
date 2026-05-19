@@ -9,9 +9,12 @@ const eslintConfig = defineConfig([
     ".next/**",
     ".claude/**",
     ".management-push-work/**",
+    ".ms-playwright/**",
     ".planning-push-work/**",
     "out/**",
     "node_modules/**",
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 
