@@ -102,6 +102,7 @@ function loginRedirect(request: NextRequest) {
   const nextPath = `${url.pathname}${url.search}`;
   url.pathname = "/login";
   url.search = "";
+  url.searchParams.set("redirect", nextPath);
   url.searchParams.set("next", nextPath);
   return NextResponse.redirect(url);
 }

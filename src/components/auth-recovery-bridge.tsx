@@ -16,13 +16,13 @@ function recoveryHashTarget() {
   if (type !== "recovery") return "";
   if (!tokenHash && (!accessToken || !refreshToken)) return "";
 
-  return `/update-password${window.location.hash}`;
+  return `/reset-password${window.location.hash}`;
 }
 
 export function AuthRecoveryBridge() {
   useEffect(() => {
     const target = recoveryHashTarget();
-    if (!target || window.location.pathname === "/update-password") return;
+    if (!target || window.location.pathname === "/reset-password") return;
 
     window.location.replace(target);
   }, []);

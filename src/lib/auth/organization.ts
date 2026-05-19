@@ -2,6 +2,7 @@ import "server-only";
 
 import { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   isAuthBypassEnabled,
   isAuthBypassUser,
@@ -28,6 +29,46 @@ function defaultOrganizationSlug(user: User) {
   return `workspace-${user.id.slice(0, 8)}`;
 }
 
+function slugifyOrganizationName(name: string, user: User) {
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+
+  return `${base || defaultOrganizationSlug(user)}-${user.id.slice(0, 8)}`;
+}
+
+async function setActiveOrganizationMetadata(
+  supabase: SupabaseClient,
+  user: User,
+  organizationId: string,
+) {
+  const { data: existingProfile } = await supabase
+    .from("user_profiles")
+    .select("metadata")
+    .eq("user_id", user.id)
+    .maybeSingle<UserProfile>();
+
+  const metadata = {
+    ...(existingProfile?.metadata ?? {}),
+    active_tenant_id: organizationId,
+  };
+
+  await supabase
+    .from("user_profiles")
+    .update({
+      email: user.email ?? null,
+      display_name:
+        (user.user_metadata?.name as string | undefined) ??
+        (user.user_metadata?.full_name as string | undefined) ??
+        null,
+      metadata,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
+}
+
 async function activeOrganizationCookie() {
   try {
     return (await cookies()).get(ACTIVE_ORGANIZATION_COOKIE)?.value ?? null;
@@ -51,13 +92,31 @@ async function activeOrganizationFromProfile(
 }
 
 async function findAccessibleOrganization(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   user: User,
   organizationId: string | null,
 ) {
   if (!organizationId) return null;
 
-  const { data: tenantMembership, error: tenantError } = await supabase
+  // Server-only service-role reads avoid recursive RLS policy failures while
+  // still enforcing membership against the authenticated user before any data
+  // is returned to the app.
+  const admin = createAdminClient();
+
+  const { data: organization, error: organizationError } = await admin
+    .from("organizations")
+    .select("id,name,slug,owner_id")
+    .eq("id", organizationId)
+    .maybeSingle<Organization>();
+
+  if (organizationError) {
+    throw new Error(organizationError.message);
+  }
+
+  if (!organization) return null;
+  if (organization.owner_id === user.id) return organization;
+
+  const { data: tenantMembership, error: tenantError } = await admin
     .from("tenant_memberships")
     .select("tenant_id")
     .eq("tenant_id", organizationId)
@@ -69,34 +128,20 @@ async function findAccessibleOrganization(
     throw new Error(tenantError.message);
   }
 
-  const hasTenantMembership = Boolean(tenantMembership);
+  if (tenantMembership) return organization;
 
-  const { data: legacyMembership, error: legacyError } = hasTenantMembership
-    ? { data: null, error: null }
-    : await supabase
-        .from("organization_memberships")
-        .select("organization_id")
-        .eq("organization_id", organizationId)
-        .eq("user_id", user.id)
-        .maybeSingle<{ organization_id: string }>();
+  const { data: legacyMembership, error: legacyError } = await admin
+    .from("organization_memberships")
+    .select("organization_id")
+    .eq("organization_id", organizationId)
+    .eq("user_id", user.id)
+    .maybeSingle<{ organization_id: string }>();
 
   if (legacyError) {
     throw new Error(legacyError.message);
   }
 
-  if (!hasTenantMembership && !legacyMembership) return null;
-
-  const { data: organization, error: organizationError } = await supabase
-    .from("organizations")
-    .select("id,name,slug,owner_id")
-    .eq("id", organizationId)
-    .maybeSingle<Organization>();
-
-  if (organizationError) {
-    throw new Error(organizationError.message);
-  }
-
-  return organization;
+  return legacyMembership ? organization : null;
 }
 
 export async function getCurrentOrganization(
@@ -141,7 +186,9 @@ export async function getCurrentOrganization(
     return activeProfileOrganization;
   }
 
-  const { data: tenantMembership, error: tenantMembershipError } = await supabase
+  const admin = createAdminClient();
+
+  const { data: tenantMembership, error: tenantMembershipError } = await admin
     .from("tenant_memberships")
     .select("tenant_id")
     .eq("user_id", user.id)
@@ -164,27 +211,29 @@ export async function getCurrentOrganization(
     return tenantMemberOrganization;
   }
 
-  const { data: membership, error: membershipError } = await supabase
+  const { data: membership, error: membershipError } = await admin
     .from("organization_memberships")
-    .select("organization:organizations(id,name,slug,owner_id)")
+    .select("organization_id")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
-    .maybeSingle<{ organization: Organization | Organization[] | null }>();
+    .maybeSingle<{ organization_id: string }>();
 
   if (membershipError) {
     throw new Error(membershipError.message);
   }
 
-  const memberOrganization = Array.isArray(membership?.organization)
-    ? membership?.organization[0]
-    : membership?.organization;
+  const memberOrganization = await findAccessibleOrganization(
+    supabase,
+    user,
+    membership?.organization_id ?? null,
+  );
 
   if (memberOrganization) {
     return memberOrganization;
   }
 
-  const { data: ownedOrganization, error: ownedSelectError } = await supabase
+  const { data: ownedOrganization, error: ownedSelectError } = await admin
     .from("organizations")
     .select("id,name,slug,owner_id")
     .eq("owner_id", user.id)
@@ -222,5 +271,53 @@ export async function getOrCreateDefaultOrganization(
     throw new Error(insertError.message);
   }
 
+  return createdOrganization;
+}
+
+export async function bootstrapSignupOrganization(
+  supabase: SupabaseClient,
+  user: User,
+) {
+  const metadata = user.user_metadata ?? {};
+  if (metadata.onboarding_bootstrap !== "new_organization") {
+    return getCurrentOrganization(supabase, user);
+  }
+
+  const currentOrganization = await getCurrentOrganization(supabase, user);
+  if (currentOrganization) {
+    await setActiveOrganizationMetadata(supabase, user, currentOrganization.id);
+    return currentOrganization;
+  }
+
+  const organizationName =
+    typeof metadata.onboarding_organization_name === "string" && metadata.onboarding_organization_name.trim()
+      ? metadata.onboarding_organization_name.trim()
+      : typeof metadata.organization_name === "string" && metadata.organization_name.trim()
+        ? metadata.organization_name.trim()
+        : defaultOrganizationName(user);
+
+  const { data: createdOrganization, error: insertError } = await supabase
+    .from("organizations")
+    .insert({
+      name: organizationName,
+      slug: slugifyOrganizationName(organizationName, user),
+      owner_id: user.id,
+    })
+    .select("id,name,slug,owner_id")
+    .single<Organization>();
+
+  if (insertError) {
+    throw new Error(insertError.message);
+  }
+
+  await supabase.from("tenant_memberships").upsert({
+    tenant_id: createdOrganization.id,
+    user_id: user.id,
+    role: "owner",
+    archived_at: null,
+    updated_at: new Date().toISOString(),
+  });
+
+  await setActiveOrganizationMetadata(supabase, user, createdOrganization.id);
   return createdOrganization;
 }

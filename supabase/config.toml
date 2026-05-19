@@ -22,12 +22,16 @@ site_url = "https://management-swart-iota.vercel.app"
 additional_redirect_urls = [
   "https://management-mattiika69.vercel.app/auth/callback",
   "https://management-mattiika69.vercel.app/update-password",
+  "https://management-mattiika69.vercel.app/reset-password",
   "https://management-swart-iota.vercel.app/auth/callback",
   "https://management-swart-iota.vercel.app/update-password",
+  "https://management-swart-iota.vercel.app/reset-password",
   "https://management-*-mattiika69.vercel.app/auth/callback",
   "https://management-*-mattiika69.vercel.app/update-password",
+  "https://management-*-mattiika69.vercel.app/reset-password",
   "http://localhost:3000/auth/callback",
   "http://localhost:3000/update-password",
+  "http://localhost:3000/reset-password",
   "http://localhost:3000/**"
 ]
 jwt_expiry = 3600
@@ -59,7 +63,7 @@ admin_email = "team@hyperoptimal.com"
 sender_name = "HyperOptimal"
 
 [auth.email.template.confirmation]
-subject = "Confirm your HyperOptimal Management account"
+subject = "Verify your HyperOptimal account"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.magic_link]
@@ -67,7 +71,7 @@ subject = "Log in to HyperOptimal Management"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.recovery]
-subject = "Reset your HyperOptimal Management password"
+subject = "Reset your HyperOptimal password"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.invite]

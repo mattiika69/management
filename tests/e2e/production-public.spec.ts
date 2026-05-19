@@ -21,12 +21,12 @@ test.describe("production public launch boundaries", () => {
     const management = await page.goto("/management", { waitUntil: "domcontentloaded" });
     expect(management?.status()).toBeLessThan(400);
     expect(page.url()).toContain("/login");
-    expect(page.url()).toContain("next=%2Fmanagement");
+    expect(page.url()).toContain("redirect=%2Fmanagement");
 
     const admin = await page.goto("/admin", { waitUntil: "domcontentloaded" });
     expect(admin?.status()).toBeLessThan(400);
     expect(page.url()).toContain("/login");
-    expect(page.url()).toContain("next=%2Fadmin");
+    expect(page.url()).toContain("redirect=%2Fadmin");
 
     const adminOverview = await request.get("/api/admin/overview");
     expect([401, 403]).toContain(adminOverview.status());
@@ -121,7 +121,7 @@ test.describe("production public launch boundaries", () => {
     await expect(page.getByLabel("Email")).toHaveValue(inviteEmail);
     await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute(
       "href",
-      `/reset-password?email=${encodeURIComponent(inviteEmail)}`,
+      `/forgot-password?email=${encodeURIComponent(inviteEmail)}`,
     );
 
     const signup = await page.goto(
@@ -139,23 +139,23 @@ test.describe("production public launch boundaries", () => {
     await expect(page.getByLabel("Organization Name")).toBeVisible();
 
     const reset = await page.goto(
-      `/reset-password?email=${encodeURIComponent(inviteEmail)}`,
+      `/forgot-password?email=${encodeURIComponent(inviteEmail)}`,
       { waitUntil: "domcontentloaded" },
     );
     expect(reset?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
     await expect(page.getByLabel("Email")).toHaveValue(inviteEmail);
 
-    const update = await page.goto("/update-password?token_hash=fake&type=recovery", {
+    const update = await page.goto("/reset-password?token_hash=fake&type=recovery", {
       waitUntil: "domcontentloaded",
     });
     expect(update?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: "Update password" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
 
     await page.goto("/login#access_token=fake&refresh_token=fake&type=recovery", {
       waitUntil: "domcontentloaded",
     });
-    await expect(page).toHaveURL(/\/update-password#access_token=fake/);
-    await expect(page.getByRole("heading", { name: "Update password" })).toBeVisible();
+    await expect(page).toHaveURL(/\/reset-password#access_token=fake/);
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
   });
 });

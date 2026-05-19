@@ -31,7 +31,7 @@ function safeActionLinkFromGenerateLink(data: unknown, request: Request) {
 
   try {
     const url = new URL(actionLink);
-    const redirectTo = `${canonicalSiteOrigin(request)}/update-password`;
+    const redirectTo = `${canonicalSiteOrigin(request)}/reset-password`;
 
     if (url.searchParams.has("redirect_to")) {
       url.searchParams.set("redirect_to", redirectTo);
@@ -47,7 +47,7 @@ function safeActionLinkFromGenerateLink(data: unknown, request: Request) {
 function buildResetUrl(data: unknown, request: Request) {
   const tokenHash = tokenHashFromGenerateLink(data);
   if (tokenHash) {
-    const resetUrl = new URL("/update-password", canonicalSiteOrigin(request));
+    const resetUrl = new URL("/reset-password", canonicalSiteOrigin(request));
     resetUrl.searchParams.set("token_hash", tokenHash);
     resetUrl.searchParams.set("type", "recovery");
     return resetUrl.toString();
@@ -69,8 +69,8 @@ export async function POST(request: Request) {
 
   const limit = checkRateLimit({
     key: rateLimitKey(["password-reset", requestIp(request), email]),
-    limit: 5,
-    windowMs: 60 * 60 * 1000,
+    limit: 3,
+    windowMs: 60 * 1000,
   });
 
   if (!limit.allowed) {
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  const redirectTo = `${canonicalSiteOrigin(request)}/update-password`;
+  const redirectTo = `${canonicalSiteOrigin(request)}/reset-password`;
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,

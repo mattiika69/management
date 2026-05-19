@@ -2,10 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 
 function safeNextPath(next: string) {
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  return next.startsWith("/") && !next.startsWith("//") && !next.includes("://") ? next : "/";
 }
 
 function noticeMessage(notice: string | undefined) {
@@ -18,27 +17,13 @@ function noticeMessage(notice: string | undefined) {
   if (notice === "auth-callback-failed") {
     return "That sign-in link could not be verified. Try signing in with your email and password.";
   }
+  if (notice === "organization-setup-failed") {
+    return "Your account was verified, but workspace setup did not finish. Sign in and retry.";
+  }
   if (notice === "login-required") {
     return "Sign in to continue.";
   }
   return "";
-}
-
-function authErrorMessage(message: string) {
-  const lower = message.toLowerCase();
-  if (lower.includes("invalid login credentials")) {
-    return "Email or password is incorrect. Try again or reset your password.";
-  }
-  if (lower.includes("email not confirmed")) {
-    return "Please confirm your email before signing in.";
-  }
-  if (lower.includes("email rate limit")) {
-    return "Too many attempts. Wait a moment, then try again.";
-  }
-  if (lower.includes("network") || lower.includes("fetch")) {
-    return "We could not reach the login service. Check your connection and try again.";
-  }
-  return message || "Sign in failed. Please try again.";
 }
 
 export function LoginForm({
@@ -54,80 +39,72 @@ export function LoginForm({
   const [messageType, setMessageType] = useState<"info" | "error">(
     noticeMessage(notice) ? "error" : "info",
   );
-  const [showResetHelp, setShowResetHelp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const nextPath = safeNextPath(next);
   const resetHref = initialEmail
-    ? `/reset-password?email=${encodeURIComponent(initialEmail)}`
-    : "/reset-password";
+    ? `/forgot-password?email=${encodeURIComponent(initialEmail)}`
+    : "/forgot-password";
 
   async function signInWithPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setMessage("");
     setMessageType("info");
-    setShowResetHelp(false);
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
-    const supabase = createClient();
 
-    let result: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>;
     try {
-      result = await supabase.auth.signInWithPassword({ email, password });
-    } catch {
-      setLoading(false);
-      setMessageType("error");
-      setMessage("We could not reach the login service. Check your connection and try again.");
-      setShowResetHelp(false);
-      return;
-    }
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, redirect: nextPath }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        redirectTo?: string;
+      };
 
-    const { data, error } = result;
-
-    if (error) {
-      setLoading(false);
-      setMessageType("error");
-      setMessage(authErrorMessage(error.message));
-      setShowResetHelp(true);
-      return;
-    }
-
-    if (!data.session) {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        setLoading(false);
+      if (!response.ok) {
         setMessageType("error");
-        setMessage("Sign in did not finish. Try again or reset your password.");
-        setShowResetHelp(true);
+        setMessage(payload.error || "Invalid email or password.");
+        setLoading(false);
         return;
       }
-    }
 
-    window.location.assign(nextPath);
+      window.location.assign(safeNextPath(payload.redirectTo || nextPath));
+    } catch {
+      setMessageType("error");
+      setMessage("Authentication provider is temporarily unavailable. Please retry in a minute.");
+      setLoading(false);
+    }
   }
 
   return (
-    <form
-      onSubmit={signInWithPassword}
-      className="w-full max-w-[448px] rounded-[14px] bg-white px-8 py-9 shadow-[0_18px_42px_rgba(31,54,94,0.14)] sm:px-8"
-    >
-      <div className="mb-9 text-center">
-        <h1 className="text-[26px] font-bold leading-tight text-[#111827]">
-          HyperOptimal
-        </h1>
-        <p className="mt-2 text-[16px] leading-6 text-[#727c91]">
-          Sign in to your account
-        </p>
+    <form onSubmit={signInWithPassword} className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl font-bold text-slate-950">HyperOptimal</h1>
+        <p className="mt-2 text-sm text-slate-500">Sign in to your account</p>
       </div>
 
+      {message ? (
+        <div
+          className={`mb-8 rounded-lg border px-4 py-3 text-sm font-medium ${
+            messageType === "error"
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-blue-200 bg-blue-50 text-blue-700"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </div>
+      ) : null}
+
       <label className="mb-5 block">
-        <span className="mb-2 block text-[15px] font-medium text-[#334155]">Email</span>
+        <span className="mb-2 block text-sm font-medium text-slate-700">Email</span>
         <input
           required
           name="email"
@@ -135,15 +112,15 @@ export function LoginForm({
           autoComplete="email"
           defaultValue={initialEmail}
           readOnly={Boolean(initialEmail)}
-          className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-[#eaf2ff] px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
+          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base text-slate-950 outline-none transition focus:border-blue-600 focus:bg-blue-50 focus:ring-2 focus:ring-blue-600/20 aria-[invalid=true]:border-red-500 aria-[invalid=true]:focus:ring-red-500/20"
           placeholder="team@hyperoptimal.com"
         />
       </label>
 
       <label className="mb-5 block">
-        <span className="mb-2 flex items-center justify-between text-[15px] font-medium text-[#334155]">
+        <span className="mb-2 flex items-center justify-between text-sm font-medium text-slate-700">
           Password
-          <Link className="text-[15px] font-medium text-[#2563ff]" href={resetHref}>
+          <Link className="font-medium text-blue-600 hover:text-blue-700" href={resetHref}>
             Forgot password?
           </Link>
         </span>
@@ -153,14 +130,14 @@ export function LoginForm({
             name="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
-            className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-[#eaf2ff] px-4 pr-11 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
+            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 pr-11 text-base text-slate-950 outline-none transition focus:border-blue-600 focus:bg-blue-50 focus:ring-2 focus:ring-blue-600/20"
             placeholder="Password"
           />
           <button
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
             onClick={() => setShowPassword((visible) => !visible)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b]"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/30"
           >
             <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none">
               <path d="M2.75 12s3.4-6.25 9.25-6.25S21.25 12 21.25 12s-3.4 6.25-9.25 6.25S2.75 12 2.75 12Z" stroke="currentColor" strokeWidth="1.7" />
@@ -173,29 +150,18 @@ export function LoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="mt-1 h-12 w-full rounded-[7px] bg-[#1f5bff] px-5 text-[17px] font-medium text-white transition hover:bg-[#164ce5] disabled:cursor-not-allowed disabled:opacity-70"
+        className="w-full rounded-lg bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "Signing in..." : "Sign in"}
       </button>
 
-      {message ? (
-        <div
-          className={`mt-4 rounded-[7px] border px-4 py-3 text-center text-sm font-medium ${
-            messageType === "error"
-              ? "border-red-200 bg-red-50 text-red-700"
-              : "border-blue-200 bg-blue-50 text-[#2563ff]"
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          <p>{message}</p>
-          {showResetHelp ? (
-            <Link className="mt-2 inline-block text-[#2563ff]" href={resetHref}>
-              Reset password
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
+
+      <p className="mt-6 text-center text-sm text-slate-500">
+        Don&apos;t have an account?{" "}
+        <Link className="font-medium text-blue-600 hover:text-blue-700" href={`/signup?redirect=${encodeURIComponent(nextPath)}`}>
+          Sign up
+        </Link>
+      </p>
     </form>
   );
 }
