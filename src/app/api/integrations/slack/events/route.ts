@@ -26,7 +26,12 @@ type SlackEventEnvelope = {
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const verified = await verifySlackRequest(request, rawBody).catch(() => null);
+  let verified = false;
+  try {
+    verified = await verifySlackRequest(request, rawBody);
+  } catch {
+    return NextResponse.json({ error: "Slack webhook is not configured." }, { status: 503 });
+  }
 
   if (!verified) {
     return NextResponse.json({ error: "Invalid Slack signature." }, { status: 401 });
