@@ -34,8 +34,13 @@ type Organization = {
   name: string;
 };
 
-function authHref(path: string, token: string) {
-  return `${path}?next=${encodeURIComponent(`/invite/${token}`)}`;
+function authHref(path: string, token: string, email: string) {
+  const params = new URLSearchParams({
+    next: `/invite/${token}`,
+    email,
+  });
+
+  return `${path}?${params.toString()}`;
 }
 
 function logoutHref(token: string) {
@@ -194,13 +199,13 @@ export default async function InvitePage({ params, searchParams }: RouteProps) {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            href={authHref("/login", token)}
+            href={authHref("/login", token, invitation.email)}
             className="bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
           >
             Log in
           </Link>
           <Link
-            href={authHref("/signup", token)}
+            href={authHref("/signup", token, invitation.email)}
             className="border border-[#0f766e] px-5 py-3 text-sm font-semibold text-[#0f766e]"
           >
             Create account

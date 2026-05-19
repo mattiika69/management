@@ -6,9 +6,9 @@ import { isAuthBypassEnabled } from "@/lib/supabase/auth-bypass";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; notice?: string }>;
+  searchParams: Promise<{ next?: string; notice?: string; email?: string }>;
 }) {
-  const { next, notice } = await searchParams;
+  const { next, notice, email } = await searchParams;
   const nextPath = next?.startsWith("/") && !next.startsWith("//") ? next : "/management";
 
   if (isAuthBypassEnabled() && !nextPath.startsWith("/invite/")) {
@@ -17,7 +17,7 @@ export default async function LoginPage({
 
   return (
     <AuthPageShell>
-      <LoginForm next={nextPath} notice={notice} />
+      <LoginForm initialEmail={email} next={nextPath} notice={notice} />
     </AuthPageShell>
   );
 }

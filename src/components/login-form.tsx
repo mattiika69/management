@@ -41,7 +41,15 @@ function authErrorMessage(message: string) {
   return message || "Sign in failed. Please try again.";
 }
 
-export function LoginForm({ next = "/", notice }: { next?: string; notice?: string }) {
+export function LoginForm({
+  initialEmail = "",
+  next = "/",
+  notice,
+}: {
+  initialEmail?: string;
+  next?: string;
+  notice?: string;
+}) {
   const [message, setMessage] = useState(noticeMessage(notice));
   const [messageType, setMessageType] = useState<"info" | "error">(
     noticeMessage(notice) ? "error" : "info",
@@ -122,6 +130,8 @@ export function LoginForm({ next = "/", notice }: { next?: string; notice?: stri
           name="email"
           type="email"
           autoComplete="email"
+          defaultValue={initialEmail}
+          readOnly={Boolean(initialEmail)}
           className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-[#eaf2ff] px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
           placeholder="team@hyperoptimal.com"
         />

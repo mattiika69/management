@@ -22,7 +22,13 @@ function signupErrorMessage(message: string) {
   return message || "Account creation failed. Please try again.";
 }
 
-export function SignupForm({ next = "/get-started" }: { next?: string }) {
+export function SignupForm({
+  initialEmail = "",
+  next = "/get-started",
+}: {
+  initialEmail?: string;
+  next?: string;
+}) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -59,7 +65,7 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
         options: {
           emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
           data: {
-            organization_name: organizationName,
+            ...(isInviteSignup ? {} : { organization_name: organizationName }),
             first_name: firstName,
             last_name: lastName,
             name: [firstName, lastName].filter(Boolean).join(" "),
@@ -154,6 +160,8 @@ export function SignupForm({ next = "/get-started" }: { next?: string }) {
           name="email"
           type="email"
           autoComplete="email"
+          defaultValue={initialEmail}
+          readOnly={Boolean(initialEmail)}
           className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-[#eaf2ff] px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
           placeholder="team@hyperoptimal.com"
         />

@@ -27,6 +27,23 @@ function actionLinkFromGenerateLink(data: unknown) {
   return properties?.action_link ?? "";
 }
 
+function tokenHashFromGenerateLink(data: unknown) {
+  const properties = (data as { properties?: { hashed_token?: string } })?.properties;
+  return properties?.hashed_token ?? "";
+}
+
+function buildResetUrl(data: unknown, request: Request) {
+  const tokenHash = tokenHashFromGenerateLink(data);
+  if (tokenHash) {
+    const resetUrl = new URL("/update-password", siteOrigin(request));
+    resetUrl.searchParams.set("token_hash", tokenHash);
+    resetUrl.searchParams.set("type", "recovery");
+    return resetUrl.toString();
+  }
+
+  return actionLinkFromGenerateLink(data);
+}
+
 export async function POST(request: Request) {
   const payload = (await request.json().catch(() => ({}))) as PasswordResetPayload;
   const email = normalizeEmail(payload.email);
@@ -47,7 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const resetUrl = actionLinkFromGenerateLink(data);
+  const resetUrl = buildResetUrl(data, request);
   if (!resetUrl) {
     return NextResponse.json(
       { error: "Password reset could not be prepared. Try again in a moment." },

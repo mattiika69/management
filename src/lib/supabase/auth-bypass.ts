@@ -27,6 +27,14 @@ export function isAuthBypassEnabled() {
   );
 }
 
+export function isAuthBypassUser(user: Pick<User, "email" | "user_metadata">) {
+  const bypassEmail = readBypassEmail();
+  return (
+    user.user_metadata?.auth_bypass === true ||
+    user.email?.toLowerCase() === bypassEmail
+  );
+}
+
 async function findUserByEmail(supabase: SupabaseClient, email: string) {
   for (let page = 1; page <= 10; page += 1) {
     const { data, error } = await supabase.auth.admin.listUsers({
