@@ -16,20 +16,23 @@ test.describe("production public launch boundaries", () => {
 
     const login = await page.goto("/login", { waitUntil: "domcontentloaded" });
     expect(login?.status()).toBe(200);
-    expect(page.url()).toContain("/management");
-    await expect(page.getByRole("heading", { name: "Management" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
 
-    await page.goto("/management", { waitUntil: "domcontentloaded" });
-    expect(page.url()).toContain("/management");
+    const management = await page.goto("/management", { waitUntil: "domcontentloaded" });
+    expect(management?.status()).toBeLessThan(400);
+    expect(page.url()).toContain("/login");
+    expect(page.url()).toContain("next=%2Fmanagement");
 
     const admin = await page.goto("/admin", { waitUntil: "domcontentloaded" });
-    expect(admin?.status()).toBe(404);
+    expect(admin?.status()).toBeLessThan(400);
+    expect(page.url()).toContain("/login");
+    expect(page.url()).toContain("next=%2Fadmin");
 
     const adminOverview = await request.get("/api/admin/overview");
     expect(adminOverview.status()).toBe(403);
 
     const billingPlans = await request.get("/api/billing/plans");
-    expect(billingPlans.ok()).toBe(true);
+    expect([401, 403]).toContain(billingPlans.status());
   });
 
   test("keeps invite auth and password reset outside the app bypass", async ({

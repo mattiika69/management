@@ -28,7 +28,7 @@ Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from 
 ## Current Platform Capabilities
 
 - Auth: Supabase auth pages and callback routes exist for signup, login, reset password, and update password.
-- Temporary auth bypass: `DISABLE_LOGIN_AUTH` can be configured for development-only login bypass. Remove or disable this before real customer launch.
+- Temporary auth bypass: `DISABLE_LOGIN_AUTH`/`AUTH_BYPASS_ENABLED` can be configured for local or preview-only login bypass. Production code ignores bypass unless `ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE=true` is deliberately set.
 - Multi-tenancy: canonical tenant tables are present and synced with compatibility organization tables; persistent app tables are tenant-scoped with organization compatibility columns where legacy product code still uses them.
 - RLS: migrations enable row-level security and member policies on app data tables.
 - Team members: Settings > Team supports member listing and invitations.
@@ -212,10 +212,11 @@ Calendar and Zoom OAuth are implemented but blocked until these are added in Ver
 - `ZOOM_CLIENT_SECRET`
 - `INTEGRATION_SECRET_KEY`
 
-Production auth must be restored before customer launch:
+Production auth must stay enforced before customer launch:
 
 - Remove or set these to `false`/empty in Production: `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, and `AUTH_BYPASS_USER_ID`.
-- The code ignores auth bypass automatically when `VERCEL_ENV=production`; the Production env vars should still be removed so the dashboard state is unambiguous.
+- The code ignores auth bypass automatically when `VERCEL_ENV=production` or `NODE_ENV=production` unless `ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE=true` is deliberately set.
+- Do not set `ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE=true` for a customer launch.
 
 ## APIs We Have
 
@@ -243,6 +244,6 @@ Production auth must be restored before customer launch:
 - Triggers: pushes to `main`, pull requests, and manual dispatch.
 - Runner: `ubuntu-latest`.
 - Checks: `npm ci`, public Supabase config presence, Supabase admin/table verification on trusted runs, `npm run lint`, `npm run typecheck`, `npm run build`, Chromium install, and `npm run test:e2e:public`.
-- Default smoke target: `https://management-mattiika69.vercel.app`.
-- Override target with GitHub repository variable `PLAYWRIGHT_BASE_URL`.
+- Default smoke target: the built app served locally by `next start` on the GitHub Linux runner.
+- Override target locally or in CI by setting `PLAYWRIGHT_BASE_URL` only when an external deployment smoke is intentionally needed.
 - Required repository secrets: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.

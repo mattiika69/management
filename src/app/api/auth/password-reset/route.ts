@@ -7,6 +7,7 @@ import {
   rateLimitResponse,
   requestIp,
 } from "@/lib/security/rate-limit";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type PasswordResetPayload = {
@@ -65,6 +66,9 @@ function buildResetUrl(data: unknown, request: Request) {
 }
 
 export async function POST(request: Request) {
+  const originGuard = enforceSameOrigin(request);
+  if (originGuard) return originGuard;
+
   const payload = (await request.json().catch(() => ({}))) as PasswordResetPayload;
   const email = normalizeEmail(payload.email);
 

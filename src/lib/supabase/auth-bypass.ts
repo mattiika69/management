@@ -11,17 +11,27 @@ function readBypassEmail() {
   );
 }
 
+function isProductionRuntime() {
+  return process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+}
+
 export function isAuthBypassEnabled() {
   const bypassRequested =
     process.env.AUTH_BYPASS_ENABLED === "true" ||
     process.env.DISABLE_LOGIN_AUTH === "true";
 
-  if (!bypassRequested && process.env.REQUIRE_LOGIN_AUTH === "true") {
+  if (!bypassRequested || process.env.REQUIRE_LOGIN_AUTH === "true") {
+    return false;
+  }
+
+  if (
+    isProductionRuntime() &&
+    process.env.ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE !== "true"
+  ) {
     return false;
   }
 
   return Boolean(
-    bypassRequested &&
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   );

@@ -4,6 +4,7 @@ import {
   requireTenantAdmin,
   requireTenantContext,
 } from "@/lib/tenant-context";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -119,6 +120,9 @@ async function transferOrganizationOwnerIfNeeded(
 
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const { id } = await params;
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
@@ -180,8 +184,11 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, { params }: RouteContext) {
+export async function DELETE(request: Request, { params }: RouteContext) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const { id } = await params;
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);

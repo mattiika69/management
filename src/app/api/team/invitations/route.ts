@@ -6,6 +6,7 @@ import {
   rateLimitKey,
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { buildTeamInviteEmail } from "@/lib/team/email";
@@ -229,6 +230,9 @@ async function upsertInvitationRows(
 
 export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const payload = (await request.json()) as InvitePayload;
     const email = normalizeEmail(payload.email);
     const role = payload.role?.trim() ?? "member";
@@ -383,6 +387,9 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const supabase = await createClient();
     const context = await requireTenantContext(supabase);
     const body = (await request.json().catch(() => ({}))) as { id?: string };

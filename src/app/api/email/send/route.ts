@@ -5,6 +5,7 @@ import {
   rateLimitKey,
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createClient } from "@/lib/supabase/server";
 import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
@@ -17,6 +18,9 @@ type EmailPayload = {
 
 export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const payload = (await request.json()) as EmailPayload;
     const to = normalizeEmail(payload.to);
     const subject = payload.subject?.trim();

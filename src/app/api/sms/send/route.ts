@@ -9,6 +9,7 @@ import {
   rateLimitKey,
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createClient } from "@/lib/supabase/server";
 
 type SmsPayload = {
@@ -37,6 +38,9 @@ function getRoezanResult(error: unknown) {
 }
 
 export async function POST(request: Request) {
+  const originGuard = enforceSameOrigin(request);
+  if (originGuard) return originGuard;
+
   const payload = (await request.json()) as SmsPayload;
   const phone = payload.phone ? normalizePhone(payload.phone) : "";
   const message = payload.message?.trim();

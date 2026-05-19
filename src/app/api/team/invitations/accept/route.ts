@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ACTIVE_ORGANIZATION_COOKIE } from "@/lib/auth/organization";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createSessionClient } from "@/lib/supabase/server";
 import { hashInvitationToken } from "@/lib/team/invitations";
@@ -151,6 +152,9 @@ async function saveActiveOrganization(
 }
 
 export async function POST(request: Request) {
+  const originGuard = enforceSameOrigin(request);
+  if (originGuard) return originGuard;
+
   const payload = (await request.json()) as AcceptPayload;
   const token = payload.token?.trim();
 

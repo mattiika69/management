@@ -21,13 +21,19 @@ function isMiddlewareBypassEnabled() {
     process.env.AUTH_BYPASS_ENABLED === "true" ||
     process.env.DISABLE_LOGIN_AUTH === "true";
 
-  if (!bypassRequested && process.env.REQUIRE_LOGIN_AUTH === "true") {
+  if (!bypassRequested || process.env.REQUIRE_LOGIN_AUTH === "true") {
+    return false;
+  }
+
+  if (
+    (process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production") &&
+    process.env.ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE !== "true"
+  ) {
     return false;
   }
 
   return Boolean(
-    bypassRequested &&
-      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }
@@ -50,12 +56,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    "";
+
+  if (!supabaseUrl || !supabaseKey) {
+    return loginRedirect(request);
+  }
+
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-      "",
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
