@@ -10,6 +10,12 @@ type PasswordResetPayload = {
 function siteOrigin(request: Request) {
   const requestOrigin = new URL(request.url).origin;
   const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  const productionOrigin = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/\/$/, "")}`
+    : "";
+  const deploymentOrigin = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`
+    : "";
 
   if (
     configuredOrigin &&
@@ -17,6 +23,14 @@ function siteOrigin(request: Request) {
     !configuredOrigin.includes("127.0.0.1")
   ) {
     return configuredOrigin;
+  }
+
+  if (productionOrigin) {
+    return productionOrigin;
+  }
+
+  if (deploymentOrigin) {
+    return deploymentOrigin;
   }
 
   return requestOrigin;

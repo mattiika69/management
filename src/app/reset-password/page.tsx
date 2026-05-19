@@ -1,10 +1,16 @@
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { ResetPasswordForm } from "@/components/reset-password-form";
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string }>;
+}) {
+  const { email } = await searchParams;
+
   return (
     <AuthPageShell>
-      <ResetPasswordForm />
+      <ResetPasswordForm initialEmail={email} />
     </AuthPageShell>
   );
 }

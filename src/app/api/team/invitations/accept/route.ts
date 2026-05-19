@@ -22,11 +22,20 @@ type TenantInvitationRow = Omit<InvitationRow, "organization_id"> & {
   tenant_id: string;
 };
 
+type FoundInvitation = {
+  invitation: InvitationRow | null;
+  source: "tenant_invitations" | "organization_invitations" | null;
+  error: string | null;
+};
+
 type UserProfile = {
   metadata: Record<string, unknown> | null;
 };
 
-async function findInvitation(admin: ReturnType<typeof createAdminClient>, tokenHash: string) {
+async function findInvitation(
+  admin: ReturnType<typeof createAdminClient>,
+  tokenHash: string,
+): Promise<FoundInvitation> {
   const { data: tenantInvitation, error: tenantError } = await admin
     .from("tenant_invitations")
     .select("id,tenant_id,email,role,accepted_at,revoked_at,expires_at")
@@ -34,7 +43,7 @@ async function findInvitation(admin: ReturnType<typeof createAdminClient>, token
     .maybeSingle<TenantInvitationRow>();
 
   if (tenantError) {
-    return { invitation: null, error: tenantError.message };
+    return { invitation: null, source: null, error: tenantError.message };
   }
 
   if (tenantInvitation) {
@@ -48,6 +57,7 @@ async function findInvitation(admin: ReturnType<typeof createAdminClient>, token
         revoked_at: tenantInvitation.revoked_at,
         expires_at: tenantInvitation.expires_at,
       } satisfies InvitationRow,
+      source: "tenant_invitations",
       error: null,
     };
   }
@@ -60,8 +70,47 @@ async function findInvitation(admin: ReturnType<typeof createAdminClient>, token
 
   return {
     invitation: organizationInvitation,
+    source: organizationInvitation ? "organization_invitations" : null,
     error: organizationError?.message ?? null,
   };
+}
+
+async function markInvitationAccepted(
+  admin: ReturnType<typeof createAdminClient>,
+  input: {
+    invitation: InvitationRow;
+    tokenHash: string;
+    userId: string;
+    acceptedAt: string;
+  },
+) {
+  const organizationUpdate = await admin
+    .from("organization_invitations")
+    .update({
+      accepted_at: input.acceptedAt,
+      accepted_by: input.userId,
+    })
+    .eq("organization_id", input.invitation.organization_id)
+    .eq("token_hash", input.tokenHash)
+    .is("accepted_at", null)
+    .is("revoked_at", null);
+
+  if (organizationUpdate.error) {
+    return organizationUpdate.error.message;
+  }
+
+  const tenantUpdate = await admin
+    .from("tenant_invitations")
+    .update({
+      accepted_at: input.acceptedAt,
+      accepted_by_user_id: input.userId,
+    })
+    .eq("tenant_id", input.invitation.organization_id)
+    .eq("token_hash", input.tokenHash)
+    .is("accepted_at", null)
+    .is("revoked_at", null);
+
+  return tenantUpdate.error?.message ?? null;
 }
 
 async function saveActiveOrganization(
@@ -200,28 +249,15 @@ export async function POST(request: Request) {
   }
 
   const acceptedAt = new Date().toISOString();
-  const { error: invitationUpdateError } = await admin
-    .from("organization_invitations")
-    .update({
-      accepted_at: acceptedAt,
-      accepted_by: user.id,
-    })
-    .eq("id", invitation.id);
+  const invitationUpdateError = await markInvitationAccepted(admin, {
+    invitation,
+    tokenHash,
+    userId: user.id,
+    acceptedAt,
+  });
 
   if (invitationUpdateError) {
-    return NextResponse.json({ error: invitationUpdateError.message }, { status: 400 });
-  }
-
-  const { error: tenantInvitationError } = await admin
-    .from("tenant_invitations")
-    .update({
-      accepted_at: acceptedAt,
-      accepted_by_user_id: user.id,
-    })
-    .eq("id", invitation.id);
-
-  if (tenantInvitationError) {
-    return NextResponse.json({ error: tenantInvitationError.message }, { status: 400 });
+    return NextResponse.json({ error: invitationUpdateError }, { status: 400 });
   }
 
   const profileError = await saveActiveOrganization(admin, {

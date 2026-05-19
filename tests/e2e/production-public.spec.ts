@@ -31,4 +31,46 @@ test.describe("production public launch boundaries", () => {
     const billingPlans = await request.get("/api/billing/plans");
     expect(billingPlans.ok()).toBe(true);
   });
+
+  test("keeps invite auth and password reset outside the app bypass", async ({
+    page,
+  }) => {
+    const inviteEmail = "invitee@example.com";
+    const invitePath = "/invite/test-token";
+
+    const login = await page.goto(
+      `/login?next=${encodeURIComponent(invitePath)}&email=${encodeURIComponent(inviteEmail)}`,
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(login?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
+    await expect(page.getByLabel("Email")).toHaveValue(inviteEmail);
+    await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute(
+      "href",
+      `/reset-password?email=${encodeURIComponent(inviteEmail)}`,
+    );
+
+    const signup = await page.goto(
+      `/signup?next=${encodeURIComponent(invitePath)}&email=${encodeURIComponent(inviteEmail)}`,
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(signup?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
+    await expect(page.getByLabel("Email")).toHaveValue(inviteEmail);
+    await expect(page.getByLabel("Organization Name")).toHaveCount(0);
+
+    const reset = await page.goto(
+      `/reset-password?email=${encodeURIComponent(inviteEmail)}`,
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(reset?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
+    await expect(page.getByLabel("Email")).toHaveValue(inviteEmail);
+
+    const update = await page.goto("/update-password?token_hash=fake&type=recovery", {
+      waitUntil: "domcontentloaded",
+    });
+    expect(update?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Update password" })).toBeVisible();
+  });
 });

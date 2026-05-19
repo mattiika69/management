@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ initialEmail = "" }: { initialEmail?: string }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -59,6 +59,8 @@ export function ResetPasswordForm() {
           name="email"
           type="email"
           autoComplete="email"
+          defaultValue={initialEmail}
+          readOnly={Boolean(initialEmail)}
           className="h-12 w-full rounded-[7px] border border-[#cbd5e1] bg-white px-4 text-[16px] text-[#111827] outline-none transition focus:border-[#2563ff] focus:ring-2 focus:ring-[#2563ff]/15"
           placeholder="you@example.com"
         />

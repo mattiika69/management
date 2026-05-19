@@ -58,6 +58,9 @@ export function LoginForm({
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const nextPath = safeNextPath(next);
+  const resetHref = initialEmail
+    ? `/reset-password?email=${encodeURIComponent(initialEmail)}`
+    : "/reset-password";
 
   async function signInWithPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -140,7 +143,7 @@ export function LoginForm({
       <label className="mb-5 block">
         <span className="mb-2 flex items-center justify-between text-[15px] font-medium text-[#334155]">
           Password
-          <Link className="text-[15px] font-medium text-[#2563ff]" href="/reset-password">
+          <Link className="text-[15px] font-medium text-[#2563ff]" href={resetHref}>
             Forgot password?
           </Link>
         </span>
@@ -187,7 +190,7 @@ export function LoginForm({
         >
           <p>{message}</p>
           {showResetHelp ? (
-            <Link className="mt-2 inline-block text-[#2563ff]" href="/reset-password">
+            <Link className="mt-2 inline-block text-[#2563ff]" href={resetHref}>
               Reset password
             </Link>
           ) : null}
