@@ -120,7 +120,7 @@ export default async function TeamSettingsPage({
     <AppShell
       active="/settings/team"
       title="Team"
-      subtitle={`Manage workspace settings for ${organization.name}.`}
+      subtitle="Member since March 2026"
       tabs={settingsTabs}
     >
       <section className="w-full">
