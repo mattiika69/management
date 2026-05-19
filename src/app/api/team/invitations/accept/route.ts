@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { User } from "@supabase/supabase-js";
 import { ACTIVE_ORGANIZATION_COOKIE } from "@/lib/auth/organization";
 import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -32,6 +33,10 @@ type FoundInvitation = {
 type UserProfile = {
   metadata: Record<string, unknown> | null;
 };
+
+function isVerifiedEmailUser(user: User) {
+  return Boolean(user.email_confirmed_at || user.confirmed_at);
+}
 
 async function findInvitation(
   admin: ReturnType<typeof createAdminClient>,
@@ -169,6 +174,13 @@ export async function POST(request: Request) {
 
   if (!user?.email) {
     return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
+  }
+
+  if (!isVerifiedEmailUser(user)) {
+    return NextResponse.json(
+      { error: "Confirm your email before accepting this invitation." },
+      { status: 403 },
+    );
   }
 
   const admin = createAdminClient();

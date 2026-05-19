@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import type { ReactNode } from "react";
+import { AuthRecoveryBridge } from "@/components/auth-recovery-bridge";
 import { AppChrome } from "@/components/app-chrome";
 import "./globals.css";
 
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={montserrat.variable}>
       <body className={montserrat.className}>
+        <AuthRecoveryBridge />
         <AppChrome>{children}</AppChrome>
       </body>
     </html>

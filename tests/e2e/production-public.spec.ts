@@ -80,5 +80,11 @@ test.describe("production public launch boundaries", () => {
     });
     expect(update?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Update password" })).toBeVisible();
+
+    await page.goto("/login#access_token=fake&refresh_token=fake&type=recovery", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page).toHaveURL(/\/update-password#access_token=fake/);
+    await expect(page.getByRole("heading", { name: "Update password" })).toBeVisible();
   });
 });

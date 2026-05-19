@@ -49,8 +49,36 @@ function actionLinkFromGenerateLink(data: unknown) {
 }
 
 function tokenHashFromGenerateLink(data: unknown) {
-  const properties = (data as { properties?: { hashed_token?: string } })?.properties;
-  return properties?.hashed_token ?? "";
+  const properties = (data as { properties?: { hashed_token?: string; token_hash?: string } })?.properties;
+  return properties?.hashed_token ?? properties?.token_hash ?? "";
+}
+
+function isLocalhostUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return true;
+  }
+}
+
+function safeActionLinkFromGenerateLink(data: unknown, request: Request) {
+  const actionLink = actionLinkFromGenerateLink(data);
+  if (!actionLink) return "";
+
+  try {
+    const url = new URL(actionLink);
+    const redirectTo = `${siteOrigin(request)}/update-password`;
+
+    if (url.searchParams.has("redirect_to")) {
+      url.searchParams.set("redirect_to", redirectTo);
+    }
+
+    const finalUrl = url.toString();
+    return isLocalhostUrl(finalUrl) ? "" : finalUrl;
+  } catch {
+    return "";
+  }
 }
 
 function buildResetUrl(data: unknown, request: Request) {
@@ -62,7 +90,7 @@ function buildResetUrl(data: unknown, request: Request) {
     return resetUrl.toString();
   }
 
-  return actionLinkFromGenerateLink(data);
+  return safeActionLinkFromGenerateLink(data, request);
 }
 
 export async function POST(request: Request) {
