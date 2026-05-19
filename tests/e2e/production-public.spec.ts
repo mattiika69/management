@@ -39,7 +39,9 @@ test.describe("production public launch boundaries", () => {
     });
     expect(anonymousMutation.status()).toBe(403);
 
-    const companyContext = await request.get("/api/company-context");
+    const companyContext = await request.put("/api/company-context", {
+      data: { data: { company: "Blocked" } },
+    });
     expect([401, 403]).toContain(companyContext.status());
 
     const leadCreate = await request.post("/api/leads", {
