@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type Payload = {
   agentId?: string;
@@ -25,40 +25,38 @@ function refs(value: unknown) {
 }
 
 export async function PUT(request: Request) {
-  const payload = (await request.json()) as Payload;
-  const agentId = payload.agentId?.trim();
+  try {
+    const payload = (await request.json()) as Payload;
+    const agentId = payload.agentId?.trim();
 
-  if (!agentId) {
-    return NextResponse.json({ error: "Agent ID is required." }, { status: 400 });
+    if (!agentId) {
+      return NextResponse.json({ error: "Agent ID is required." }, { status: 400 });
+    }
+
+    const context = await requireTenantContext(await createClient());
+    const { error } = await context.supabase.from("workspace_ai_training").upsert(
+      {
+        organization_id: context.tenant.id,
+        agent_id: agentId,
+        overall_description: payload.overallDescription?.trim() ?? "",
+        framework: payload.framework?.trim() ?? "",
+        criteria: payload.criteria?.trim() ?? "",
+        ai_sequence: payload.aiSequence?.trim() ?? "",
+        training_refs: refs(payload.trainingRefs),
+        updated_by: context.user.id,
+      },
+      { onConflict: "organization_id,agent_id" },
+    );
+
+    if (error) {
+      return NextResponse.json(
+        { error: "AI Agent settings could not be saved." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
-  }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const { error } = await supabase.from("workspace_ai_training").upsert(
-    {
-      organization_id: organization.id,
-      agent_id: agentId,
-      overall_description: payload.overallDescription?.trim() ?? "",
-      framework: payload.framework?.trim() ?? "",
-      criteria: payload.criteria?.trim() ?? "",
-      ai_sequence: payload.aiSequence?.trim() ?? "",
-      training_refs: refs(payload.trainingRefs),
-      updated_by: user.id,
-    },
-    { onConflict: "organization_id,agent_id" },
-  );
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true });
 }

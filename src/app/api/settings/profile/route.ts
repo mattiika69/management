@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError } from "@/lib/tenant-context";
 
 type ProfileMetadata = {
   phoneNumber?: string;
@@ -26,57 +27,67 @@ function normalizeMetadata(value: unknown): ProfileMetadata {
 }
 
 export async function PATCH(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
+    }
+
+    const payload = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const displayName = cleanText(payload.displayName, 120);
+
+    if (!displayName) {
+      return NextResponse.json({ error: "Display name is required." }, { status: 400 });
+    }
+
+    const admin = createAdminClient();
+    const { data: existing, error: existingError } = await admin
+      .from("user_profiles")
+      .select("metadata,avatar_url")
+      .eq("user_id", user.id)
+      .maybeSingle<{ metadata: ProfileMetadata | null; avatar_url: string | null }>();
+
+    if (existingError) {
+      return NextResponse.json(
+        { error: "Profile could not be loaded." },
+        { status: 500 },
+      );
+    }
+
+    const metadata = {
+      ...(existing?.metadata && typeof existing.metadata === "object" ? existing.metadata : {}),
+      ...normalizeMetadata(payload),
+    };
+
+    const { data, error } = await admin
+      .from("user_profiles")
+      .upsert(
+        {
+          user_id: user.id,
+          email: user.email ?? null,
+          display_name: displayName,
+          avatar_url: existing?.avatar_url ?? null,
+          metadata,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" },
+      )
+      .select("user_id,email,display_name,avatar_url,metadata,created_at,updated_at")
+      .single();
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Profile could not be saved." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ profile: data });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  const payload = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const displayName = cleanText(payload.displayName, 120);
-
-  if (!displayName) {
-    return NextResponse.json({ error: "Display name is required." }, { status: 400 });
-  }
-
-  const admin = createAdminClient();
-  const { data: existing, error: existingError } = await admin
-    .from("user_profiles")
-    .select("metadata,avatar_url")
-    .eq("user_id", user.id)
-    .maybeSingle<{ metadata: ProfileMetadata | null; avatar_url: string | null }>();
-
-  if (existingError) {
-    return NextResponse.json({ error: existingError.message }, { status: 400 });
-  }
-
-  const metadata = {
-    ...(existing?.metadata && typeof existing.metadata === "object" ? existing.metadata : {}),
-    ...normalizeMetadata(payload),
-  };
-
-  const { data, error } = await admin
-    .from("user_profiles")
-    .upsert(
-      {
-        user_id: user.id,
-        email: user.email ?? null,
-        display_name: displayName,
-        avatar_url: existing?.avatar_url ?? null,
-        metadata,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    )
-    .select("user_id,email,display_name,avatar_url,metadata,created_at,updated_at")
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ profile: data });
 }

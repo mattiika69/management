@@ -99,7 +99,7 @@ async function findAccessibleOrganization(
   return organization;
 }
 
-export async function getOrCreateDefaultOrganization(
+export async function getCurrentOrganization(
   supabase: SupabaseClient,
   user: User,
 ) {
@@ -196,6 +196,14 @@ export async function getOrCreateDefaultOrganization(
     throw new Error(ownedSelectError.message);
   }
 
+  return ownedOrganization ?? null;
+}
+
+export async function getOrCreateDefaultOrganization(
+  supabase: SupabaseClient,
+  user: User,
+) {
+  const ownedOrganization = await getCurrentOrganization(supabase, user);
   if (ownedOrganization) {
     return ownedOrganization;
   }

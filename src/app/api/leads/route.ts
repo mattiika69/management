@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type LeadPayload = {
   email?: string;
@@ -8,37 +8,39 @@ type LeadPayload = {
   source?: string;
 };
 
+function isEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export async function POST(request: Request) {
-  const payload = (await request.json()) as LeadPayload;
-  const email = payload.email?.trim().toLowerCase();
-  const name = payload.name?.trim() || null;
-  const source = payload.source?.trim() || "homepage";
+  try {
+    const payload = (await request.json()) as LeadPayload;
+    const email = payload.email?.trim().toLowerCase();
+    const name = payload.name?.trim().slice(0, 160) || null;
+    const source = payload.source?.trim().slice(0, 80) || "homepage";
 
-  if (!email) {
-    return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    if (!email || !isEmail(email)) {
+      return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+    }
+
+    const context = await requireTenantContext(await createClient());
+    const { error } = await context.supabase.from("leads").insert({
+      email,
+      name,
+      source,
+      organization_id: context.tenant.id,
+      created_by: context.user.id,
+    });
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Lead could not be saved." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
-  }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const { error } = await supabase.from("leads").insert({
-    email,
-    name,
-    source,
-    organization_id: organization.id,
-    created_by: user.id,
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true });
 }

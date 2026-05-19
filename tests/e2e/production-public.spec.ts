@@ -39,6 +39,25 @@ test.describe("production public launch boundaries", () => {
     });
     expect(anonymousMutation.status()).toBe(403);
 
+    const companyContext = await request.get("/api/company-context");
+    expect([401, 403]).toContain(companyContext.status());
+
+    const leadCreate = await request.post("/api/leads", {
+      data: { email: "blocked@example.com" },
+    });
+    expect([401, 403]).toContain(leadCreate.status());
+
+    const sidebarOrder = await request.get("/api/settings/sidebar-order");
+    expect([401, 403]).toContain(sidebarOrder.status());
+
+    const smsSend = await request.post("/api/sms/send", {
+      data: { phone: "+15555555555", message: "Blocked" },
+    });
+    expect([401, 403]).toContain(smsSend.status());
+
+    const telegramStatus = await request.get("/api/integrations/telegram/status");
+    expect([401, 403]).toContain(telegramStatus.status());
+
     const slackEvents = await request.post("/api/integrations/slack/events", {
       data: {},
     });

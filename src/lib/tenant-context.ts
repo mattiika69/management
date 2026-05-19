@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 
 export type TenantContext = {
   supabase: SupabaseClient;
@@ -50,7 +50,11 @@ export async function requireTenantContext(
     throw new HttpError("Authentication is required.", 401);
   }
 
-  const tenant = await getOrCreateDefaultOrganization(supabase, user);
+  const tenant = await getCurrentOrganization(supabase, user);
+  if (!tenant) {
+    throw new HttpError("Workspace access is required.", 403);
+  }
+
   const { data: membership, error } = await supabase
     .from("tenant_memberships")
     .select("role")

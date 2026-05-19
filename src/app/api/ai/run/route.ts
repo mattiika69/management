@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { isFunnelType } from "@/lib/hyperoptimal/data";
 import {
   buildAIOutputText,
@@ -10,6 +9,7 @@ import {
 import { formatLearningsForPrompt, getLearningItems } from "@/lib/learnings/server";
 import { createWorkspaceNote } from "@/lib/notes/server";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type Payload = {
   funnelType?: string;
@@ -69,150 +69,147 @@ async function generateWithClaude(prompt: string) {
     }),
   });
 
-  const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const errorMessage =
-      body && typeof body === "object" && "error" in body
-        ? JSON.stringify((body as { error: unknown }).error)
-        : "Claude generation failed.";
-    throw new Error(errorMessage);
+    throw new Error("AI generation failed.");
   }
 
+  const body = await response.json().catch(() => null);
   return extractResponseText(body) || null;
 }
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as Payload;
-  const funnelType = payload.funnelType?.trim() ?? "";
-  const funnelId = payload.funnelId?.trim();
-  const stepId = payload.stepId?.trim();
-  const agentId = payload.agentId?.trim();
-
-  if (!isFunnelType(funnelType) || !funnelId || !agentId) {
-    return NextResponse.json({ error: "A valid funnel and agent are required." }, { status: 400 });
-  }
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
-  }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const definitions = await getAIDefinitions(supabase, funnelType);
-  const definition = definitions.find((entry) => entry.agent_id === agentId);
-
-  if (!definition) {
-    return NextResponse.json({ error: "This AI is not approved for this funnel." }, { status: 400 });
-  }
-
-  const { data: step, error: stepError } = stepId
-    ? await supabase
-        .from("funnel_steps")
-        .select("id,funnel_id,title,notes,ai_agent_id")
-        .eq("id", stepId)
-        .eq("funnel_id", funnelId)
-        .eq("organization_id", organization.id)
-        .maybeSingle<StepRow>()
-    : { data: null, error: null };
-
-  if (stepError) {
-    return NextResponse.json({ error: stepError.message }, { status: 400 });
-  }
-
-  if (step && step.ai_agent_id && step.ai_agent_id !== agentId) {
-    return NextResponse.json({ error: "This AI does not match the selected funnel step." }, { status: 400 });
-  }
-
-  const { data: training } = await supabase
-    .from("workspace_ai_training")
-    .select("id,organization_id,agent_id,overall_description,framework,criteria,ai_sequence,training_refs,updated_at")
-    .eq("organization_id", organization.id)
-    .eq("agent_id", agentId)
-    .maybeSingle<TrainingRow>();
-  const companyContext = await getOrCreateCompanyContext(supabase, organization, user);
-  const learnings = await getLearningItems(supabase, organization, 20);
-  const prompt = buildAIOutputText({
-    agentTitle: definition.title,
-    agentPrompt: definition.default_prompt,
-    criteria: definition.default_criteria,
-    companyContext: companyContext.data,
-    stepTitle: step?.title,
-    stepNotes: step?.notes,
-    training: training ?? undefined,
-    learnings: formatLearningsForPrompt(learnings),
-  });
-
-  let outputText = prompt;
-  let status: "saved" | "generated" | "failed" = "saved";
-  let errorMessage: string | null = null;
-
   try {
-    const generated = await generateWithClaude(prompt);
-    if (generated) {
-      outputText = generated;
-      status = "generated";
-    }
-  } catch (error) {
-    status = "failed";
-    errorMessage = error instanceof Error ? error.message : "AI generation failed.";
-    outputText = `${prompt}\n\n## Generation Error\n${errorMessage}`;
-  }
+    const payload = (await request.json()) as Payload;
+    const funnelType = payload.funnelType?.trim() ?? "";
+    const funnelId = payload.funnelId?.trim();
+    const stepId = payload.stepId?.trim();
+    const agentId = payload.agentId?.trim();
 
-  const { data: saved, error: saveError } = await supabase
-    .from("funnel_ai_outputs")
-    .insert({
-      organization_id: organization.id,
-      funnel_id: funnelId,
-      step_id: step?.id ?? null,
-      context_id: companyContext.id,
-      asset_key: step?.id ? step.title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") : agentId,
-      agent_id: agentId,
-      prompt,
-      output_text: outputText,
-      status,
-      error_message: errorMessage,
-      created_by: user.id,
+    if (!isFunnelType(funnelType) || !funnelId || !agentId) {
+      return NextResponse.json({ error: "A valid funnel and agent are required." }, { status: 400 });
+    }
+
+    const context = await requireTenantContext(await createClient());
+    const organization = context.tenant;
+    const user = context.user;
+    const supabase = context.supabase;
+    const definitions = await getAIDefinitions(supabase, funnelType);
+    const definition = definitions.find((entry) => entry.agent_id === agentId);
+
+    if (!definition) {
+      return NextResponse.json({ error: "This AI is not approved for this funnel." }, { status: 400 });
+    }
+
+    const { data: step, error: stepError } = stepId
+      ? await supabase
+          .from("funnel_steps")
+          .select("id,funnel_id,title,notes,ai_agent_id")
+          .eq("id", stepId)
+          .eq("funnel_id", funnelId)
+          .eq("organization_id", organization.id)
+          .maybeSingle<StepRow>()
+      : { data: null, error: null };
+
+    if (stepError) {
+      return NextResponse.json(
+        { error: "The selected funnel step could not be loaded." },
+        { status: 400 },
+      );
+    }
+
+    if (step && step.ai_agent_id && step.ai_agent_id !== agentId) {
+      return NextResponse.json({ error: "This AI does not match the selected funnel step." }, { status: 400 });
+    }
+
+    const { data: training } = await supabase
+      .from("workspace_ai_training")
+      .select("id,organization_id,agent_id,overall_description,framework,criteria,ai_sequence,training_refs,updated_at")
+      .eq("organization_id", organization.id)
+      .eq("agent_id", agentId)
+      .maybeSingle<TrainingRow>();
+    const companyContext = await getOrCreateCompanyContext(supabase, organization, user);
+    const learnings = await getLearningItems(supabase, organization, 20);
+    const prompt = buildAIOutputText({
+      agentTitle: definition.title,
+      agentPrompt: definition.default_prompt,
+      criteria: definition.default_criteria,
+      companyContext: companyContext.data,
+      stepTitle: step?.title,
+      stepNotes: step?.notes,
+      training: training ?? undefined,
+      learnings: formatLearningsForPrompt(learnings),
+    });
+
+    let outputText = prompt;
+    let status: "saved" | "generated" | "failed" = "saved";
+    let errorMessage: string | null = null;
+
+    try {
+      const generated = await generateWithClaude(prompt);
+      if (generated) {
+        outputText = generated;
+        status = "generated";
+      }
+    } catch {
+      status = "failed";
+      errorMessage = "AI generation failed.";
+      outputText = `${prompt}\n\n## Generation Status\nAI generation failed. The source prompt was saved for manual review.`;
+    }
+
+    const { data: saved, error: saveError } = await supabase
+      .from("funnel_ai_outputs")
+      .insert({
+        organization_id: organization.id,
+        funnel_id: funnelId,
+        step_id: step?.id ?? null,
+        context_id: companyContext.id,
+        asset_key: step?.id ? step.title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") : agentId,
+        agent_id: agentId,
+        prompt,
+        output_text: outputText,
+        status,
+        error_message: errorMessage,
+        created_by: user.id,
+        metadata: {
+          funnelType,
+          provider: "anthropic",
+          model:
+            process.env.CLAUDE_MODEL?.trim() ||
+            process.env.ANTHROPIC_MODEL?.trim() ||
+            "claude-sonnet-4-5",
+          liveProviderConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+          learningItemIds: learnings.map((item) => item.id),
+        },
+      })
+      .select("id,status")
+      .single<{ id: string; status: string }>();
+
+    if (saveError) {
+      return NextResponse.json({ error: "AI output could not be saved." }, { status: 500 });
+    }
+
+    const note = await createWorkspaceNote(supabase, organization, user, {
+      title: `${step?.title ?? definition.title} - AI Output`,
+      body: outputText,
+      source: "Pre-Made AI",
+      folder: "Generated Assets",
+      tags: ["generated", "manual-ai", agentId],
+      visibility: "private",
+      contextId: companyContext.id,
+      funnelId,
+      stepId: step?.id ?? null,
+      assetKey: step?.id ? step.title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") : agentId,
+      aiOutputId: saved.id,
       metadata: {
-        funnelType,
+        source: "manual-ai-run",
         provider: "anthropic",
-        model:
-          process.env.CLAUDE_MODEL?.trim() ||
-          process.env.ANTHROPIC_MODEL?.trim() ||
-          "claude-sonnet-4-5",
-        liveProviderConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
         learningItemIds: learnings.map((item) => item.id),
       },
-    })
-    .select("id,status")
-    .single<{ id: string; status: string }>();
+    });
+    await supabase.from("funnel_ai_outputs").update({ note_id: note.id }).eq("id", saved.id);
 
-  if (saveError) {
-    return NextResponse.json({ error: saveError.message }, { status: 400 });
+    return NextResponse.json({ ok: true, outputId: saved.id, noteId: note.id, status: saved.status });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  const note = await createWorkspaceNote(supabase, organization, user, {
-    title: `${step?.title ?? definition.title} - AI Output`,
-    body: outputText,
-    source: "Pre-Made AI",
-    folder: "Generated Assets",
-    tags: ["generated", "manual-ai", agentId],
-    visibility: "private",
-    contextId: companyContext.id,
-    funnelId,
-    stepId: step?.id ?? null,
-    assetKey: step?.id ? step.title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") : agentId,
-    aiOutputId: saved.id,
-    metadata: {
-      source: "manual-ai-run",
-      provider: "anthropic",
-      learningItemIds: learnings.map((item) => item.id),
-    },
-  });
-  await supabase.from("funnel_ai_outputs").update({ note_id: note.id }).eq("id", saved.id);
-
-  return NextResponse.json({ ok: true, outputId: saved.id, noteId: note.id, status: saved.status });
 }

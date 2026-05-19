@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import {
   BOOK_A_CALL_LAUNCH_ASSETS,
   BUILDER_OPTIONS,
@@ -15,6 +14,7 @@ import { getFunnelById, normalizeCompanyContext, type TrainingRow } from "@/lib/
 import { formatLearningsForPrompt, type LearningItem } from "@/lib/learnings/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type RouteContext = {
   params: Promise<{ type: string }>;
@@ -92,15 +92,11 @@ async function generateWithClaude(prompt: string) {
     }),
   });
 
-  const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const errorMessage =
-      body && typeof body === "object" && "error" in body
-        ? JSON.stringify((body as { error: unknown }).error)
-        : "Claude generation failed.";
-    throw new Error(errorMessage);
+    throw new Error("AI generation failed.");
   }
 
+  const body = await response.json().catch(() => null);
   return extractResponseText(body) || null;
 }
 
@@ -168,8 +164,9 @@ function buildPrompt(input: {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
-  const { type: funnelId } = await params;
-  const payload = (await request.json().catch(() => ({}))) as Payload;
+  try {
+    const { type: funnelId } = await params;
+    const payload = (await request.json().catch(() => ({}))) as Payload;
   const requestedAssetKeys = Array.isArray(payload.assetKeys)
     ? payload.assetKeys.filter(isBookACallAssetKey)
     : BOOK_A_CALL_LAUNCH_ASSETS.map((asset) => asset.key);
@@ -179,17 +176,11 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Select at least one asset to launch." }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
-  }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const funnel = await getFunnelById(supabase, organization, funnelId);
+    const tenantContext = await requireTenantContext(await createClient());
+    const organization = tenantContext.tenant;
+    const user = tenantContext.user;
+    const supabase = tenantContext.supabase;
+    const funnel = await getFunnelById(supabase, organization, funnelId);
   if (!funnel || funnel.template_key !== "book-a-call") {
     return NextResponse.json({ error: "A valid workspace is required." }, { status: 404 });
   }
@@ -199,7 +190,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const admin = createAdminClient();
-  const { data: context, error: contextError } = await admin
+  const { data: linkedContext, error: contextError } = await admin
     .from("company_contexts")
     .select("id,title,status,data")
     .eq("id", funnel.context_id)
@@ -208,9 +199,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     .maybeSingle<ContextRow>();
 
   if (contextError) {
-    return NextResponse.json({ error: contextError.message }, { status: 400 });
+    return NextResponse.json({ error: "The linked AI Context Doc could not be loaded." }, { status: 400 });
   }
-  if (!context || context.status !== "confirmed") {
+  if (!linkedContext || linkedContext.status !== "confirmed") {
     return NextResponse.json({ error: "Confirm the linked AI Context Doc before launching." }, { status: 400 });
   }
 
@@ -238,7 +229,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     .insert({
       organization_id: organization.id,
       funnel_id: funnel.id,
-      context_id: context.id,
+      context_id: linkedContext.id,
       builder_key: builderKey,
       builder_project_url: builderProjectUrl,
       selected_assets: assets.map((asset) => asset.key),
@@ -250,7 +241,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     .single<{ id: string }>();
 
   if (launchError) {
-    return NextResponse.json({ error: launchError.message }, { status: 400 });
+    return NextResponse.json({ error: "Launch could not be started." }, { status: 500 });
   }
 
   const { data: steps } = await admin
@@ -271,7 +262,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         organization_id: organization.id,
         launch_run_id: launchRun.id,
         funnel_id: funnel.id,
-        context_id: context.id,
+        context_id: linkedContext.id,
         step_id: step?.id ?? null,
         asset_key: asset.key,
         agent_id: asset.agentId,
@@ -282,7 +273,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       .single<{ id: string }>();
 
     if (assetRunError) {
-      results.push({ assetKey: asset.key, status: "failed", error: assetRunError.message });
+      results.push({ assetKey: asset.key, status: "failed", error: "Asset could not be started." });
       continue;
     }
 
@@ -292,7 +283,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         .select("agent_id,title,default_prompt,default_criteria")
         .eq("agent_id", asset.agentId)
         .single<DefinitionRow>();
-      if (!definition) throw new Error(`Missing AI definition for ${asset.agentId}.`);
+      if (!definition) throw new Error("AI definition is missing.");
 
       const { data: training } = await admin
         .from("workspace_ai_training")
@@ -323,7 +314,7 @@ export async function POST(request: Request, { params }: RouteContext) {
       const prompt = buildPrompt({
         asset,
         definition,
-        context: { ...context, data: normalizeCompanyContext(context.data ?? DEFAULT_COMPANY_CONTEXT) },
+          context: { ...linkedContext, data: normalizeCompanyContext(linkedContext.data ?? DEFAULT_COMPANY_CONTEXT) },
         funnelName: funnel.name,
         builderKey,
         builderProjectUrl,
@@ -345,7 +336,7 @@ export async function POST(request: Request, { params }: RouteContext) {
           organization_id: organization.id,
           funnel_id: funnel.id,
           step_id: step?.id ?? null,
-          context_id: context.id,
+          context_id: linkedContext.id,
           asset_key: asset.key,
           builder_key: builderKey,
           agent_id: asset.agentId,
@@ -368,7 +359,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         })
         .select("id")
         .single<{ id: string }>();
-      if (outputError) throw new Error(outputError.message);
+      if (outputError) throw new Error("Generated asset could not be saved.");
 
       const { data: note, error: noteError } = await admin
         .from("workspace_notes")
@@ -380,7 +371,7 @@ export async function POST(request: Request, { params }: RouteContext) {
           folder: asset.noteFolder,
           tags: ["generated", "book-a-call", asset.key, builderKey],
           visibility: "private",
-          context_id: context.id,
+          context_id: linkedContext.id,
           funnel_id: funnel.id,
           step_id: step?.id ?? null,
           asset_key: asset.key,
@@ -397,7 +388,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         })
         .select("id")
         .single<{ id: string }>();
-      if (noteError) throw new Error(noteError.message);
+      if (noteError) throw new Error("Generated note could not be saved.");
 
       const { error: spendError } = await admin.rpc("spend_credits", {
         target_organization_id: organization.id,
@@ -409,7 +400,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         entry_metadata: { assetKey: asset.key, aiOutputId: output.id, noteId: note.id },
         actor_user_id: user.id,
       });
-      if (spendError) throw new Error(spendError.message);
+      if (spendError) throw new Error("Credits could not be recorded.");
 
       spentCredits += asset.creditCost;
       await admin.from("funnel_ai_outputs").update({ note_id: note.id }).eq("id", output.id);
@@ -461,5 +452,8 @@ export async function POST(request: Request, { params }: RouteContext) {
     })
     .eq("id", funnel.id);
 
-  return NextResponse.json({ ok: !failed, launchRunId: launchRun.id, spentCredits, results });
+    return NextResponse.json({ ok: !failed, launchRunId: launchRun.id, spentCredits, results });
+  } catch (error) {
+    return jsonError(error);
+  }
 }

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { isBuilderKey } from "@/lib/hyperoptimal/data";
 import {
   archiveFunnel,
@@ -8,6 +7,7 @@ import {
   updateFunnel,
 } from "@/lib/hyperoptimal/server";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 type Payload = {
   id?: string;
@@ -20,76 +20,75 @@ type Payload = {
 };
 
 async function getRequestContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ error: "Authentication is required." }, { status: 401 }) };
-  }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  return { supabase, user, organization };
+  const context = await requireTenantContext(await createClient());
+  return { supabase: context.supabase, user: context.user, organization: context.tenant };
 }
 
 export async function GET() {
-  const context = await getRequestContext();
-  if ("error" in context) return context.error;
-
-  const funnels = await listFunnels(context.supabase, context.organization, "book-a-call");
-  return NextResponse.json({ funnels });
+  try {
+    const context = await getRequestContext();
+    const funnels = await listFunnels(context.supabase, context.organization, "book-a-call");
+    return NextResponse.json({ funnels });
+  } catch (error) {
+    return jsonError(error);
+  }
 }
 
 export async function POST(request: Request) {
-  const context = await getRequestContext();
-  if ("error" in context) return context.error;
+  try {
+    const context = await getRequestContext();
+    const payload = (await request.json().catch(() => ({}))) as Payload;
+    const builderKey = payload.builderKey && isBuilderKey(payload.builderKey) ? payload.builderKey : undefined;
+    const result = await createFunnel(context.supabase, context.organization, context.user, {
+      name: payload.name,
+      contextId: payload.contextId,
+      builderKey,
+      builderProjectUrl: payload.builderProjectUrl,
+      duplicateFromId: payload.duplicateFromId,
+    });
 
-  const payload = (await request.json().catch(() => ({}))) as Payload;
-  const builderKey = payload.builderKey && isBuilderKey(payload.builderKey) ? payload.builderKey : undefined;
-  const result = await createFunnel(context.supabase, context.organization, context.user, {
-    name: payload.name,
-    contextId: payload.contextId,
-    builderKey,
-    builderProjectUrl: payload.builderProjectUrl,
-    duplicateFromId: payload.duplicateFromId,
-  });
-
-  return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result });
+  } catch (error) {
+    return jsonError(error);
+  }
 }
 
 export async function PATCH(request: Request) {
-  const context = await getRequestContext();
-  if ("error" in context) return context.error;
+  try {
+    const context = await getRequestContext();
+    const payload = (await request.json()) as Payload;
+    const funnelId = payload.id?.trim();
+    if (!funnelId) {
+      return NextResponse.json({ error: "A funnel is required." }, { status: 400 });
+    }
 
-  const payload = (await request.json()) as Payload;
-  const funnelId = payload.id?.trim();
-  if (!funnelId) {
-    return NextResponse.json({ error: "A funnel is required." }, { status: 400 });
+    const builderKey = payload.builderKey && isBuilderKey(payload.builderKey) ? payload.builderKey : undefined;
+    const funnel = await updateFunnel(context.supabase, context.organization, context.user, funnelId, {
+      name: payload.name,
+      contextId: payload.contextId,
+      builderKey,
+      builderProjectUrl: payload.builderProjectUrl,
+      status: payload.status,
+    });
+
+    return NextResponse.json({ ok: true, funnel });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  const builderKey = payload.builderKey && isBuilderKey(payload.builderKey) ? payload.builderKey : undefined;
-  const funnel = await updateFunnel(context.supabase, context.organization, context.user, funnelId, {
-    name: payload.name,
-    contextId: payload.contextId,
-    builderKey,
-    builderProjectUrl: payload.builderProjectUrl,
-    status: payload.status,
-  });
-
-  return NextResponse.json({ ok: true, funnel });
 }
 
 export async function DELETE(request: Request) {
-  const context = await getRequestContext();
-  if ("error" in context) return context.error;
+  try {
+    const context = await getRequestContext();
+    const payload = (await request.json()) as Payload;
+    const funnelId = payload.id?.trim();
+    if (!funnelId) {
+      return NextResponse.json({ error: "A funnel is required." }, { status: 400 });
+    }
 
-  const payload = (await request.json()) as Payload;
-  const funnelId = payload.id?.trim();
-  if (!funnelId) {
-    return NextResponse.json({ error: "A funnel is required." }, { status: 400 });
+    await archiveFunnel(context.supabase, context.organization, context.user, funnelId);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  await archiveFunnel(context.supabase, context.organization, context.user, funnelId);
-  return NextResponse.json({ ok: true });
 }

@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
 import { createClient } from "@/lib/supabase/server";
+import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
 function buildDeepLink(code: string) {
   const username = process.env.TELEGRAM_BOT_USERNAME?.trim();
@@ -9,33 +9,31 @@ function buildDeepLink(code: string) {
 }
 
 export async function POST() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const context = await requireTenantContext(await createClient());
+    const code = randomBytes(8).toString("hex").toUpperCase();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const { error } = await context.supabase.from("telegram_link_codes").insert({
+      code,
+      user_id: context.user.id,
+      organization_id: context.tenant.id,
+      expires_at: expiresAt,
+    });
 
-  if (!user) {
-    return NextResponse.json({ error: "Authentication is required." }, { status: 401 });
+    if (error) {
+      return NextResponse.json(
+        { error: "Telegram link code could not be created." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      code,
+      expiresAt,
+      deepLink: buildDeepLink(code),
+      botUsername: process.env.TELEGRAM_BOT_USERNAME?.trim() || null,
+    });
+  } catch (error) {
+    return jsonError(error);
   }
-
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const code = randomBytes(8).toString("hex").toUpperCase();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-  const { error } = await supabase.from("telegram_link_codes").insert({
-    code,
-    user_id: user.id,
-    organization_id: organization.id,
-    expires_at: expiresAt,
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
-
-  return NextResponse.json({
-    code,
-    expiresAt,
-    deepLink: buildDeepLink(code),
-    botUsername: process.env.TELEGRAM_BOT_USERNAME?.trim() || null,
-  });
 }
