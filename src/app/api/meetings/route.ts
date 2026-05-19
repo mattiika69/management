@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { auditAction, jsonError, requireTenantContext } from "@/lib/tenant-context";
+import { auditAction, jsonError, requireTenantContext, requireTenantMemberUserIds } from "@/lib/tenant-context";
 import type { MeetingType } from "@/lib/operations/meetings";
 
 type AttendeeInput = {
@@ -93,6 +93,18 @@ export async function POST(request: Request) {
     if (!meetingDate) {
       return NextResponse.json({ error: "Meeting date is required." }, { status: 400 });
     }
+
+    const memberScopedUserIds = [
+      cleanId(payload.ownerUserId),
+      cleanId(payload.employeeUserId),
+      ...(payload.attendees ?? []).map((attendee) => cleanId(attendee.userId)),
+      ...(payload.actionItems ?? []).map((item) => cleanId(item.ownerUserId)),
+      ...(payload.trainingItems ?? []).flatMap((item) => [
+        cleanId(item.traineeUserId),
+        cleanId(item.trainerUserId),
+      ]),
+    ];
+    await requireTenantMemberUserIds(context, memberScopedUserIds);
 
     const meetingRecord = {
       tenant_id: context.tenant.id,

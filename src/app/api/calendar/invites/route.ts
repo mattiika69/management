@@ -37,6 +37,13 @@ type ZoomConnection = {
   cloud_recording_sync: boolean;
 };
 
+const MAX_TITLE_LENGTH = 180;
+const MAX_DESCRIPTION_LENGTH = 5000;
+const MAX_LOCATION_LENGTH = 500;
+const MAX_TIMEZONE_LENGTH = 100;
+const MAX_RECIPIENTS = 50;
+const MAX_DURATION_MS = 24 * 60 * 60 * 1000;
+
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -98,7 +105,7 @@ export async function POST(request: Request) {
     const description = cleanText(payload.description);
     const timezone = cleanText(payload.timezone) || "America/New_York";
     const location = cleanText(payload.location);
-    const recipientEmails = normalizeEmailList(payload.recipientEmails);
+    const recipientEmails = normalizeEmailList(payload.recipientEmails).slice(0, MAX_RECIPIENTS);
     const startAt = parseDate(payload.startAt);
     const endAt = parseDate(payload.endAt);
 
@@ -109,8 +116,31 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      title.length > MAX_TITLE_LENGTH ||
+      description.length > MAX_DESCRIPTION_LENGTH ||
+      location.length > MAX_LOCATION_LENGTH ||
+      timezone.length > MAX_TIMEZONE_LENGTH
+    ) {
+      return NextResponse.json(
+        { error: "Invite details are too long." },
+        { status: 400 },
+      );
+    }
+
+    if ((payload.recipientEmails?.length ?? 0) > MAX_RECIPIENTS) {
+      return NextResponse.json(
+        { error: `Calendar invites support up to ${MAX_RECIPIENTS} recipients.` },
+        { status: 400 },
+      );
+    }
+
     if (new Date(endAt).getTime() <= new Date(startAt).getTime()) {
       return NextResponse.json({ error: "End time must be after start time." }, { status: 400 });
+    }
+
+    if (new Date(endAt).getTime() - new Date(startAt).getTime() > MAX_DURATION_MS) {
+      return NextResponse.json({ error: "Invite duration cannot exceed 24 hours." }, { status: 400 });
     }
 
     const calendarConnectionId = cleanText(payload.calendarConnectionId) || null;
@@ -271,7 +301,7 @@ export async function POST(request: Request) {
           .update({
             status: "sent",
             external_message_id: result.data?.id,
-            metadata: { source: "calendar_invite", calendar_invite_id: invite.id, provider_response: result.data },
+            metadata: { source: "calendar_invite", calendar_invite_id: invite.id, provider_message_id: result.data?.id ?? null },
           })
           .eq("id", emailMessage.id);
       } catch (error) {

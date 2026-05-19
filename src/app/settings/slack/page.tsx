@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,7 +20,10 @@ export default async function SlackSettingsPage() {
     redirect("/login?next=/settings/slack");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const { data, error } = await supabase
     .from("integration_connections")
     .select("id,display_name,external_team_id")

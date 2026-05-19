@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ScheduleManager } from "@/components/schedule-manager";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canManageTeam, getMembershipRole } from "@/lib/team/permissions";
@@ -16,7 +16,10 @@ export default async function SchedulingSettingsPage() {
     redirect("/login?next=/settings/scheduling");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const role = await getMembershipRole(supabase, organization.id, user);
 
   if (!canManageTeam(role)) {

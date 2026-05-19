@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { BillingCheckoutButton } from "@/components/billing-checkout-button";
 import { CreditCheckoutButton } from "@/components/credit-checkout-button";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { getCreditAccount } from "@/lib/hyperoptimal/server";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +17,10 @@ export default async function BillingSettingsPage() {
     redirect("/login?next=/settings/billing");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const creditAccount = await getCreditAccount(supabase, organization).catch(() => null);
   const { data: subscriptions } = await supabase
     .from("subscriptions")

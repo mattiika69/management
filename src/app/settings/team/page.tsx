@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { TeamMemberActions } from "@/components/team-member-actions";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -85,7 +85,10 @@ export default async function TeamSettingsPage({
     redirect("/login?next=/settings/team");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const membershipRole = await getMembershipRole(supabase, organization.id, user);
   const canManage = canManageTeam(membershipRole);
   const params = searchParams ? await searchParams : {};

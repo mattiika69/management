@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ManagementEcosystemWorkspace } from "@/components/management-ecosystem-workspace";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { hiringTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -24,7 +24,10 @@ export default async function JobDescriptionsPage() {
     redirect("/login?next=/management/job-descriptions");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const { data, error } = await supabase
     .from("management_job_descriptions")
     .select("id,title,department,reports_to,status,updated_at")

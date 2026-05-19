@@ -36,7 +36,6 @@ type InviteDelivery = {
   sent: boolean;
   provider: "resend" | null;
   externalMessageId?: string;
-  providerResponse?: unknown;
   errorMessage?: string;
 };
 
@@ -62,7 +61,6 @@ async function sendInviteEmail(input: {
       sent: true,
       provider: "resend",
       externalMessageId: result.data?.id,
-      providerResponse: result.data,
     };
   } catch (resendError) {
     const resendMessage = resendError instanceof Error ? resendError.message : "Resend delivery failed.";
@@ -332,7 +330,7 @@ export async function POST(request: Request) {
             source: "team_invitation",
             invitation_id: invitation.id,
             delivery_provider: delivery.provider,
-            provider_response: delivery.providerResponse,
+            provider_message_id: delivery.externalMessageId ?? null,
           },
         })
         .eq("id", emailMessage.id);

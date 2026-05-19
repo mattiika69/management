@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ZoomSettings, type ZoomConnectionRow } from "@/components/zoom-settings";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { oauthProviderReady } from "@/lib/oauth/provider-oauth";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +17,10 @@ export default async function ZoomSettingsPage() {
     redirect("/login?next=/settings/zoom");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const membershipRole = await getMembershipRole(supabase, organization.id, user);
   const { data, error } = await supabase
     .from("zoom_connections")

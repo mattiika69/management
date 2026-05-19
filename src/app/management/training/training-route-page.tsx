@@ -6,7 +6,7 @@ import {
   type TrainingPerson,
   type TrainingProgram,
 } from "@/components/training-screening-workspace";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { trainingTabs } from "@/lib/hyperoptimal/navigation";
 import { initialsFor, listWorkspacePeople } from "@/lib/operations/people";
 import { createClient } from "@/lib/supabase/server";
@@ -38,7 +38,10 @@ export async function TrainingRoutePage({
     redirect(`/login?next=${active}`);
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const [programsResult, itemsResult, employeesResult] = await Promise.all([
     supabase
       .from("management_training_programs")

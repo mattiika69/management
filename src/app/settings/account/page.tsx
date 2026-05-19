@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProfileSettingsForm } from "@/components/profile-settings-form";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,7 +35,10 @@ export default async function AccountSettingsPage() {
     redirect("/login?next=/settings/account");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const { data: profile } = await supabase
     .from("user_profiles")
     .select("display_name,metadata,created_at")

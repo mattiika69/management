@@ -52,10 +52,40 @@ test.describe("production public launch boundaries", () => {
     const sidebarOrder = await request.get("/api/settings/sidebar-order");
     expect([401, 403]).toContain(sidebarOrder.status());
 
+    const acceptInvite = await request.post("/api/team/invitations/accept", {
+      data: { token: "blocked-token" },
+    });
+    expect([401, 403]).toContain(acceptInvite.status());
+
     const smsSend = await request.post("/api/sms/send", {
       data: { phone: "+15555555555", message: "Blocked" },
     });
     expect([401, 403]).toContain(smsSend.status());
+
+    const managementWrite = await request.post("/api/management", {
+      data: { action: "setReviewFlag" },
+    });
+    expect([401, 403]).toContain(managementWrite.status());
+
+    const meetingsWrite = await request.post("/api/meetings", {
+      data: { meetingType: "team", meetingDate: "2026-05-19" },
+    });
+    expect([401, 403]).toContain(meetingsWrite.status());
+
+    const calendarInvite = await request.post("/api/calendar/invites", {
+      data: {
+        title: "Blocked",
+        startAt: "2026-05-19T13:00:00Z",
+        endAt: "2026-05-19T13:30:00Z",
+        recipientEmails: ["blocked@example.com"],
+      },
+    });
+    expect([401, 403]).toContain(calendarInvite.status());
+
+    const zoomSync = await request.post("/api/zoom/recordings/sync", {
+      data: { connectionId: "00000000-0000-0000-0000-000000000000" },
+    });
+    expect([401, 403]).toContain(zoomSync.status());
 
     const telegramStatus = await request.get("/api/integrations/telegram/status");
     expect([401, 403]).toContain(telegramStatus.status());
@@ -102,6 +132,11 @@ test.describe("production public launch boundaries", () => {
     await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
     await expect(page.getByLabel("Email")).toHaveValue(inviteEmail);
     await expect(page.getByLabel("Organization Name")).toHaveCount(0);
+
+    const normalSignup = await page.goto("/signup", { waitUntil: "domcontentloaded" });
+    expect(normalSignup?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "HyperOptimal" })).toBeVisible();
+    await expect(page.getByLabel("Organization Name")).toBeVisible();
 
     const reset = await page.goto(
       `/reset-password?email=${encodeURIComponent(inviteEmail)}`,

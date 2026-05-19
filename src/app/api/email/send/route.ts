@@ -16,6 +16,14 @@ type EmailPayload = {
   html?: string;
 };
 
+const MAX_SUBJECT_LENGTH = 180;
+const MAX_TEXT_LENGTH = 10000;
+const MAX_HTML_LENGTH = 20000;
+
+function cleanText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 export async function POST(request: Request) {
   try {
     const originGuard = enforceSameOrigin(request);
@@ -23,13 +31,24 @@ export async function POST(request: Request) {
 
     const payload = (await request.json()) as EmailPayload;
     const to = normalizeEmail(payload.to);
-    const subject = payload.subject?.trim();
-    const text = payload.text?.trim();
-    const html = payload.html?.trim();
+    const subject = cleanText(payload.subject);
+    const text = cleanText(payload.text);
+    const html = cleanText(payload.html);
 
     if (!to || !subject || (!text && !html)) {
       return NextResponse.json(
         { error: "A valid recipient, subject, and message body are required." },
+        { status: 400 },
+      );
+    }
+
+    if (
+      subject.length > MAX_SUBJECT_LENGTH ||
+      text.length > MAX_TEXT_LENGTH ||
+      html.length > MAX_HTML_LENGTH
+    ) {
+      return NextResponse.json(
+        { error: "Message content is too long." },
         { status: 400 },
       );
     }
@@ -86,7 +105,7 @@ export async function POST(request: Request) {
         .update({
           status: "sent",
           external_message_id: result.data?.id,
-          metadata: { source: "api", provider_response: result.data },
+          metadata: { source: "api", provider_message_id: result.data?.id ?? null },
         })
         .eq("id", emailMessage.id);
 

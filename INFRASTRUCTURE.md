@@ -133,7 +133,7 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 ### Server Flow For New Features
 
 1. Read the current user from Supabase Auth.
-2. Resolve or create the active organization through `getOrCreateDefaultOrganization`.
+2. Resolve the active organization through `getCurrentOrganization`; only `/get-started` may create a default organization through `getOrCreateDefaultOrganization`.
 3. Validate membership and role when needed.
 4. Read/write only rows for that organization.
 5. Persist data to Supabase before returning success.

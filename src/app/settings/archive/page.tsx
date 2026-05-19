@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,7 +14,10 @@ export default async function ArchiveSettingsPage() {
     redirect("/login?next=/settings/archive");
   }
 
-  await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
 
   return (
     <AppShell active="/settings/archive" title="Archive" subtitle="Manage archived records." tabs={settingsTabs}>

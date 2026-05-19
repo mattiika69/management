@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ContextWorkspace } from "@/components/context-workspace";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { getOrCreateCompanyContext, listCompanyContexts } from "@/lib/hyperoptimal/server";
 import { createClient } from "@/lib/supabase/server";
@@ -26,7 +26,10 @@ export default async function AIContextDocsSettingsPage({
     redirect("/login?next=/settings/ai-context-docs");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const params = searchParams ? await searchParams : {};
   const requestedContextId = readParam(params.context);
   const fallbackContext = await getOrCreateCompanyContext(supabase, organization, user, requestedContextId);

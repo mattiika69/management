@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { TelegramLinkPanel } from "@/components/telegram-link-panel";
 import { TelegramUsernameForm } from "@/components/telegram-username-form";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,7 +25,10 @@ export default async function TelegramSettingsPage() {
     redirect("/login?next=/settings/telegram");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const { data, error } = await supabase
     .from("integration_connections")
     .select("id,display_name,external_channel_id,config")

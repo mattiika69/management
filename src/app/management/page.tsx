@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ManagementWorkspace } from "@/components/management-workspace";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { managementTabs } from "@/lib/hyperoptimal/navigation";
 import { getManagementData } from "@/lib/operations/management";
 import { createClient } from "@/lib/supabase/server";
@@ -42,7 +42,10 @@ export default async function ManagementPage({
   const safeActiveView = views.has(activeView) ? activeView : "checklist";
   const activeTab = managementTabs.find((tab) => tab.href.includes(`view=${safeActiveView}`))?.href ?? managementTabs[0].href;
   const weekStart = readParam(params.week);
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const data = await getManagementData(supabase, organization, user, weekStart);
 
   return (

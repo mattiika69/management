@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { MeetingsWorkspace } from "@/components/meetings-workspace";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { getMeetingsData } from "@/lib/operations/meetings";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,7 +29,10 @@ export default async function MeetingsPage({
 
   const params = searchParams ? await searchParams : {};
   const activeView = readParam(params.view) || "team";
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const data = await getMeetingsData(supabase, organization, user);
 
   return (

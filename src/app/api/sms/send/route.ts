@@ -132,7 +132,7 @@ export async function POST(request: Request) {
           rate_limit_limit: result.rateLimit.limit,
           rate_limit_remaining: result.rateLimit.remaining,
           rate_limit_reset: result.rateLimit.reset,
-          metadata: { source: "api", provider_response: result.data },
+          metadata: { source: "api", provider_status: "accepted" },
         })
         .eq("id", smsMessage.id);
 
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
           rate_limit_limit: result?.rateLimit.limit,
           rate_limit_remaining: result?.rateLimit.remaining,
           rate_limit_reset: result?.rateLimit.reset,
-          metadata: { source: "api", provider_response: result?.data, error: messageText },
+          metadata: { source: "api", provider_status: result ? "failed" : "unavailable", error: messageText },
         })
         .eq("id", smsMessage.id);
 

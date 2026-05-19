@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { CalendarInviteForm, type CalendarInviteCalendar, type CalendarInviteZoom } from "@/components/calendar-invite-form";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { listWorkspacePeople } from "@/lib/operations/people";
 import { oauthProviderReady } from "@/lib/oauth/provider-oauth";
@@ -61,7 +61,10 @@ export default async function CalendarSettingsPage() {
     redirect("/login?next=/settings/calendars");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const [employeesResult, calendarsResult, zoomResult] = await Promise.all([
     supabase
       .from("employees")

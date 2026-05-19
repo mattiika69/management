@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { getCreditAccount } from "@/lib/hyperoptimal/server";
 import { createClient } from "@/lib/supabase/server";
@@ -15,7 +15,10 @@ export default async function UsageSettingsPage() {
     redirect("/login?next=/settings/usage");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const creditAccount = await getCreditAccount(supabase, organization).catch(() => null);
 
   return (

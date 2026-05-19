@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { CalendarSettings, type CalendarConnectionRow } from "@/components/calendar-settings";
 import { TelegramLinkPanel } from "@/components/telegram-link-panel";
 import { ZoomSettings, type ZoomConnectionRow } from "@/components/zoom-settings";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { oauthProviderReady } from "@/lib/oauth/provider-oauth";
 import { createClient } from "@/lib/supabase/server";
@@ -53,7 +53,10 @@ export default async function IntegrationsSettingsPage() {
     redirect("/login?next=/settings/integrations");
   }
 
-  const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    redirect("/get-started");
+  }
   const membershipRole = await getMembershipRole(supabase, organization.id, user);
   const canManage = canManageTeam(membershipRole);
   const [calendarsResult, zoomResult, connectionsResult] = await Promise.all([

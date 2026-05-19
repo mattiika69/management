@@ -15,13 +15,11 @@ export default async function SignupPage({
     redirect("/management");
   }
 
-  if (!inviteNext) {
-    redirect("/login");
-  }
+  const safeNext = inviteNext ? next : "/get-started";
 
   return (
     <AuthPageShell>
-      <SignupForm initialEmail={email} next={next ?? "/get-started"} />
+      <SignupForm initialEmail={email} next={safeNext ?? "/get-started"} />
     </AuthPageShell>
   );
 }

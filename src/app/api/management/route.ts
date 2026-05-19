@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { auditAction, jsonError, requireTenantContext } from "@/lib/tenant-context";
+import { auditAction, jsonError, requireTenantContext, requireTenantMemberUserIds } from "@/lib/tenant-context";
 
 type SubjectPayload = {
   subjectKey?: string;
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const payload = (await request.json()) as Payload;
     const subject = readSubject(payload);
+    await requireTenantMemberUserIds(context, [subject.member_user_id]);
 
     if (payload.action === "setReviewFlag") {
       const field = requireString(payload.field, "A checklist field");

@@ -95,6 +95,59 @@ export function requireTenantAdmin(context: TenantContext) {
   }
 }
 
+function normalizeUserIds(userIds: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      userIds
+        .map((userId) => (typeof userId === "string" ? userId.trim() : ""))
+        .filter(Boolean),
+    ),
+  );
+}
+
+export async function requireTenantMemberUserIds(
+  context: TenantContext,
+  userIds: Array<string | null | undefined>,
+) {
+  const uniqueUserIds = normalizeUserIds(userIds);
+  if (!uniqueUserIds.length) return;
+
+  const { data: tenantMemberships, error: tenantError } = await context.supabase
+    .from("tenant_memberships")
+    .select("user_id")
+    .eq("tenant_id", context.tenant.id)
+    .in("user_id", uniqueUserIds)
+    .is("archived_at", null)
+    .returns<Array<{ user_id: string }>>();
+
+  if (tenantError) {
+    throw new HttpError("Workspace membership could not be verified.", 403);
+  }
+
+  const verifiedUserIds = new Set((tenantMemberships ?? []).map((row) => row.user_id));
+  const missingFromTenant = uniqueUserIds.filter((userId) => !verifiedUserIds.has(userId));
+  if (!missingFromTenant.length) return;
+
+  const { data: legacyMemberships, error: legacyError } = await context.supabase
+    .from("organization_memberships")
+    .select("user_id")
+    .eq("organization_id", context.tenant.id)
+    .in("user_id", missingFromTenant)
+    .returns<Array<{ user_id: string }>>();
+
+  if (legacyError) {
+    throw new HttpError("Workspace membership could not be verified.", 403);
+  }
+
+  for (const row of legacyMemberships ?? []) {
+    verifiedUserIds.add(row.user_id);
+  }
+
+  if (uniqueUserIds.some((userId) => !verifiedUserIds.has(userId))) {
+    throw new HttpError("One or more selected people are not in this workspace.", 400);
+  }
+}
+
 export async function auditAction(
   context: TenantContext,
   action: string,
