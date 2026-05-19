@@ -19,6 +19,13 @@ type Membership = {
   created_at: string;
 };
 
+type ProfileRow = {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
 type Invitation = {
   id: string;
   email: string;
@@ -55,19 +62,70 @@ function isInternalBypassEmail(email: string | undefined) {
   return email?.toLowerCase() === "auth-bypass@hyperoptimal-management.test";
 }
 
-async function loadMemberEmails(memberships: Membership[]) {
+function metadataPhone(metadata: Record<string, unknown> | null | undefined) {
+  const phone = metadata?.phone;
+  return typeof phone === "string" ? phone : "";
+}
+
+async function loadMemberProfiles(memberships: Membership[]) {
+  const fallback = new Map(
+    memberships.map((membership) => [
+      membership.user_id,
+      {
+        displayName: membership.user_id,
+        email: membership.user_id,
+        phone: "",
+      },
+    ] as const),
+  );
+
   try {
     const admin = createAdminClient();
+    const userIds = memberships.map((membership) => membership.user_id);
+    const { data: profileRows } = userIds.length
+      ? await admin
+          .from("user_profiles")
+          .select("user_id,email,display_name,metadata")
+          .in("user_id", userIds)
+          .returns<ProfileRow[]>()
+      : { data: [] as ProfileRow[] };
+
+    const profilesByUserId = new Map(
+      (profileRows ?? []).map((profile) => [profile.user_id, profile]),
+    );
+
     const entries = await Promise.all(
       memberships.map(async (membership) => {
         const { data } = await admin.auth.admin.getUserById(membership.user_id);
-        return [membership.user_id, data.user?.email ?? membership.user_id] as const;
+        const authEmail = data.user?.email ?? "";
+        const profile = profilesByUserId.get(membership.user_id);
+        const metadata = data.user?.user_metadata ?? {};
+        const metadataName =
+          typeof metadata.full_name === "string"
+            ? metadata.full_name
+            : typeof metadata.name === "string"
+              ? metadata.name
+              : "";
+        const email = profile?.email || authEmail || membership.user_id;
+        const displayName =
+          profile?.display_name ||
+          metadataName ||
+          (email.includes("@") ? email.split("@")[0] : email);
+
+        return [
+          membership.user_id,
+          {
+            displayName,
+            email,
+            phone: metadataPhone(profile?.metadata),
+          },
+        ] as const;
       }),
     );
 
     return new Map(entries);
   } catch {
-    return new Map(memberships.map((membership) => [membership.user_id, membership.user_id]));
+    return fallback;
   }
 }
 
@@ -106,9 +164,9 @@ export default async function TeamSettingsPage({
     throw new Error(membershipsError.message);
   }
 
-  const memberEmails = await loadMemberEmails(memberships ?? []);
+  const memberProfiles = await loadMemberProfiles(memberships ?? []);
   const visibleMemberships = (memberships ?? []).filter(
-    (membership) => !isInternalBypassEmail(memberEmails.get(membership.user_id)),
+    (membership) => !isInternalBypassEmail(memberProfiles.get(membership.user_id)?.email),
   );
 
   const { data: invitations, error: invitationsError } = canManage
@@ -159,49 +217,65 @@ export default async function TeamSettingsPage({
               <div
                 className={`settings-table-head hidden gap-3 px-4 py-3 md:grid ${
                   canManage
-                    ? "md:grid-cols-[minmax(0,1fr)_120px_120px_210px]"
-                    : "md:grid-cols-[minmax(0,1fr)_140px_140px]"
+                    ? "md:grid-cols-[minmax(150px,1fr)_minmax(190px,1.15fr)_minmax(130px,0.8fr)_120px_100px_170px]"
+                    : "md:grid-cols-[minmax(0,1fr)_minmax(180px,1fr)_140px_140px]"
                 }`}
               >
+                <span>Name</span>
                 <span>Email</span>
+                {canManage ? <span>Phone</span> : null}
                 <span>Role</span>
                 <span>Joined</span>
                 {canManage ? <span>Actions</span> : null}
               </div>
-              {visibleMemberships.map((membership) => (
-                <div
-                  key={membership.user_id}
-                  className={`grid gap-2 border-t border-[#e4e7ec] px-4 py-4 text-[13px] md:gap-3 ${
-                    canManage
-                      ? "md:grid-cols-[minmax(0,1fr)_120px_120px_210px]"
-                      : "md:grid-cols-[minmax(0,1fr)_140px_140px]"
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-bold text-[#171717]">
-                      {memberEmails.get(membership.user_id)}
-                    </p>
-                    {membership.user_id === user.id ? (
-                      <p className="mt-1 text-[11px] font-medium text-[#667085]">You</p>
-                    ) : null}
+              {visibleMemberships.map((membership) => {
+                const profile = memberProfiles.get(membership.user_id) ?? {
+                  displayName: membership.user_id,
+                  email: membership.user_id,
+                  phone: "",
+                };
+
+                return (
+                  <div
+                    key={membership.user_id}
+                    className={`grid gap-2 border-t border-[#e4e7ec] px-4 py-4 text-[13px] md:gap-3 ${
+                      canManage
+                        ? "md:grid-cols-[minmax(150px,1fr)_minmax(190px,1.15fr)_minmax(130px,0.8fr)_120px_100px_170px]"
+                        : "md:grid-cols-[minmax(0,1fr)_minmax(180px,1fr)_140px_140px]"
+                    }`}
+                  >
+                    {canManage ? (
+                      <TeamMemberActions
+                        userId={membership.user_id}
+                        currentUserId={user.id}
+                        role={membership.role}
+                        displayName={profile.displayName}
+                        email={profile.email}
+                        phone={profile.phone}
+                        joinedAt={formatDate(membership.created_at)}
+                      />
+                    ) : (
+                      <>
+                        <div className="min-w-0">
+                          <p className="truncate font-bold text-[#171717]">{profile.displayName}</p>
+                          {membership.user_id === user.id ? (
+                            <p className="mt-1 text-[11px] font-medium text-[#667085]">You</p>
+                          ) : null}
+                        </div>
+                        <p className="truncate text-[#667085]">{profile.email}</p>
+                        <span className="capitalize text-[#667085]">
+                          <span className="md:hidden">Role: </span>
+                          {roleLabel(membership.role)}
+                        </span>
+                        <span className="text-[#667085]">
+                          <span className="md:hidden">Joined: </span>
+                          {formatDate(membership.created_at)}
+                        </span>
+                      </>
+                    )}
                   </div>
-                  <span className="capitalize text-[#667085]">
-                    <span className="md:hidden">Role: </span>
-                    {roleLabel(membership.role)}
-                  </span>
-                  <span className="text-[#667085]">
-                    <span className="md:hidden">Joined: </span>
-                    {formatDate(membership.created_at)}
-                  </span>
-                  {canManage ? (
-                    <TeamMemberActions
-                      userId={membership.user_id}
-                      currentUserId={user.id}
-                      role={membership.role}
-                    />
-                  ) : null}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 

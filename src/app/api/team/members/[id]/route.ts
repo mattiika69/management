@@ -12,8 +12,54 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
+type MemberPatchBody = {
+  displayName?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+};
+
+type UserProfileRow = {
+  email: string | null;
+  display_name: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
 type TenantContext = Awaited<ReturnType<typeof requireTenantContext>>;
 type AdminClient = ReturnType<typeof createAdminClient>;
+const allowedRoles = ["owner", "admin", "member", "viewer"] as const;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^[0-9+().\-\s]{0,40}$/;
+
+function normalizeText(value: unknown, maxLength: number) {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, maxLength) : null;
+}
+
+function normalizeEmail(value: unknown) {
+  const normalized = normalizeText(value, 254);
+  if (normalized === undefined) return undefined;
+  if (!normalized) return null;
+
+  const email = normalized.toLowerCase();
+  return emailPattern.test(email) ? email : "";
+}
+
+function normalizePhone(value: unknown) {
+  const normalized = normalizeText(value, 40);
+  if (normalized === undefined) return undefined;
+  if (!normalized) return null;
+  return phonePattern.test(normalized) ? normalized : "";
+}
+
+function normalizedMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): Record<string, unknown> {
+  if (!metadata || Array.isArray(metadata) || typeof metadata !== "object") return {};
+  return { ...metadata };
+}
 
 async function getTenantMembership(
   admin: AdminClient,
@@ -79,6 +125,54 @@ async function auditTeamAction(
   if (error) throw new Error(error.message);
 }
 
+async function updateMemberProfile(
+  admin: AdminClient,
+  userId: string,
+  input: {
+    displayName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  },
+) {
+  const updatesProfile =
+    input.displayName !== undefined ||
+    input.email !== undefined ||
+    input.phone !== undefined;
+
+  if (!updatesProfile) return;
+
+  const { data: profile, error: profileError } = await admin
+    .from("user_profiles")
+    .select("email,display_name,metadata")
+    .eq("user_id", userId)
+    .maybeSingle<UserProfileRow>();
+
+  if (profileError) throw new Error(profileError.message);
+
+  const metadata = normalizedMetadata(profile?.metadata);
+  if (input.phone !== undefined) {
+    if (input.phone) {
+      metadata.phone = input.phone;
+    } else {
+      delete metadata.phone;
+    }
+  }
+
+  const { error } = await admin.from("user_profiles").upsert(
+    {
+      user_id: userId,
+      email: input.email !== undefined ? input.email : profile?.email ?? null,
+      display_name:
+        input.displayName !== undefined ? input.displayName : profile?.display_name ?? null,
+      metadata,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+
+  if (error) throw new Error(error.message);
+}
+
 async function replacementOwnerId(
   admin: AdminClient,
   context: TenantContext,
@@ -126,13 +220,33 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     const { id } = await params;
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
-    const body = (await request.json()) as { role?: string };
+    const body = (await request.json().catch(() => ({}))) as MemberPatchBody;
+    const nextRole = typeof body.role === "string" ? body.role.trim() : undefined;
+    const displayName = normalizeText(body.displayName, 120);
+    const email = normalizeEmail(body.email);
+    const phone = normalizePhone(body.phone);
 
-    if (!body.role || !["owner", "admin", "member", "viewer"].includes(body.role)) {
+    if (nextRole !== undefined && !allowedRoles.includes(nextRole as (typeof allowedRoles)[number])) {
       return NextResponse.json({ error: "Valid role is required." }, { status: 400 });
     }
 
-    if (id === context.user.id) {
+    if (displayName === "" || email === "" || phone === "") {
+      return NextResponse.json(
+        { error: "Enter a valid name, email, and phone number." },
+        { status: 400 },
+      );
+    }
+
+    if (
+      nextRole === undefined &&
+      displayName === undefined &&
+      email === undefined &&
+      phone === undefined
+    ) {
+      return NextResponse.json({ error: "No member updates were provided." }, { status: 400 });
+    }
+
+    if (id === context.user.id && nextRole !== undefined && nextRole !== context.role) {
       return NextResponse.json({ error: "You cannot change your own role." }, { status: 400 });
     }
 
@@ -142,40 +256,52 @@ export async function PATCH(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: "Team member not found." }, { status: 404 });
     }
 
-    if (body.role !== "owner") {
+    if (nextRole !== undefined && nextRole !== "owner") {
       const ownerGuard = await assertCanChangeOwner(admin, context, membership);
       if (ownerGuard) return ownerGuard;
     }
 
-    const { error } = await admin
-      .from("tenant_memberships")
-      .update({ role: body.role })
-      .eq("tenant_id", context.tenant.id)
-      .eq("user_id", id)
-      .is("archived_at", null);
+    if (nextRole !== undefined && nextRole !== membership.role) {
+      const { error } = await admin
+        .from("tenant_memberships")
+        .update({ role: nextRole })
+        .eq("tenant_id", context.tenant.id)
+        .eq("user_id", id)
+        .is("archived_at", null);
 
-    if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message);
 
-    const { error: organizationMembershipError } = await admin
-      .from("organization_memberships")
-      .upsert(
-        {
-          organization_id: context.tenant.id,
-          user_id: id,
-          role: body.role,
-        },
-        { onConflict: "organization_id,user_id" },
-      );
+      const { error: organizationMembershipError } = await admin
+        .from("organization_memberships")
+        .upsert(
+          {
+            organization_id: context.tenant.id,
+            user_id: id,
+            role: nextRole,
+          },
+          { onConflict: "organization_id,user_id" },
+        );
 
-    if (organizationMembershipError) throw new Error(organizationMembershipError.message);
+      if (organizationMembershipError) throw new Error(organizationMembershipError.message);
 
-    if (membership.role === "owner" && body.role !== "owner") {
-      await transferOrganizationOwnerIfNeeded(admin, context, id);
+      if (membership.role === "owner" && nextRole !== "owner") {
+        await transferOrganizationOwnerIfNeeded(admin, context, id);
+      }
     }
 
-    await auditTeamAction(admin, context, "team.member.role_changed", {
+    await updateMemberProfile(admin, id, { displayName, email, phone });
+
+    await auditTeamAction(admin, context, "team.member.updated", {
       targetId: id,
-      metadata: { role: body.role },
+      metadata: {
+        fields: {
+          displayName: displayName !== undefined,
+          email: email !== undefined,
+          phone: phone !== undefined,
+          role: nextRole !== undefined,
+        },
+        role: nextRole,
+      },
     });
 
     return NextResponse.json({ ok: true });
