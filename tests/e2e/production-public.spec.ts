@@ -33,6 +33,11 @@ test.describe("production public launch boundaries", () => {
 
     const billingPlans = await request.get("/api/billing/plans");
     expect([401, 403]).toContain(billingPlans.status());
+
+    const anonymousMutation = await request.post("/api/learning", {
+      data: { title: "Blocked", body: "This should not write." },
+    });
+    expect(anonymousMutation.status()).toBe(403);
   });
 
   test("keeps invite auth and password reset outside the app bypass", async ({

@@ -16,6 +16,68 @@ function isProtectedPath(pathname: string) {
   );
 }
 
+function originFrom(value: string | null | undefined) {
+  if (!value) return "";
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return "";
+  }
+}
+
+function configuredOrigins(request: NextRequest) {
+  const host = request.headers.get("host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+  const hostOrigin = host ? originFrom(`${forwardedProto}://${host}`) : "";
+
+  return new Set(
+    [
+      originFrom(request.url),
+      hostOrigin,
+      originFrom(process.env.NEXT_PUBLIC_SITE_URL),
+      originFrom(
+        process.env.VERCEL_PROJECT_PRODUCTION_URL
+          ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+          : "",
+      ),
+      originFrom(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ""),
+    ].filter(Boolean),
+  );
+}
+
+function isUnsafeMethod(method: string) {
+  return ["DELETE", "PATCH", "POST", "PUT"].includes(method.toUpperCase());
+}
+
+function isExternalApiCallback(pathname: string) {
+  return (
+    pathname.endsWith("/webhook") ||
+    pathname === "/api/integrations/slack/commands" ||
+    pathname === "/api/integrations/slack/events" ||
+    pathname === "/api/integrations/slack/interactions" ||
+    pathname === "/api/workflows/scheduled"
+  );
+}
+
+function sameOriginApiGuard(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (
+    !pathname.startsWith("/api/") ||
+    !isUnsafeMethod(request.method) ||
+    isExternalApiCallback(pathname)
+  ) {
+    return null;
+  }
+
+  const origin = originFrom(request.headers.get("origin"));
+  if (!origin || !configuredOrigins(request).has(origin)) {
+    return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+  }
+
+  return null;
+}
+
 function isMiddlewareBypassEnabled() {
   const bypassRequested =
     process.env.AUTH_BYPASS_ENABLED === "true" ||
@@ -48,6 +110,11 @@ function loginRedirect(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
+  const originGuard = sameOriginApiGuard(request);
+  if (originGuard) {
+    return originGuard;
+  }
+
   if (!isProtectedPath(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
@@ -102,6 +169,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/api/:path*",
     "/admin/:path*",
     "/learn/:path*",
     "/management/:path*",
