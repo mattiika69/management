@@ -34,6 +34,15 @@ async function createCookieClient() {
 
 export async function createClient() {
   if (isAuthBypassEnabled()) {
+    const sessionClient = await createCookieClient();
+    const {
+      data: { user },
+    } = await sessionClient.auth.getUser();
+
+    if (user) {
+      return sessionClient;
+    }
+
     return createAuthBypassClient();
   }
 
