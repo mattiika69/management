@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  checkRateLimit,
+  rateLimitKey,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
@@ -26,6 +31,16 @@ export async function POST(request: Request) {
     }
 
     const context = await requireTenantContext(await createClient());
+    const limit = checkRateLimit({
+      key: rateLimitKey(["email-send", context.tenant.id, context.user.id]),
+      limit: 60,
+      windowMs: 60 * 60 * 1000,
+    });
+
+    if (!limit.allowed) {
+      return rateLimitResponse(limit.retryAfterSeconds);
+    }
+
     const resend = getResend();
     const from = getResendFromEmail();
 
@@ -44,7 +59,12 @@ export async function POST(request: Request) {
       .select("id")
       .single<{ id: string }>();
 
-    if (insertError) throw new Error(insertError.message);
+    if (insertError) {
+      return NextResponse.json(
+        { error: "Email could not be queued. Try again in a moment." },
+        { status: 500 },
+      );
+    }
 
     try {
       const result = await resend.emails.send({
@@ -66,7 +86,12 @@ export async function POST(request: Request) {
         })
         .eq("id", emailMessage.id);
 
-      if (updateError) throw new Error(updateError.message);
+      if (updateError) {
+        return NextResponse.json(
+          { error: "Email was sent, but delivery status could not be saved." },
+          { status: 500 },
+        );
+      }
 
       return NextResponse.json({ ok: true, id: result.data?.id });
     } catch (error) {
@@ -81,7 +106,10 @@ export async function POST(request: Request) {
         })
         .eq("id", emailMessage.id);
 
-      return NextResponse.json({ error: message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Email could not be sent. Try again in a moment." },
+        { status: 502 },
+      );
     }
   } catch (error) {
     return jsonError(error);

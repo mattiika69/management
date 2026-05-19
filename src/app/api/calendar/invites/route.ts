@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { buildIcsInvite, createConnectedCalendarEvent, createZoomMeeting } from "@/lib/calendar/invites";
 import { getResend, getResendFromEmail, normalizeEmailList } from "@/lib/resend/server";
+import {
+  checkRateLimit,
+  rateLimitKey,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { auditAction, jsonError, requireTenantContext } from "@/lib/tenant-context";
@@ -75,6 +80,15 @@ export async function POST(request: Request) {
     const payload = (await request.json()) as Payload;
     const context = await requireTenantContext(await createClient());
     const admin = createAdminClient();
+    const limit = checkRateLimit({
+      key: rateLimitKey(["calendar-invite", context.tenant.id, context.user.id]),
+      limit: 30,
+      windowMs: 60 * 60 * 1000,
+    });
+
+    if (!limit.allowed) {
+      return rateLimitResponse(limit.retryAfterSeconds);
+    }
 
     const title = cleanText(payload.title);
     const description = cleanText(payload.description);
@@ -293,7 +307,10 @@ export async function POST(request: Request) {
 
     if (status === "failed") {
       return NextResponse.json(
-        { error: lastError || "One or more invites could not be sent.", sentCount },
+        {
+          error: "One or more invites could not be sent. Review the invite status and try again.",
+          sentCount,
+        },
         { status: 502 },
       );
     }

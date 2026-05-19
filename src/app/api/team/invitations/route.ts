@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  checkRateLimit,
+  rateLimitKey,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { buildTeamInviteEmail } from "@/lib/team/email";
@@ -237,6 +242,15 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
     const context = await requireTenantContext(supabase);
+    const limit = checkRateLimit({
+      key: rateLimitKey(["team-invite", context.tenant.id, context.user.id]),
+      limit: 20,
+      windowMs: 60 * 60 * 1000,
+    });
+
+    if (!limit.allowed) {
+      return rateLimitResponse(limit.retryAfterSeconds);
+    }
 
     if (!canManageTeam(context.role)) {
       return NextResponse.json(

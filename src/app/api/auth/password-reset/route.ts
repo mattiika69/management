@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { buildPasswordResetEmail } from "@/lib/auth/password-reset-email";
 import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  checkRateLimit,
+  rateLimitKey,
+  rateLimitResponse,
+  requestIp,
+} from "@/lib/security/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type PasswordResetPayload = {
@@ -64,6 +70,16 @@ export async function POST(request: Request) {
 
   if (!email) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
+
+  const limit = checkRateLimit({
+    key: rateLimitKey(["password-reset", requestIp(request), email]),
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  if (!limit.allowed) {
+    return rateLimitResponse(limit.retryAfterSeconds);
   }
 
   const admin = createAdminClient();

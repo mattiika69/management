@@ -4,6 +4,11 @@ import {
   RoezanSendResult,
   sendRoezanMessage,
 } from "@/lib/roezan/server";
+import {
+  checkRateLimit,
+  rateLimitKey,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 type SmsPayload = {
@@ -57,6 +62,16 @@ export async function POST(request: Request) {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
+  const limit = checkRateLimit({
+    key: rateLimitKey(["sms-send", organization.id, user.id]),
+    limit: 30,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  if (!limit.allowed) {
+    return rateLimitResponse(limit.retryAfterSeconds);
+  }
+
   const { data: smsMessage, error: insertError } = await supabase
     .from("sms_messages")
     .insert({
@@ -74,7 +89,10 @@ export async function POST(request: Request) {
     .single<{ id: string }>();
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 400 });
+    return NextResponse.json(
+      { error: "SMS could not be queued. Try again in a moment." },
+      { status: 500 },
+    );
   }
 
   try {
@@ -99,7 +117,10 @@ export async function POST(request: Request) {
       .eq("id", smsMessage.id);
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 400 });
+      return NextResponse.json(
+        { error: "SMS was sent, but delivery status could not be saved." },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ ok: true, rateLimit: result.rateLimit });
@@ -121,7 +142,10 @@ export async function POST(request: Request) {
       .eq("id", smsMessage.id);
 
     return NextResponse.json(
-      { error: messageText, rateLimit: result?.rateLimit },
+      {
+        error: "SMS could not be sent. Try again in a moment.",
+        rateLimit: result?.rateLimit,
+      },
       { status: result?.status ?? 500 },
     );
   }
