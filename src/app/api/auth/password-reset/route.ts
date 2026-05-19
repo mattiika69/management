@@ -9,39 +9,11 @@ import {
 } from "@/lib/security/rate-limit";
 import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canonicalSiteOrigin, isLocalhostUrl } from "@/lib/url/site-origin";
 
 type PasswordResetPayload = {
   email?: string;
 };
-
-function siteOrigin(request: Request) {
-  const requestOrigin = new URL(request.url).origin;
-  const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  const productionOrigin = process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/\/$/, "")}`
-    : "";
-  const deploymentOrigin = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`
-    : "";
-
-  if (
-    configuredOrigin &&
-    !configuredOrigin.includes("localhost") &&
-    !configuredOrigin.includes("127.0.0.1")
-  ) {
-    return configuredOrigin;
-  }
-
-  if (productionOrigin) {
-    return productionOrigin;
-  }
-
-  if (deploymentOrigin) {
-    return deploymentOrigin;
-  }
-
-  return requestOrigin;
-}
 
 function actionLinkFromGenerateLink(data: unknown) {
   const properties = (data as { properties?: { action_link?: string } })?.properties;
@@ -53,22 +25,13 @@ function tokenHashFromGenerateLink(data: unknown) {
   return properties?.hashed_token ?? properties?.token_hash ?? "";
 }
 
-function isLocalhostUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
-  } catch {
-    return true;
-  }
-}
-
 function safeActionLinkFromGenerateLink(data: unknown, request: Request) {
   const actionLink = actionLinkFromGenerateLink(data);
   if (!actionLink) return "";
 
   try {
     const url = new URL(actionLink);
-    const redirectTo = `${siteOrigin(request)}/update-password`;
+    const redirectTo = `${canonicalSiteOrigin(request)}/update-password`;
 
     if (url.searchParams.has("redirect_to")) {
       url.searchParams.set("redirect_to", redirectTo);
@@ -84,7 +47,7 @@ function safeActionLinkFromGenerateLink(data: unknown, request: Request) {
 function buildResetUrl(data: unknown, request: Request) {
   const tokenHash = tokenHashFromGenerateLink(data);
   if (tokenHash) {
-    const resetUrl = new URL("/update-password", siteOrigin(request));
+    const resetUrl = new URL("/update-password", canonicalSiteOrigin(request));
     resetUrl.searchParams.set("token_hash", tokenHash);
     resetUrl.searchParams.set("type", "recovery");
     return resetUrl.toString();
@@ -115,7 +78,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  const redirectTo = `${siteOrigin(request)}/update-password`;
+  const redirectTo = `${canonicalSiteOrigin(request)}/update-password`;
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email,

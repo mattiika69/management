@@ -1,3 +1,4 @@
+import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getNylasCalendarId, nylasFetchJson } from "@/lib/nylas/server";
 import { getProviderAccessToken } from "@/lib/oauth/provider-oauth";

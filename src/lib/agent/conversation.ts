@@ -1,3 +1,4 @@
+import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   DEFAULT_COMPANY_CONTEXT,

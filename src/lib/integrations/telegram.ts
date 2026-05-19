@@ -1,3 +1,4 @@
+import "server-only";
 import { constantTimeEquals } from "@/lib/security/request-guards";
 
 export function verifyTelegramRequest(request: Request) {

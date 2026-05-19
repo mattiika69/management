@@ -18,6 +18,7 @@ import {
 } from "@/lib/team/invitations";
 import { canManageTeam } from "@/lib/team/permissions";
 import { jsonError, requireTenantContext } from "@/lib/tenant-context";
+import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 type InvitePayload = {
   email?: string;
@@ -291,10 +292,7 @@ export async function POST(request: Request) {
       metadata: { email, role },
     });
 
-    const inviteUrl = buildInviteUrl(
-      process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin,
-      token,
-    );
+    const inviteUrl = buildInviteUrl(canonicalSiteOrigin(request), token);
     const { subject, text, html } = buildTeamInviteEmail({
       inviteUrl,
       organizationName: context.tenant.name,

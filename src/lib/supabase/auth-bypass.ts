@@ -1,3 +1,4 @@
+import "server-only";
 import { randomBytes } from "crypto";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -24,10 +25,7 @@ export function isAuthBypassEnabled() {
     return false;
   }
 
-  if (
-    isProductionRuntime() &&
-    process.env.ALLOW_PRODUCTION_AUTH_BYPASS_UNSAFE !== "true"
-  ) {
+  if (isProductionRuntime()) {
     return false;
   }
 

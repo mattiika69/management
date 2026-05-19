@@ -1,3 +1,5 @@
+import "server-only";
+
 type RoezanMessageInput = {
   phone: string;
   message: string;

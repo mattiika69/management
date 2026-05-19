@@ -1,3 +1,4 @@
+import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 
 export async function verifySlackRequest(request: Request, rawBody: string) {
