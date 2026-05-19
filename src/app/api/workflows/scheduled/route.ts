@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
+import { constantTimeEquals } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   const expectedSecret = process.env.SCHEDULE_WORKER_SECRET;
   const suppliedSecret = request.headers.get("x-schedule-worker-secret");
 
-  if (!expectedSecret || suppliedSecret !== expectedSecret) {
+  if (!expectedSecret) {
+    return NextResponse.json({ error: "Scheduled worker is not configured." }, { status: 503 });
+  }
+
+  if (!constantTimeEquals(suppliedSecret, expectedSecret)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 

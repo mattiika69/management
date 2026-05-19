@@ -10,14 +10,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const verified = await verifySlackRequest(request, rawBody);
+  const verified = await verifySlackRequest(request, rawBody).catch(() => null);
   if (!verified) {
     return NextResponse.json({ error: "Invalid Slack signature." }, { status: 401 });
   }
 
   const form = new URLSearchParams(rawBody);
   const payloadRaw = form.get("payload");
-  const payload = payloadRaw ? JSON.parse(payloadRaw) as Record<string, unknown> : null;
+  let payload: Record<string, unknown> | null = null;
+  try {
+    payload = payloadRaw ? JSON.parse(payloadRaw) as Record<string, unknown> : null;
+  } catch {
+    return NextResponse.json({ error: "Invalid Slack payload." }, { status: 400 });
+  }
   const teamId =
     form.get("team_id") ||
     (payload?.team && typeof payload.team === "object"

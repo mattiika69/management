@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const verified = await verifySlackRequest(request, rawBody);
+  const verified = await verifySlackRequest(request, rawBody).catch(() => null);
 
   if (!verified) {
     return NextResponse.json({ error: "Invalid Slack signature." }, { status: 401 });

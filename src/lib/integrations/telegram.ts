@@ -1,3 +1,5 @@
+import { constantTimeEquals } from "@/lib/security/request-guards";
+
 export function verifyTelegramRequest(request: Request) {
   const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
 
@@ -5,7 +7,10 @@ export function verifyTelegramRequest(request: Request) {
     throw new Error("TELEGRAM_WEBHOOK_SECRET is not configured.");
   }
 
-  return request.headers.get("x-telegram-bot-api-secret-token") === expectedSecret;
+  return constantTimeEquals(
+    request.headers.get("x-telegram-bot-api-secret-token"),
+    expectedSecret,
+  );
 }
 
 export async function postTelegramMessage(chatId: string, text: string) {

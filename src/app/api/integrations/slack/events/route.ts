@@ -26,13 +26,18 @@ type SlackEventEnvelope = {
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
-  const verified = await verifySlackRequest(request, rawBody);
+  const verified = await verifySlackRequest(request, rawBody).catch(() => null);
 
   if (!verified) {
     return NextResponse.json({ error: "Invalid Slack signature." }, { status: 401 });
   }
 
-  const payload = JSON.parse(rawBody) as SlackEventEnvelope;
+  let payload: SlackEventEnvelope;
+  try {
+    payload = JSON.parse(rawBody) as SlackEventEnvelope;
+  } catch {
+    return NextResponse.json({ error: "Invalid Slack payload." }, { status: 400 });
+  }
 
   if (payload.type === "url_verification" && payload.challenge) {
     return NextResponse.json({ challenge: payload.challenge });

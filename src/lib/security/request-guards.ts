@@ -1,4 +1,5 @@
 import "server-only";
+import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
 function originFrom(value: string | null | undefined) {
@@ -40,4 +41,14 @@ export function enforceSameOrigin(request: Request) {
   }
 
   return null;
+}
+
+export function constantTimeEquals(actual: string | null | undefined, expected: string | null | undefined) {
+  if (!actual || !expected) return false;
+
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+  if (actualBuffer.length !== expectedBuffer.length) return false;
+
+  return timingSafeEqual(actualBuffer, expectedBuffer);
 }

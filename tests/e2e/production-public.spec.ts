@@ -38,6 +38,21 @@ test.describe("production public launch boundaries", () => {
       data: { title: "Blocked", body: "This should not write." },
     });
     expect(anonymousMutation.status()).toBe(403);
+
+    const slackEvents = await request.post("/api/integrations/slack/events", {
+      data: {},
+    });
+    expect([401, 503]).toContain(slackEvents.status());
+
+    const telegramWebhook = await request.post("/api/integrations/telegram/webhook", {
+      data: {},
+    });
+    expect([401, 503]).toContain(telegramWebhook.status());
+
+    const scheduledWorker = await request.post("/api/workflows/scheduled", {
+      data: {},
+    });
+    expect([401, 503]).toContain(scheduledWorker.status());
   });
 
   test("keeps invite auth and password reset outside the app bypass", async ({

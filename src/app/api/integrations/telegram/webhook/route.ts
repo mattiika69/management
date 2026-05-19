@@ -84,13 +84,21 @@ async function connectTelegramCode(
 }
 
 export async function POST(request: Request) {
-  const verified = verifyTelegramRequest(request);
+  let verified = false;
+  try {
+    verified = verifyTelegramRequest(request);
+  } catch {
+    return NextResponse.json({ error: "Telegram webhook is not configured." }, { status: 503 });
+  }
 
   if (!verified) {
     return NextResponse.json({ error: "Invalid Telegram secret." }, { status: 401 });
   }
 
-  const payload = (await request.json()) as TelegramUpdate;
+  const payload = (await request.json().catch(() => null)) as TelegramUpdate | null;
+  if (!payload) {
+    return NextResponse.json({ error: "Invalid Telegram payload." }, { status: 400 });
+  }
   const chatId = payload.message?.chat?.id?.toString();
   const telegramUserId = payload.message?.from?.id?.toString();
 
