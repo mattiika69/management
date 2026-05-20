@@ -27,6 +27,8 @@ type Draft = {
   clientName: string;
   nextMeetingDate: string;
   notes: string;
+  metadata: Record<string, unknown>;
+  oneOnOne: OneOnOneMetadata;
   attendees: string[];
   agendaItems: Array<{ title: string; audience: string; minutes: number; completed: boolean }>;
   actionItems: Array<{ title: string; ownerUserId: string; dueDate: string; addToCalendar: boolean; completed: boolean }>;
@@ -40,6 +42,61 @@ type Draft = {
     theyDoIt: boolean;
   }>;
 };
+
+type OneOnOneMetadata = {
+  okrCheckIn: string;
+  managerNotes: string;
+  blockers: string;
+  startStopKeep: {
+    start: string;
+    stop: string;
+    keep: string;
+    managerStart: string;
+    managerStop: string;
+    managerKeep: string;
+  };
+};
+
+const emptyOneOnOne: OneOnOneMetadata = {
+  okrCheckIn: "",
+  managerNotes: "",
+  blockers: "",
+  startStopKeep: {
+    start: "",
+    stop: "",
+    keep: "",
+    managerStart: "",
+    managerStop: "",
+    managerKeep: "",
+  },
+};
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function oneOnOneMetadataFrom(metadata: Record<string, unknown>): OneOnOneMetadata {
+  const oneOnOne = objectValue(metadata.oneOnOne);
+  const startStopKeep = objectValue(oneOnOne.startStopKeep);
+
+  return {
+    okrCheckIn: stringValue(oneOnOne.okrCheckIn),
+    managerNotes: stringValue(oneOnOne.managerNotes),
+    blockers: stringValue(oneOnOne.blockers),
+    startStopKeep: {
+      start: stringValue(startStopKeep.start),
+      stop: stringValue(startStopKeep.stop),
+      keep: stringValue(startStopKeep.keep),
+      managerStart: stringValue(startStopKeep.managerStart),
+      managerStop: stringValue(startStopKeep.managerStop),
+      managerKeep: stringValue(startStopKeep.managerKeep),
+    },
+  };
+}
 
 const meetingTabs: Array<{ id: MeetingView; label: string; href: string }> = [
   { id: "team", label: "Team Meetings", href: "/meetings?view=team" },
@@ -117,6 +174,8 @@ function initialDraft(type: MeetingType, people: WorkspacePerson[]): Draft {
     clientName: "",
     nextMeetingDate: "",
     notes: "",
+    metadata: {},
+    oneOnOne: emptyOneOnOne,
     attendees: attendeeKeys,
     agendaItems:
       type === "team"
@@ -159,6 +218,7 @@ function draftFromMeeting(
   },
 ): Draft {
   const fallback = initialDraft(type, people);
+  const metadata = meeting.metadata ?? {};
   return {
     id: meeting.id,
     date: meeting.meeting_date,
@@ -168,6 +228,8 @@ function draftFromMeeting(
     clientName: meeting.client_name ?? "",
     nextMeetingDate: meeting.next_meeting_date ?? "",
     notes: meeting.notes,
+    metadata,
+    oneOnOne: oneOnOneMetadataFrom(metadata),
     attendees: childData.attendees
       .filter((attendee) => attendee.meeting_id === meeting.id)
       .map((attendee) => attendee.user_id ?? attendee.display_name ?? "")
@@ -281,6 +343,23 @@ export function MeetingsWorkspace({
     }));
   }
 
+  function updateOneOnOne(patch: Partial<OneOnOneMetadata>) {
+    setDraft((current) => ({
+      ...current,
+      oneOnOne: { ...current.oneOnOne, ...patch },
+    }));
+  }
+
+  function updateOneOnOneStartStopKeep(patch: Partial<OneOnOneMetadata["startStopKeep"]>) {
+    setDraft((current) => ({
+      ...current,
+      oneOnOne: {
+        ...current.oneOnOne,
+        startStopKeep: { ...current.oneOnOne.startStopKeep, ...patch },
+      },
+    }));
+  }
+
   async function save() {
     setSaving(true);
     setError("");
@@ -295,6 +374,10 @@ export function MeetingsWorkspace({
         clientName: draft.clientName || null,
         nextMeetingDate: draft.nextMeetingDate || null,
         notes: draft.notes,
+        metadata:
+          activeView === "one_on_one"
+            ? { ...draft.metadata, oneOnOne: draft.oneOnOne }
+            : draft.metadata,
         attendees: draft.attendees.map((key) => ({
           userId: data.people.find((person) => person.userId === key)?.userId ?? null,
           displayName: personName(data.people, key),
@@ -306,7 +389,13 @@ export function MeetingsWorkspace({
       });
       if (meeting) {
         setMeetings((current) => [meeting, ...current.filter((item) => item.id !== meeting.id)]);
-        setDraft((current) => ({ ...current, id: meeting.id }));
+        const metadata = meeting.metadata ?? {};
+        setDraft((current) => ({
+          ...current,
+          id: meeting.id,
+          metadata,
+          oneOnOne: activeView === "one_on_one" ? oneOnOneMetadataFrom(metadata) : current.oneOnOne,
+        }));
       }
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Save failed.");
@@ -337,7 +426,7 @@ export function MeetingsWorkspace({
           <TrainingMeetingEditor people={data.people} draft={draft} saving={saving} onSave={save} updateDraft={updateDraft} updateTraining={updateTraining} updateAction={updateAction} />
         ) : null}
         {activeView === "one_on_one" ? (
-          <OneOnOneEditor people={data.people} draft={draft} saving={saving} onSave={save} updateDraft={updateDraft} updateAction={updateAction} />
+          <OneOnOneEditor people={data.people} draft={draft} saving={saving} onSave={save} updateDraft={updateDraft} updateOneOnOne={updateOneOnOne} updateOneOnOneStartStopKeep={updateOneOnOneStartStopKeep} updateAction={updateAction} />
         ) : null}
         {activeView === "client" ? (
           <ClientMeetingEditor people={data.people} draft={draft} saving={saving} onSave={save} updateDraft={updateDraft} updateAction={updateAction} />
@@ -598,6 +687,8 @@ function OneOnOneEditor({
   saving,
   onSave,
   updateDraft,
+  updateOneOnOne,
+  updateOneOnOneStartStopKeep,
   updateAction,
 }: {
   people: WorkspacePerson[];
@@ -605,6 +696,8 @@ function OneOnOneEditor({
   saving: boolean;
   onSave: () => void;
   updateDraft: (patch: Partial<Draft>) => void;
+  updateOneOnOne: (patch: Partial<OneOnOneMetadata>) => void;
+  updateOneOnOneStartStopKeep: (patch: Partial<OneOnOneMetadata["startStopKeep"]>) => void;
   updateAction: (index: number, patch: Partial<Draft["actionItems"][number]>) => void;
 }) {
   const diamondPerson =
@@ -639,7 +732,12 @@ function OneOnOneEditor({
             </div>
           </OneOnOneSection>
           <OneOnOneSection title="2. Check In On OKRs And Responsibilities">
-            <textarea placeholder="Check in notes on OKRs and responsibilities..." className="h-[47px] w-full rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]" />
+            <textarea
+              value={draft.oneOnOne.okrCheckIn}
+              onChange={(event) => updateOneOnOne({ okrCheckIn: event.target.value })}
+              placeholder="Check in notes on OKRs and responsibilities..."
+              className="h-[47px] w-full rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]"
+            />
           </OneOnOneSection>
           <OneOnOneSection title="3. Management Diamond">
             <div className="h-[190px] rounded-[5px] border border-gray-200 bg-white p-2">
@@ -660,17 +758,56 @@ function OneOnOneEditor({
           </OneOnOneSection>
           <OneOnOneSection title="4. Start/Stop/Keep">
             <div className="grid gap-2 xl:grid-cols-6">
-              {["Start", "Stop", "Keep", "Manager start", "Manager stop", "Manager keep"].map((label) => <Input key={label} placeholder={`${label}...`} />)}
+              <Input
+                value={draft.oneOnOne.startStopKeep.start}
+                onChange={(event) => updateOneOnOneStartStopKeep({ start: event.target.value })}
+                placeholder="Start..."
+              />
+              <Input
+                value={draft.oneOnOne.startStopKeep.stop}
+                onChange={(event) => updateOneOnOneStartStopKeep({ stop: event.target.value })}
+                placeholder="Stop..."
+              />
+              <Input
+                value={draft.oneOnOne.startStopKeep.keep}
+                onChange={(event) => updateOneOnOneStartStopKeep({ keep: event.target.value })}
+                placeholder="Keep..."
+              />
+              <Input
+                value={draft.oneOnOne.startStopKeep.managerStart}
+                onChange={(event) => updateOneOnOneStartStopKeep({ managerStart: event.target.value })}
+                placeholder="Manager start..."
+              />
+              <Input
+                value={draft.oneOnOne.startStopKeep.managerStop}
+                onChange={(event) => updateOneOnOneStartStopKeep({ managerStop: event.target.value })}
+                placeholder="Manager stop..."
+              />
+              <Input
+                value={draft.oneOnOne.startStopKeep.managerKeep}
+                onChange={(event) => updateOneOnOneStartStopKeep({ managerKeep: event.target.value })}
+                placeholder="Manager keep..."
+              />
             </div>
           </OneOnOneSection>
           <OneOnOneSection title="5. Employee Notes And Manager Notes">
             <div className="grid gap-2 xl:grid-cols-2">
               <textarea value={draft.notes} onChange={(event) => updateDraft({ notes: event.target.value })} placeholder="Employee notes..." className="h-[46px] rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]" />
-              <textarea placeholder="Manager notes..." className="h-[46px] rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]" />
+              <textarea
+                value={draft.oneOnOne.managerNotes}
+                onChange={(event) => updateOneOnOne({ managerNotes: event.target.value })}
+                placeholder="Manager notes..."
+                className="h-[46px] rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]"
+              />
             </div>
           </OneOnOneSection>
           <OneOnOneSection title="6. Blockers">
-            <textarea placeholder="Blockers and people issues..." className="h-[58px] w-full rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]" />
+            <textarea
+              value={draft.oneOnOne.blockers}
+              onChange={(event) => updateOneOnOne({ blockers: event.target.value })}
+              placeholder="Blockers and people issues..."
+              className="h-[58px] w-full rounded-[3px] border border-gray-300 px-2 py-2 text-[11px]"
+            />
           </OneOnOneSection>
         </div>
         <div className="hidden"><ActionSteps people={people} draft={draft} updateAction={updateAction} /></div>

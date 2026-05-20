@@ -522,12 +522,6 @@ function ProgressView({
   selectedPersonKey: string;
   onPersonChange: (key: string) => void;
 }) {
-  const okrs = [
-    "Admin (ToS, Privacy Policy)",
-    "Workspace Operations",
-    "Get a Portfolio on Thumbnails",
-    "Get a Job Description",
-  ];
   return (
     <div>
       <SectionCard className="mb-4 flex min-h-[52px] items-center justify-between px-4">
@@ -561,7 +555,7 @@ function ProgressView({
               <b>0</b> on track
             </span>
             <span>
-              <b>8</b> OKRs
+              <b>0</b> OKRs
             </span>
             <span>
               <b>0%</b> KR complete
@@ -581,30 +575,10 @@ function ProgressView({
           <div>
             <div className="mb-3 flex justify-between text-[11px] font-bold uppercase tracking-[0.06em] text-[#667085]">
               <span>Personal OKRs</span>
-              <span className="font-medium normal-case text-gray-500">0/8 key results</span>
+              <span className="font-medium normal-case text-gray-500">0/0 key results</span>
             </div>
-            <div className="space-y-2">
-              {okrs.map((okr, index) => (
-                <div key={okr} className="rounded-[8px] border border-[#d9e1ee] bg-[#fbfcfe] p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-bold text-[#101828]">{okr}</span>
-                    <span className="font-bold text-[#475467]">0%</span>
-                  </div>
-                  <div className="mb-2 h-[7px] rounded-full bg-[#e4e7ec]" />
-                  <p className="mb-2 text-[#667085]">0/1 key results complete</p>
-                  <p className="mb-2 font-bold uppercase text-[#667085]">Key Results</p>
-                  <label className="mb-2 flex items-center gap-2 text-[#475467]">
-                    <Checkbox checked={false} />
-                    {okr}
-                  </label>
-                  <p className="mb-2 font-bold uppercase text-[#667085]">Assignments</p>
-                  <p className="text-[#667085]">
-                    {index === 2
-                      ? "Research Jeremy Haynes, Hormozi, Dan Martell and build portfolio"
-                      : "No assignments."}
-                  </p>
-                </div>
-              ))}
+            <div className="app-muted-box px-4 py-4 text-[12px]">
+              No progress items saved for this team member yet.
             </div>
           </div>
         </div>
