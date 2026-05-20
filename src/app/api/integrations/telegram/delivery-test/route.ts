@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { postTelegramMessage } from "@/lib/integrations/telegram";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import {
   auditAction,
   jsonError,
@@ -10,6 +11,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
     const body = (await request.json().catch(() => ({}))) as { chatId?: string };
