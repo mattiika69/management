@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createClient } from "@/lib/supabase/server";
 import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 
@@ -8,8 +9,11 @@ function buildDeepLink(code: string) {
   return username ? `https://t.me/${username}?start=${code}` : null;
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const context = await requireTenantContext(await createClient());
     const code = randomBytes(8).toString("hex").toUpperCase();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
