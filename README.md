@@ -68,6 +68,14 @@ HyperOptimal Management, map one private Slack channel to one organization in
 Supabase, and use `/api/slack/events` plus `/api/slack/commands` for Slack
 requests.
 
+## Telegram Bot
+
+This app has a one-off private Telegram bot setup documented in
+[`docs/TELEGRAM_SETUP.md`](docs/TELEGRAM_SETUP.md). Configure one Telegram bot
+for HyperOptimal Management, map one private Telegram chat to one organization
+in Supabase, and use `/api/telegram/webhook` for Telegram requests. Slack and
+Telegram share the same server-side agent tools.
+
 ## Vercel
 
 Set these environment variables in Vercel:
@@ -93,7 +101,9 @@ Set these environment variables in Vercel:
 - `SLACK_ALLOWED_TEAM_ID`
 - `SLACK_ALLOWED_CHANNEL_ID`
 - `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_WEBHOOK_SECRET`
+- `TELEGRAM_ALLOWED_CHAT_ID`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `ROEZAN_API_KEY`

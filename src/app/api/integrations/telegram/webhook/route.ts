@@ -5,7 +5,7 @@ import {
   saveIntegrationMessage,
   upsertIntegrationConnection,
 } from "@/lib/integrations/connections";
-import { handleHyperoptimalCommand } from "@/lib/integrations/hyperoptimal-commands";
+import { handlePrivateChannelAgentMessage } from "@/lib/integrations/private-channel-agent";
 import {
   postTelegramMessage,
   verifyTelegramRequest,
@@ -13,14 +13,16 @@ import {
 import { normalizeTelegramUsername } from "@/lib/integrations/telegram-username";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+type TelegramMessage = {
+  message_id?: number;
+  text?: string;
+  chat?: { id?: number | string };
+  from?: { id?: number | string; username?: string; first_name?: string; last_name?: string };
+};
+
 type TelegramUpdate = {
   update_id?: number;
-  message?: {
-    message_id?: number;
-    text?: string;
-    chat?: { id?: number | string };
-    from?: { id?: number | string; username?: string };
-  };
+  message?: TelegramMessage;
 };
 
 type LinkCodeRow = {
@@ -83,6 +85,17 @@ async function connectTelegramCode(
   return { handled: true };
 }
 
+function telegramDisplayName(from: TelegramMessage["from"]) {
+  const username = normalizeTelegramUsername(from?.username);
+  if (username) return username;
+  return [from?.first_name, from?.last_name].filter(Boolean).join(" ").trim() || null;
+}
+
+function isAllowedTelegramChat(chatId: string) {
+  const allowedChatId = process.env.TELEGRAM_ALLOWED_CHAT_ID?.trim();
+  return !allowedChatId || allowedChatId === chatId;
+}
+
 export async function POST(request: Request) {
   let verified = false;
   try {
@@ -106,9 +119,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  if (!isAllowedTelegramChat(chatId)) {
+    return NextResponse.json({ ok: true, ignored: "chat_not_allowed" });
+  }
+
+  const supabase = createAdminClient();
+
   if (payload.update_id) {
     const duplicate = await hasProcessedIntegrationEvent(
-      createAdminClient(),
+      supabase,
       "telegram",
       payload.update_id.toString(),
     );
@@ -125,31 +144,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const supabase = createAdminClient();
   const connection = await findIntegrationConnection(supabase, {
     provider: "telegram",
     externalChannelId: chatId,
   });
 
   if (!connection) {
+    if (payload.message?.text) {
+      await postTelegramMessage(
+        chatId,
+        "This Telegram chat is not connected to HyperOptimal Management yet. Connect it from Settings > Telegram, then try again.",
+      ).catch(() => null);
+    }
     return NextResponse.json({ ok: true, ignored: "connection_not_configured" });
   }
 
-  await saveIntegrationMessage(supabase, {
-    connection,
-    direction: "inbound",
+  const result = await handlePrivateChannelAgentMessage(supabase, connection, {
+    provider: "telegram",
+    externalChannelId: chatId,
     externalUserId: telegramUserId,
-    externalMessageId: payload.message?.message_id?.toString(),
-    messageText: payload.message?.text,
-    payload,
+    externalUserName: telegramDisplayName(payload.message?.from),
+    text: payload.message?.text ?? "",
+    eventId: payload.update_id?.toString() ?? null,
+    messageId: payload.message?.message_id?.toString() ?? null,
+    payload: payload as unknown as Record<string, unknown>,
+    source: "webhook",
   });
-
-  const result = await handleHyperoptimalCommand(
-    supabase,
-    connection,
-    payload.message?.text ?? "",
-    { externalUserId: telegramUserId },
-  );
   const response = await postTelegramMessage(chatId, result.text);
 
   await saveIntegrationMessage(supabase, {
@@ -159,7 +179,7 @@ export async function POST(request: Request) {
     messageText: result.text,
     payload: response,
     command: result.command,
-    status: "sent",
+    status: result.status === "failed" ? "failed" : result.status === "ignored" || result.status === "needs_confirmation" ? "ignored" : "sent",
   });
 
   return NextResponse.json({ ok: true });

@@ -17,6 +17,8 @@ This app uses one Slack app for HyperOptimal Management only. Do not reuse this 
 
 The bot can read tenant-scoped Management data, including team counts, employees, meetings, training programs, recent reviews, recent learnings, and basic Management metrics. The initial safe write is AI Agent memory: `save` and `remember` create `learning_items` rows in Supabase.
 
+Slack and Telegram use the same private-channel agent tools. New agent capabilities should be added to the shared server-side agent layer first, then exposed through Slack and Telegram adapters. Provider adapters should only handle transport-specific verification, parsing, and response delivery.
+
 Destructive or high-risk Slack requests are refused from chat and must be confirmed in the app. Examples include approve, cancel, edit, set, run, delete, remove, archive, disconnect, and revoke.
 
 ## Slack App Configuration
@@ -118,9 +120,10 @@ Every Slack request is verified with `SLACK_SIGNING_SECRET`. Replayed requests o
 The Slack bot writes durable records to Supabase:
 
 - `slack_channels`: private channel to organization mapping
-- `slack_agent_messages`: inbound Slack text and outbound bot response
-- `slack_agent_actions`: Slack-triggered writes and confirmation-required requests
-- `slack_action_audit_logs`: audit trail for Slack-triggered actions
+- `integration_connections`: normalized provider/channel connection
+- `integration_messages`: inbound Slack text and outbound bot response
+- `integration_processed_events`: webhook and slash command dedupe
+- `admin_audit_log`: write/high-risk action audit records
 - `learning_items`: saved AI Agent memory from Slack
 
 RLS remains enabled. Server routes use trusted server-side code and refuse requests from unconfigured teams or channels.

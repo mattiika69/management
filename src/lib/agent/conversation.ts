@@ -41,6 +41,22 @@ type ContextRow = {
   data: CompanyContextData;
 };
 
+type TrainingRow = {
+  agent_id: string;
+  overall_description: string | null;
+  framework: string | null;
+  criteria: unknown;
+  ai_sequence: string | null;
+};
+
+type RecentMessageRow = {
+  direction: "inbound" | "outbound";
+  external_user_id: string | null;
+  message_text: string | null;
+  command: string | null;
+  created_at: string;
+};
+
 type SaveInstruction = {
   title: string;
   body: string;
@@ -154,6 +170,68 @@ async function loadLearnings(
   return data ?? [];
 }
 
+async function loadTraining(
+  supabase: SupabaseClient,
+  organizationId: string,
+) {
+  const { data, error } = await supabase
+    .from("workspace_ai_training")
+    .select("agent_id,overall_description,framework,criteria,ai_sequence")
+    .eq("organization_id", organizationId)
+    .order("updated_at", { ascending: false })
+    .limit(8)
+    .returns<TrainingRow[]>();
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+async function loadRecentConversation(
+  input: AgentConversationInput,
+) {
+  if (input.provider === "web" || !input.sourceChannelId) return [];
+
+  const { data, error } = await input.supabase
+    .from("integration_messages")
+    .select("direction,external_user_id,message_text,command,created_at")
+    .eq("organization_id", input.organizationId)
+    .eq("provider", input.provider)
+    .eq("external_channel_id", input.sourceChannelId)
+    .order("created_at", { ascending: false })
+    .limit(8)
+    .returns<RecentMessageRow[]>();
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).reverse();
+}
+
+function formatTrainingForPrompt(rows: TrainingRow[]) {
+  const text = rows
+    .map((row) => [
+      `### ${row.agent_id}`,
+      row.overall_description ? `Description: ${row.overall_description}` : "",
+      row.framework ? `Framework: ${row.framework}` : "",
+      row.criteria ? `Criteria: ${JSON.stringify(row.criteria)}` : "",
+      row.ai_sequence ? `Sequence: ${row.ai_sequence}` : "",
+    ].filter(Boolean).join("\n"))
+    .join("\n\n");
+
+  return text || "No AI Agent training has been saved yet.";
+}
+
+function formatRecentConversation(rows: RecentMessageRow[]) {
+  const text = rows
+    .filter((row) => row.message_text?.trim())
+    .map((row) => {
+      const speaker = row.direction === "outbound" ? "Assistant" : `User${row.external_user_id ? ` ${row.external_user_id}` : ""}`;
+      const command = row.command ? ` [${row.command}]` : "";
+      return `${speaker}${command}: ${row.message_text}`;
+    })
+    .join("\n");
+
+  return text || "No recent channel conversation is available.";
+}
+
 async function saveLearning(input: AgentConversationInput, instruction: SaveInstruction) {
   const title = instruction.title.trim();
   if (!title) {
@@ -194,8 +272,12 @@ async function generateAgentReply(input: AgentConversationInput) {
 
   const context = await loadCompanyContext(input.supabase, input.organizationId);
   const learnings = await loadLearnings(input.supabase, input.organizationId);
+  const training = await loadTraining(input.supabase, input.organizationId);
+  const recentConversation = await loadRecentConversation(input);
   const contextText = companyContextToText(context?.data ?? DEFAULT_COMPANY_CONTEXT) || "No AI Context Document content has been saved yet.";
   const learningText = formatLearningsForPrompt(learnings) || "No learnings have been saved yet.";
+  const trainingText = formatTrainingForPrompt(training);
+  const recentConversationText = formatRecentConversation(recentConversation);
 
   if (!apiKey) {
     return [
@@ -216,7 +298,7 @@ async function generateAgentReply(input: AgentConversationInput) {
       max_tokens: anthropicMaxTokens(),
       system: [
         "You are the HyperOptimal Management AI Agent.",
-        "Use the AI Context Document and saved Learnings in every answer.",
+        "Use the AI Context Document, AI Agent Training, saved Learnings, and recent channel context in every answer.",
         "Be concise, operational, and specific. Give direct next steps when useful.",
         "Never claim that memory, records, or app data were saved unless the tool message says they were saved.",
         "If the user wants durable memory, tell them to start with save or remember.",
@@ -228,8 +310,14 @@ async function generateAgentReply(input: AgentConversationInput) {
             "# AI Context Document",
             contextText,
             "",
+            "# AI Agent Training",
+            trainingText,
+            "",
             "# Saved Learnings",
             learningText,
+            "",
+            "# Recent Channel Conversation",
+            recentConversationText,
             "",
             "# Current Message",
             input.message.trim(),
