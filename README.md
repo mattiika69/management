@@ -60,6 +60,14 @@ settings with `RESEND_API_KEY` available in the shell:
 supabase config push
 ```
 
+## Slack Bot
+
+This app has a one-off private-channel Slack bot setup documented in
+[`docs/SLACK_SETUP.md`](docs/SLACK_SETUP.md). Configure one Slack app for
+HyperOptimal Management, map one private Slack channel to one organization in
+Supabase, and use `/api/slack/events` plus `/api/slack/commands` for Slack
+requests.
+
 ## Vercel
 
 Set these environment variables in Vercel:
@@ -77,8 +85,13 @@ Set these environment variables in Vercel:
 - `INTEGRATION_SECRET_KEY`
 - `SCHEDULE_WORKER_SECRET`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SLACK_APP_ID`
 - `SLACK_BOT_TOKEN`
+- `SLACK_CLIENT_ID`
+- `SLACK_CLIENT_SECRET`
 - `SLACK_SIGNING_SECRET`
+- `SLACK_ALLOWED_TEAM_ID`
+- `SLACK_ALLOWED_CHANNEL_ID`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_WEBHOOK_SECRET`
 - `RESEND_API_KEY`

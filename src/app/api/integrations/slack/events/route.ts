@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
+import { hasProcessedIntegrationEvent } from "@/lib/integrations/connections";
 import {
-  findSlackConnectionByTeam,
-  hasProcessedIntegrationEvent,
-  loadIntegrationSecret,
-  saveIntegrationMessage,
-} from "@/lib/integrations/connections";
-import { handleHyperoptimalCommand } from "@/lib/integrations/hyperoptimal-commands";
+  handleSlackAgentMessage,
+  isPrefixedSlackMessage,
+} from "@/lib/integrations/slack-agent";
 import { postSlackMessage, verifySlackRequest } from "@/lib/integrations/slack";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -16,13 +14,32 @@ type SlackEventEnvelope = {
   event_id?: string;
   event?: {
     type?: string;
+    subtype?: string;
     channel?: string;
+    channel_type?: string;
     user?: string;
+    username?: string;
     text?: string;
     ts?: string;
+    thread_ts?: string;
     bot_id?: string;
   };
 };
+
+function shouldHandleEvent(payload: SlackEventEnvelope) {
+  const event = payload.event;
+  if (!event || event.bot_id || event.subtype) return false;
+  if (event.type === "app_mention") return true;
+  return event.type === "message" && isPrefixedSlackMessage(event.text ?? "");
+}
+
+async function postIfPossible(channel: string, text: string, threadTs?: string | null, token?: string | null) {
+  try {
+    await postSlackMessage(channel, text, token ?? null, { threadTs });
+  } catch {
+    // Slack already received a 200 response path; do not retry provider calls here.
+  }
+}
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -48,8 +65,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ challenge: payload.challenge });
   }
 
-  if (!payload.team_id || !payload.event?.channel || payload.event.bot_id) {
-    return NextResponse.json({ ok: true });
+  const event = payload.event;
+  if (!payload.team_id || !event?.channel || !shouldHandleEvent(payload)) {
+    return NextResponse.json({ ok: true, ignored: true });
   }
 
   const supabase = createAdminClient();
@@ -58,42 +76,25 @@ export async function POST(request: Request) {
     if (duplicate) return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  const connection = await findSlackConnectionByTeam(supabase, payload.team_id);
-
-  if (!connection) {
-    return NextResponse.json({ ok: true, ignored: "connection_not_configured" });
-  }
-
-  await saveIntegrationMessage(supabase, {
-    connection,
-    direction: "inbound",
-    externalUserId: payload.event.user,
-    externalMessageId: payload.event.ts,
-    messageText: payload.event.text,
-    payload,
+  const result = await handleSlackAgentMessage(supabase, {
+    teamId: payload.team_id,
+    channelId: event.channel,
+    userId: event.user,
+    userName: event.username,
+    text: event.text ?? "",
+    eventId: payload.event_id,
+    messageId: event.ts,
+    threadTs: event.thread_ts ?? event.ts,
+    payload: payload as Record<string, unknown>,
+    source: "event",
   });
 
-  const result = await handleHyperoptimalCommand(
-    supabase,
-    connection,
-    payload.event.text ?? "",
-    { externalUserId: payload.event.user },
+  await postIfPossible(
+    event.channel,
+    result.text,
+    event.thread_ts ?? event.ts,
+    result.botToken ?? process.env.SLACK_BOT_TOKEN ?? null,
   );
-  const botToken =
-    (await loadIntegrationSecret(supabase, connection.organization_id, "slack", "bot_token")) ??
-    process.env.SLACK_BOT_TOKEN ??
-    null;
-  const response = await postSlackMessage(payload.event.channel, result.text, botToken);
 
-  await saveIntegrationMessage(supabase, {
-    connection,
-    direction: "outbound",
-    externalMessageId: response.ts,
-    messageText: result.text,
-    payload: response,
-    command: result.command,
-    status: "sent",
-  });
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, handled: result.ok, command: result.command });
 }
