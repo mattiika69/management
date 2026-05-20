@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProviderAccessToken } from "@/lib/oauth/provider-oauth";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { auditAction, jsonError, requireTenantAdmin, requireTenantContext } from "@/lib/tenant-context";
@@ -52,6 +53,9 @@ async function zoomJson<T>(url: string, accessToken: string) {
 
 export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const payload = (await request.json().catch(() => ({}))) as Payload;
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
