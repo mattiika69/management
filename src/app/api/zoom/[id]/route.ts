@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { auditAction, jsonError, requireTenantAdmin, requireTenantContext } from "@/lib/tenant-context";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,6 +43,9 @@ function zoomPatch(payload: ZoomPayload, userId: string) {
 
 export async function PATCH(request: Request, { params }: { params: Params }) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const { id } = await params;
     const payload = (await request.json()) as ZoomPayload;
     const context = await requireTenantContext(await createClient());
@@ -74,8 +78,11 @@ export async function PATCH(request: Request, { params }: { params: Params }) {
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Params }) {
+export async function DELETE(request: Request, { params }: { params: Params }) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const { id } = await params;
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
