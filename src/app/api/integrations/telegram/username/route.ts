@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { normalizeTelegramUsername } from "@/lib/integrations/telegram-username";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { auditAction, HttpError, jsonError, requireTenantContext } from "@/lib/tenant-context";
@@ -19,6 +20,9 @@ function readObject(value: unknown) {
 
 export async function PATCH(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const context = await requireTenantContext(await createClient());
     const body = await request.json() as {
       connectionId?: unknown;
