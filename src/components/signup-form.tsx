@@ -14,9 +14,11 @@ function successBody(email: string) {
 export function SignupForm({
   initialEmail = "",
   next = "/get-started",
+  billingClaimToken = "",
 }: {
   initialEmail?: string;
   next?: string;
+  billingClaimToken?: string;
 }) {
   const [message, setMessage] = useState("");
   const [successEmail, setSuccessEmail] = useState("");
@@ -56,6 +58,7 @@ export function SignupForm({
           email,
           password,
           redirect: nextPath,
+          billingClaimToken,
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as {

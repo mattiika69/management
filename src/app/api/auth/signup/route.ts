@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { buildVerificationEmail } from "@/lib/auth/verification-email";
 import {
+  getPendingBillingAccountClaim,
+  hashBillingClaimToken,
+} from "@/lib/billing/account-claims";
+import {
   cleanOrganizationName,
   cleanPersonName,
   isStrongPassword,
@@ -26,6 +30,7 @@ type SignupPayload = {
   password?: string;
   redirect?: string;
   next?: string;
+  billingClaimToken?: string;
 };
 
 function tokenHashFromGenerateLink(data: unknown) {
@@ -60,6 +65,9 @@ export async function POST(request: Request) {
   const lastName = cleanPersonName(payload.lastName);
   const nextPath = safeRelativePath(payload.redirect ?? payload.next, "/get-started");
   const isInviteSignup = nextPath.startsWith("/invite/");
+  const billingClaimToken =
+    typeof payload.billingClaimToken === "string" ? payload.billingClaimToken.trim() : "";
+  const isBillingClaimSignup = Boolean(billingClaimToken) && !isInviteSignup;
   const organizationName = cleanOrganizationName(payload.organizationName);
 
   if (!email) {
@@ -90,6 +98,32 @@ export async function POST(request: Request) {
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ");
   const admin = createAdminClient();
+
+  if (isBillingClaimSignup) {
+    const claim = await getPendingBillingAccountClaim(admin, billingClaimToken, email);
+    if (!claim) {
+      return NextResponse.json(
+        { error: "Billing setup link is invalid or expired." },
+        { status: 400 },
+      );
+    }
+  }
+
+  const bootstrapMetadata = isInviteSignup
+    ? { onboarding_bootstrap: "invite" }
+    : isBillingClaimSignup
+      ? {
+          organization_name: organizationName,
+          onboarding_organization_name: organizationName,
+          onboarding_bootstrap: "billing_claim",
+          billing_claim_token_hash: hashBillingClaimToken(billingClaimToken),
+        }
+      : {
+          organization_name: organizationName,
+          onboarding_organization_name: organizationName,
+          onboarding_bootstrap: "new_organization",
+        };
+
   const { data, error } = await admin.auth.admin.generateLink({
     type: "signup",
     email,
@@ -101,13 +135,7 @@ export async function POST(request: Request) {
         last_name: lastName,
         full_name: fullName,
         name: fullName,
-        ...(isInviteSignup
-          ? { onboarding_bootstrap: "invite" }
-          : {
-              organization_name: organizationName,
-              onboarding_organization_name: organizationName,
-              onboarding_bootstrap: "new_organization",
-            }),
+        ...bootstrapMetadata,
       },
     },
   });

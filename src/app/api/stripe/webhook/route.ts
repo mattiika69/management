@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import {
+  createBillingAccountClaim,
+  sendBillingSetupEmail,
+} from "@/lib/billing/account-claims";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/server";
+import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 function stripeId(value: string | { id: string } | null | undefined) {
   return typeof value === "string" ? value : value?.id ?? null;
@@ -9,6 +14,28 @@ function stripeId(value: string | { id: string } | null | undefined) {
 
 function toIsoTime(value: number | null | undefined) {
   return value ? new Date(value * 1000).toISOString() : null;
+}
+
+function subscriptionClaimMetadata(subscription: Stripe.Subscription) {
+  const items = subscription.items.data.map((item) => ({
+    stripe_subscription_item_id: item.id,
+    price_id: item.price.id,
+    quantity: item.quantity ?? 0,
+    current_period_start: toIsoTime(item.current_period_start ?? null),
+    current_period_end: toIsoTime(item.current_period_end ?? null),
+  }));
+  const primaryItem = subscription.items.data[0];
+
+  return {
+    subscription_status: subscription.status,
+    current_period_start: toIsoTime(
+      primaryItem?.current_period_start ?? subscription.start_date ?? null,
+    ),
+    current_period_end: toIsoTime(primaryItem?.current_period_end ?? null),
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    quantity: items.reduce((total, item) => total + item.quantity, 0),
+    subscription_items: items,
+  };
 }
 
 async function insertBillingEvent(
@@ -114,11 +141,33 @@ async function syncSubscription(
     metadata: subscription.metadata ?? {},
   };
 
-  const { error: canonicalError } = await admin
+  const { data: canonicalSubscription, error: canonicalError } = await admin
     .from("billing_subscriptions")
-    .upsert(subscriptionPayload, { onConflict: "stripe_subscription_id" });
+    .upsert(subscriptionPayload, { onConflict: "stripe_subscription_id" })
+    .select("id")
+    .single<{ id: string }>();
 
   if (canonicalError) throw new Error(canonicalError.message);
+
+  if (canonicalSubscription?.id) {
+    for (const item of subscription.items.data) {
+      const { error: itemError } = await admin
+        .from("billing_subscription_items")
+        .upsert(
+          {
+            tenant_id: organizationId,
+            billing_subscription_id: canonicalSubscription.id,
+            stripe_subscription_item_id: item.id,
+            price_id: item.price.id,
+            quantity: item.quantity ?? 0,
+            metadata: item.metadata ?? {},
+          },
+          { onConflict: "stripe_subscription_item_id" },
+        );
+
+      if (itemError) throw new Error(itemError.message);
+    }
+  }
 
   const { error: legacyError } = await admin.from("subscriptions").upsert(
     {
@@ -141,15 +190,57 @@ async function syncCheckoutSession(
   admin: ReturnType<typeof createAdminClient>,
   stripe: Stripe,
   session: Stripe.Checkout.Session,
+  appOrigin: string,
 ) {
   const organizationId = session.metadata?.organization_id ?? null;
   const stripeCustomerId = stripeId(session.customer);
+  const subscriptionId = stripeId(session.subscription);
+
+  if (session.metadata?.account_setup === "checkout_first" && !organizationId) {
+    const email = session.customer_details?.email ?? session.customer_email ?? "";
+    if (!email || !stripeCustomerId) return null;
+
+    let priceId: string | null = null;
+    let metadata: Record<string, unknown> = {
+      checkout_session_id: session.id,
+    };
+
+    if (subscriptionId) {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      priceId = subscription.items.data[0]?.price.id ?? null;
+      metadata = {
+        ...metadata,
+        ...subscriptionClaimMetadata(subscription),
+      };
+    }
+
+    const { claim, token } = await createBillingAccountClaim({
+      admin,
+      email,
+      stripeCustomerId,
+      stripeCheckoutSessionId: session.id,
+      stripeSubscriptionId: subscriptionId,
+      priceId,
+      metadata,
+    });
+    const setupUrl = new URL("/signup", appOrigin);
+    setupUrl.searchParams.set("billing_claim", token);
+    setupUrl.searchParams.set("email", claim.email);
+
+    await sendBillingSetupEmail({
+      admin,
+      claimId: claim.id,
+      email: claim.email,
+      setupUrl: setupUrl.toString(),
+    });
+
+    return null;
+  }
 
   if (organizationId && stripeCustomerId) {
     await upsertBillingCustomer(admin, organizationId, stripeCustomerId);
   }
 
-  const subscriptionId = stripeId(session.subscription);
   if (subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     return syncSubscription(admin, subscription);
@@ -213,6 +304,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  const appOrigin = canonicalSiteOrigin(request);
 
   try {
     const billingEvent = await insertBillingEvent(admin, event);
@@ -224,7 +316,7 @@ export async function POST(request: Request) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      tenantId = await syncCheckoutSession(admin, stripe, session);
+      tenantId = await syncCheckoutSession(admin, stripe, session, appOrigin);
       await grantCreditCheckout(admin, event, session);
     }
 
@@ -237,6 +329,21 @@ export async function POST(request: Request) {
         admin,
         event.data.object as Stripe.Subscription,
       );
+    }
+
+    if (
+      event.type === "invoice.payment_succeeded" ||
+      event.type === "invoice.payment_failed"
+    ) {
+      const invoice = event.data.object as Stripe.Invoice & {
+        subscription?: string | { id: string } | null;
+      };
+      const subscriptionId = stripeId(invoice.subscription);
+
+      if (subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        tenantId = await syncSubscription(admin, subscription);
+      }
     }
 
     await markBillingEventProcessed(admin, event.id, tenantId);

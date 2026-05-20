@@ -6,10 +6,14 @@ import {
   requireTenantAdmin,
   requireTenantContext,
 } from "@/lib/tenant-context";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createClient } from "@/lib/supabase/server";
 import { canonicalSiteOrigin } from "@/lib/url/site-origin";
 
 export async function POST(request: Request) {
+  const originGuard = enforceSameOrigin(request);
+  if (originGuard) return originGuard;
+
   try {
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
