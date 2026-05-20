@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { auditAction, jsonError, requireTenantAdmin, requireTenantContext } from "@/lib/tenant-context";
 import { createClient } from "@/lib/supabase/server";
 
@@ -62,6 +63,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const payload = (await request.json()) as CalendarPayload;
     const context = await requireTenantContext(await createClient());
     requireTenantAdmin(context);
