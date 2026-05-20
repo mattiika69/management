@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { auditAction, jsonError, requireTenantContext, requireTenantMemberUserIds } from "@/lib/tenant-context";
 
 type SubjectPayload = {
@@ -69,6 +70,9 @@ function numberOrNull(value: unknown) {
 
 export async function POST(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const context = await requireTenantContext(await createClient());
     const admin = createAdminClient();
     const payload = (await request.json()) as Payload;
