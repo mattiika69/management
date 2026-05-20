@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { jsonError } from "@/lib/tenant-context";
 
 type ProfileMetadata = {
@@ -28,6 +29,9 @@ function normalizeMetadata(value: unknown): ProfileMetadata {
 
 export async function PATCH(request: Request) {
   try {
+    const originGuard = enforceSameOrigin(request);
+    if (originGuard) return originGuard;
+
     const supabase = await createClient();
     const {
       data: { user },
