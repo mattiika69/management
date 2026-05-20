@@ -19,9 +19,7 @@ The initial safe write is AI Agent memory: `save` and `remember` create `learnin
 
 1. Create a bot with [@BotFather](https://t.me/BotFather).
 2. Copy the bot token as `TELEGRAM_BOT_TOKEN`.
-3. Add the bot to the private Telegram group or chat.
-4. Get the Telegram chat ID for that group/chat.
-5. Set the webhook URL:
+3. Set the webhook URL:
 
 ```sh
 curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
@@ -31,6 +29,10 @@ curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 
 The legacy compatibility route `/api/integrations/telegram/webhook` also works, but new setup should use `/api/telegram/webhook`.
 
+4. In the web app, go to Settings > Telegram and generate a one-time code.
+5. Add the bot to the private Telegram group or chat where it should operate.
+6. Send the one-time code to the bot in that chat. The webhook verifies the code server-side and links that chat to the signed-in user's organization.
+
 ## Vercel Environment Variables
 
 Set these in Vercel for Production and Preview:
@@ -39,54 +41,23 @@ Set these in Vercel for Production and Preview:
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_BOT_USERNAME=
 TELEGRAM_WEBHOOK_SECRET=
-TELEGRAM_ALLOWED_CHAT_ID=
 NEXT_PUBLIC_SITE_URL=
 ```
 
-Never prefix Telegram secrets with `NEXT_PUBLIC_`. `TELEGRAM_ALLOWED_CHAT_ID` is a server-side allowlist. The Supabase connection mapping below is still required.
+Never prefix Telegram secrets with `NEXT_PUBLIC_`. Users should not paste Telegram tokens or chat IDs into the app; the one-time code links the chat server-side.
 
 ## Supabase Chat Mapping
 
-The easiest setup path is to connect Telegram from Settings > Telegram in the app. That creates a `telegram_link_codes` row, then `/start CODE` creates the `integration_connections` row.
+Settings > Telegram creates a short-lived `telegram_link_codes` row. The raw code is shown once to the signed-in user; the database stores only the hashed code value. When the user sends that code to the bot, the webhook atomically marks the code used and creates or updates `integration_connections` for that chat and organization.
 
-If you need to map manually, add one active connection:
-
-```sql
-insert into public.integration_connections (
-  organization_id,
-  provider,
-  external_team_id,
-  external_channel_id,
-  external_user_id,
-  display_name,
-  status,
-  config
-)
-values (
-  'ORG_UUID',
-  'telegram',
-  '',
-  'TELEGRAM_CHAT_ID',
-  null,
-  'HyperOptimal Management Telegram',
-  'active',
-  '{}'::jsonb
-)
-on conflict (provider, external_team_id, external_channel_id)
-do update set
-  organization_id = excluded.organization_id,
-  display_name = excluded.display_name,
-  status = 'active',
-  revoked_at = null,
-  updated_at = now();
-```
+No normal user should manually provide Telegram tokens or chat IDs.
 
 ## Routes
 
 - Telegram webhook: `/api/telegram/webhook`
 - Existing compatibility route: `/api/integrations/telegram/webhook`
 
-Every Telegram request is verified with `TELEGRAM_WEBHOOK_SECRET` when configured. Requests from chats outside `TELEGRAM_ALLOWED_CHAT_ID` are ignored.
+Every Telegram request is verified with `TELEGRAM_WEBHOOK_SECRET` when configured. Requests from chats without a valid Supabase connection are ignored except for valid one-time link codes.
 
 ## Persistence And Audit
 

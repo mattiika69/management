@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import { buildSlackAuthorizeUrl } from "@/lib/integrations/slack";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,7 +23,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?next=/settings/slack", request.url));
   }
 
-  await getOrCreateDefaultOrganization(supabase, user);
+  const organization = await getCurrentOrganization(supabase, user);
+  if (!organization) {
+    return NextResponse.redirect(new URL("/get-started", request.url));
+  }
+
   const state = randomBytes(24).toString("base64url");
   const url = new URL(request.url);
   const origin = url.origin;

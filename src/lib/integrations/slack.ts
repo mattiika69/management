@@ -38,7 +38,7 @@ export function buildSlackAuthorizeUrl(input: { origin: string; state: string })
 
   const scopes =
     process.env.SLACK_BOT_SCOPES?.trim() ||
-    "app_mentions:read,channels:history,chat:write,commands,groups:history,im:history";
+    "app_mentions:read,chat:write,commands,groups:read,groups:history,incoming-webhook";
   const url = new URL("https://slack.com/oauth/v2/authorize");
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("scope", scopes);
@@ -74,6 +74,12 @@ export async function exchangeSlackCode(input: { code: string; origin: string })
     bot_user_id?: string;
     team?: { id?: string; name?: string };
     authed_user?: { id?: string };
+    incoming_webhook?: {
+      channel?: string;
+      channel_id?: string;
+      configuration_url?: string;
+      url?: string;
+    };
   };
 
   if (!payload.ok) {
@@ -83,7 +89,12 @@ export async function exchangeSlackCode(input: { code: string; origin: string })
   return payload;
 }
 
-export async function postSlackMessage(channel: string, text: string, tokenOverride?: string | null) {
+export async function postSlackMessage(
+  channel: string,
+  text: string,
+  tokenOverride?: string | null,
+  options: { threadTs?: string | null } = {},
+) {
   const token = tokenOverride || process.env.SLACK_BOT_TOKEN;
 
   if (!token) {
@@ -96,7 +107,11 @@ export async function postSlackMessage(channel: string, text: string, tokenOverr
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ channel, text }),
+    body: JSON.stringify({
+      channel,
+      text,
+      ...(options.threadTs ? { thread_ts: options.threadTs } : {}),
+    }),
   });
 
   const body = (await response.json()) as { ok?: boolean; error?: string; ts?: string };

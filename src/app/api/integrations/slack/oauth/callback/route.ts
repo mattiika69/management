@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getCurrentOrganization } from "@/lib/auth/organization";
 import {
   saveIntegrationSecret,
   upsertIntegrationConnection,
@@ -56,26 +56,43 @@ export async function GET(request: Request) {
   }
 
   try {
-    const organization = await getOrCreateDefaultOrganization(supabase, user);
+    const organization = await getCurrentOrganization(supabase, user);
+    if (!organization) {
+      return NextResponse.redirect(new URL("/get-started", request.url));
+    }
+
     const oauth = await exchangeSlackCode({ code, origin: url.origin });
     const teamId = oauth.team?.id?.trim();
     const botToken = oauth.access_token?.trim();
+    const channelId = oauth.incoming_webhook?.channel_id?.trim();
+    const channelName = oauth.incoming_webhook?.channel?.trim();
 
     if (!teamId || !botToken) {
       return redirectBack(request, { slack: "error", code: "missing_team_or_token" });
     }
 
+    if (!channelId) {
+      return redirectBack(request, { slack: "error", code: "missing_channel" });
+    }
+
     const admin = createAdminClient();
-    await upsertIntegrationConnection(admin, {
+    const connection = await upsertIntegrationConnection(admin, {
       organizationId: organization.id,
       provider: "slack",
       externalTeamId: teamId,
-      externalChannelId: "",
+      externalChannelId: channelId,
       externalUserId: oauth.authed_user?.id ?? null,
       botUserId: oauth.bot_user_id ?? null,
-      displayName: oauth.team?.name ?? "Slack workspace",
+      displayName: channelName
+        ? `${oauth.team?.name ?? "Slack"} #${channelName}`
+        : oauth.team?.name ?? "Slack workspace",
       createdBy: user.id,
-      config: { scope: oauth.scope ?? null },
+      config: {
+        scope: oauth.scope ?? null,
+        slack_team_name: oauth.team?.name ?? null,
+        slack_channel_name: channelName ?? null,
+        incoming_webhook_config_url: oauth.incoming_webhook?.configuration_url ?? null,
+      },
     });
     await saveIntegrationSecret(admin, {
       organizationId: organization.id,
@@ -84,6 +101,49 @@ export async function GET(request: Request) {
       secretValue: botToken,
       createdBy: user.id,
     });
+    if (oauth.incoming_webhook?.url) {
+      await saveIntegrationSecret(admin, {
+        organizationId: organization.id,
+        provider: "slack",
+        secretName: "incoming_webhook_url",
+        secretValue: oauth.incoming_webhook.url,
+        createdBy: user.id,
+      });
+    }
+
+    const { error: channelError } = await admin.from("slack_channels").upsert(
+      {
+        tenant_id: organization.id,
+        organization_id: organization.id,
+        slack_team_id: teamId,
+        slack_channel_id: channelId,
+        slack_channel_name: channelName ?? null,
+        is_private: true,
+        enabled: true,
+        created_by_user_id: user.id,
+        updated_by_user_id: user.id,
+      },
+      { onConflict: "slack_team_id,slack_channel_id" },
+    );
+    if (channelError) {
+      throw new Error(channelError.message);
+    }
+
+    const { error: auditError } = await admin.from("admin_audit_log").insert({
+      tenant_id: organization.id,
+      actor_user_id: user.id,
+      action: "integration.slack.connected",
+      target_table: "integration_connections",
+      target_id: connection.id,
+      metadata: {
+        slack_team_id: teamId,
+        slack_channel_id: channelId,
+        slack_channel_name: channelName ?? null,
+      },
+    });
+    if (auditError) {
+      throw new Error(auditError.message);
+    }
 
     return redirectBack(request, { slack: "connected" });
   } catch (error) {

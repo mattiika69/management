@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import {
   findIntegrationConnection,
   hasProcessedIntegrationEvent,
@@ -33,7 +34,12 @@ type LinkCodeRow = {
   used_at: string | null;
 };
 
+function hashTelegramLinkCode(code: string) {
+  return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
+}
+
 async function connectTelegramCode(
+  supabase: ReturnType<typeof createAdminClient>,
   chatId: string,
   telegramUserId: string | undefined,
   telegramUsername: string | undefined,
@@ -42,23 +48,23 @@ async function connectTelegramCode(
   const match = text?.match(/^\/start\s+([A-F0-9]+)$/i);
   if (!match || !telegramUserId) return null;
 
-  const supabase = createAdminClient();
+  const rawCode = match[1].toUpperCase();
+  const now = new Date().toISOString();
   const { data: code, error } = await supabase
     .from("telegram_link_codes")
+    .update({ used_at: now })
     .select("id,user_id,organization_id,expires_at,used_at")
-    .eq("code", match[1].toUpperCase())
+    .in("code", [hashTelegramLinkCode(rawCode), rawCode])
+    .is("used_at", null)
+    .gt("expires_at", now)
     .maybeSingle<LinkCodeRow>();
 
   if (error) throw new Error(error.message);
-  if (!code || code.used_at || new Date(code.expires_at).getTime() < Date.now()) {
+  if (!code) {
     await postTelegramMessage(chatId, "That HyperOptimal Management link code is invalid or expired.");
     return { handled: true };
   }
 
-  await supabase
-    .from("telegram_link_codes")
-    .update({ used_at: new Date().toISOString() })
-    .eq("id", code.id);
   const displayUsername = normalizeTelegramUsername(telegramUsername);
   const connection = await upsertIntegrationConnection(supabase, {
     organizationId: code.organization_id,
@@ -82,6 +88,19 @@ async function connectTelegramCode(
     command: "connect",
     status: "sent",
   });
+  await supabase.from("admin_audit_log").insert({
+    tenant_id: code.organization_id,
+    actor_user_id: code.user_id,
+    action: "integration.telegram.connected",
+    target_table: "integration_connections",
+    target_id: connection.id,
+    metadata: {
+      telegram_chat_id: chatId,
+      telegram_user_id: telegramUserId,
+      telegram_username: displayUsername,
+      link_code_id: code.id,
+    },
+  });
   return { handled: true };
 }
 
@@ -89,11 +108,6 @@ function telegramDisplayName(from: TelegramMessage["from"]) {
   const username = normalizeTelegramUsername(from?.username);
   if (username) return username;
   return [from?.first_name, from?.last_name].filter(Boolean).join(" ").trim() || null;
-}
-
-function isAllowedTelegramChat(chatId: string) {
-  const allowedChatId = process.env.TELEGRAM_ALLOWED_CHAT_ID?.trim();
-  return !allowedChatId || allowedChatId === chatId;
 }
 
 export async function POST(request: Request) {
@@ -119,10 +133,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (!isAllowedTelegramChat(chatId)) {
-    return NextResponse.json({ ok: true, ignored: "chat_not_allowed" });
-  }
-
   const supabase = createAdminClient();
 
   if (payload.update_id) {
@@ -135,6 +145,7 @@ export async function POST(request: Request) {
   }
 
   const connected = await connectTelegramCode(
+    supabase,
     chatId,
     telegramUserId,
     payload.message?.from?.username,

@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +7,10 @@ import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 function buildDeepLink(code: string) {
   const username = process.env.TELEGRAM_BOT_USERNAME?.trim();
   return username ? `https://t.me/${username}?start=${code}` : null;
+}
+
+function hashTelegramLinkCode(code: string) {
+  return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
 }
 
 export async function POST(request: Request) {
@@ -18,7 +22,7 @@ export async function POST(request: Request) {
     const code = randomBytes(8).toString("hex").toUpperCase();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
     const { error } = await context.supabase.from("telegram_link_codes").insert({
-      code,
+      code: hashTelegramLinkCode(code),
       user_id: context.user.id,
       organization_id: context.tenant.id,
       expires_at: expiresAt,

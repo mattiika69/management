@@ -34,19 +34,21 @@ Destructive or high-risk Slack requests are refused from chat and must be confir
    - `app_mentions:read`
    - `commands`
    - `groups:read`
+   - `incoming-webhook`
    - `groups:history` only if normal private-channel messages such as `app: status` should work.
-4. Install the Slack app to the workspace.
-5. Copy the **Bot User OAuth Token** as `SLACK_BOT_TOKEN`.
-6. In **Event Subscriptions**, enable events.
-7. Set the Request URL:
+4. In the web app, go to Settings > Slack and click **Connect Slack**.
+5. Slack will ask the user to approve the app and select the private channel where the bot should operate.
+6. The OAuth callback stores the selected team/channel and bot token in Supabase server-side.
+7. In **Event Subscriptions**, enable events.
+8. Set the Request URL:
    - `https://THIS_APP_DOMAIN/api/slack/events`
-8. Subscribe to bot events:
+9. Subscribe to bot events:
    - `app_mention`
    - `message.groups` only if normal private-channel prefixed messages should work.
-9. In **Slash Commands**, create `/management` if you want slash commands.
-10. Set the slash command Request URL:
+10. In **Slash Commands**, create `/management` if you want slash commands.
+11. Set the slash command Request URL:
     - `https://THIS_APP_DOMAIN/api/slack/commands`
-11. Invite the bot to the private channel:
+12. Invite the bot to the private channel:
     - `/invite @BotName`
 
 ## Vercel Environment Variables
@@ -58,52 +60,22 @@ SLACK_APP_ID=
 SLACK_CLIENT_ID=
 SLACK_CLIENT_SECRET=
 SLACK_SIGNING_SECRET=
-SLACK_BOT_TOKEN=
-SLACK_ALLOWED_TEAM_ID=
-SLACK_ALLOWED_CHANNEL_ID=
+SLACK_BOT_SCOPES=app_mentions:read,chat:write,commands,groups:read,groups:history,incoming-webhook
 NEXT_PUBLIC_SITE_URL=
 ```
 
-Never prefix Slack secrets with `NEXT_PUBLIC_`. `SLACK_ALLOWED_TEAM_ID` and `SLACK_ALLOWED_CHANNEL_ID` are an extra server-side allowlist. The database mapping below is still required.
+Never prefix Slack secrets with `NEXT_PUBLIC_`. Users should not paste bot tokens, channel IDs, or team IDs into the app; OAuth stores provider tokens and channel mappings server-side.
 
 ## Supabase Channel Mapping
 
-Add one row mapping the private Slack channel to the HyperOptimal Management organization. `tenant_id` and `organization_id` should be the same workspace ID used by this app.
+The Slack OAuth callback creates or updates the Supabase records automatically:
 
-```sql
-insert into public.slack_channels (
-  tenant_id,
-  organization_id,
-  slack_team_id,
-  slack_channel_id,
-  slack_channel_name,
-  is_private,
-  enabled,
-  created_by_user_id,
-  updated_by_user_id
-)
-values (
-  'ORG_UUID',
-  'ORG_UUID',
-  'T0123456789',
-  'C0123456789',
-  'private-management-channel',
-  true,
-  true,
-  'OWNER_AUTH_USER_UUID',
-  'OWNER_AUTH_USER_UUID'
-)
-on conflict (slack_team_id, slack_channel_id)
-do update set
-  tenant_id = excluded.tenant_id,
-  organization_id = excluded.organization_id,
-  slack_channel_name = excluded.slack_channel_name,
-  enabled = true,
-  updated_by_user_id = excluded.updated_by_user_id,
-  updated_at = now();
-```
+- `integration_connections`: normalized Slack team/channel connection for the signed-in user's organization
+- `integration_secrets`: server-only bot token and incoming webhook URL
+- `slack_channels`: private Slack channel mapping used by the agent runtime
+- `admin_audit_log`: who connected Slack, when, and to which team/channel
 
-`created_by_user_id` should be an owner/admin in the organization when possible. The bot still allows private-channel conversation without every Slack user having an app login, but owner/admin attribution is useful for AI Agent requests and audits.
+No normal user should manually provide Slack tokens, channel IDs, or team IDs.
 
 ## Routes
 
