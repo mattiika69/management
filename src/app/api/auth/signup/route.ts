@@ -10,7 +10,12 @@ import {
   isStrongPassword,
   passwordPolicyMessage,
 } from "@/lib/auth/validation";
-import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  getResend,
+  getResendFromEmail,
+  normalizeEmail,
+  resendIdempotencyKey,
+} from "@/lib/resend/server";
 import {
   checkRateLimit,
   rateLimitKey,
@@ -168,6 +173,8 @@ export async function POST(request: Request) {
       subject,
       text,
       html,
+    }, {
+      idempotencyKey: resendIdempotencyKey("signup-verification", data.user?.id ?? email),
     });
 
     if (result.error) {

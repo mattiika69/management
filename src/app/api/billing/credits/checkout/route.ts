@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { envErrorResponse } from "@/lib/env/http";
+import { getServerEnv } from "@/lib/env/server";
 import { getStripe } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
 import { canonicalSiteOrigin } from "@/lib/url/site-origin";
+import type Stripe from "stripe";
 
 type Payload = {
   pack?: string;
 };
 
 const PACKS: Record<string, { credits: number; envKey: string; fallbackEnvKey?: string }> = {
-  starter: { credits: 100, envKey: "STRIPE_CREDIT_PACK_STARTER_PRICE_ID", fallbackEnvKey: "STRIPE_PRICE_ID" },
+  starter: { credits: 100, envKey: "STRIPE_CREDIT_PACK_STARTER_PRICE_ID", fallbackEnvKey: "STRIPE_PRICE_BASIC" },
   growth: { credits: 500, envKey: "STRIPE_CREDIT_PACK_GROWTH_PRICE_ID" },
 };
 
@@ -17,7 +20,7 @@ export async function POST(request: Request) {
   const payload = (await request.json().catch(() => ({}))) as Payload;
   const packKey = payload.pack && PACKS[payload.pack] ? payload.pack : "starter";
   const pack = PACKS[packKey];
-  const priceId = process.env[pack.envKey] || (pack.fallbackEnvKey ? process.env[pack.fallbackEnvKey] : "");
+  const priceId = getServerEnv(pack.envKey) || (pack.fallbackEnvKey ? getServerEnv(pack.fallbackEnvKey) : "");
 
   if (!priceId) {
     return NextResponse.json(
@@ -36,7 +39,15 @@ export async function POST(request: Request) {
   }
 
   const organization = await getOrCreateDefaultOrganization(supabase, user);
-  const stripe = getStripe();
+  let stripe: Stripe;
+  try {
+    stripe = getStripe();
+  } catch (error) {
+    return envErrorResponse(error) ?? NextResponse.json(
+      { error: "Credit checkout is not available right now." },
+      { status: 500 },
+    );
+  }
   const appUrl = canonicalSiteOrigin(request);
 
   const session = await stripe.checkout.sessions.create({

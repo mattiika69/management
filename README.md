@@ -11,13 +11,15 @@ state.
 ## Local setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+2. Fill in the required public, Supabase, Stripe, and Resend variables. Do not
+   commit `.env.local` or any real secret values.
 3. Install dependencies with `npm install`.
 4. Run `npm run dev`.
 
 Useful checks:
 
 ```sh
+npm run test
 npm run lint
 npm run verify:supabase-admin
 npm run typecheck
@@ -78,21 +80,37 @@ server-side agent tools.
 
 ## Vercel
 
-Set these environment variables in Vercel:
+Set these environment variables in Vercel Production:
 
+- `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_BASIC`
+- `STRIPE_PRICE_PRO`
+- `STRIPE_PRICE_BUSINESS`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
+
+The app also supports these compatibility aliases while older provider setup is
+being normalized:
+
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `STRIPE_ONBOARDING_PRICE_ID`
+- `STRIPE_PRICE_ID`
+- `RESEND_FROM_EMAIL`
 - `RESEND_FROM_NAME`
+
+Additional integration variables:
+
 - `ROEZAN_API_BASE_URL`
 - `CLAUDE_MODEL`
 - `INTEGRATION_SECRET_KEY`
 - `SCHEDULE_WORKER_SECRET`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `SLACK_APP_ID`
 - `SLACK_CLIENT_ID`
 - `SLACK_CLIENT_SECRET`
@@ -100,9 +118,12 @@ Set these environment variables in Vercel:
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_BOT_USERNAME`
 - `TELEGRAM_WEBHOOK_SECRET`
-- `RESEND_API_KEY`
-- `RESEND_FROM_EMAIL`
 - `ROEZAN_API_KEY`
+
+Use Vercel Marketplace or managed integrations for Stripe, Supabase, and Resend
+when available. Add manually only the variables that the managed integration
+does not create, especially plan price IDs and verified sender email values.
+Server-only keys must never use the `NEXT_PUBLIC_` prefix.
 
 Then deploy with:
 

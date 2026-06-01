@@ -1,6 +1,7 @@
 import "server-only";
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { getPublicEnv } from "@/lib/env/public";
 
 function originFrom(value: string | null | undefined) {
   if (!value) return "";
@@ -23,7 +24,7 @@ function configuredOrigins(request: Request) {
     [
       originFrom(request.url),
       hostOrigin,
-      originFrom(process.env.NEXT_PUBLIC_SITE_URL),
+      originFrom(getPublicEnv("NEXT_PUBLIC_APP_URL")),
       originFrom(
         process.env.VERCEL_PROJECT_PRODUCTION_URL
           ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`

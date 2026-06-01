@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getOrCreateDefaultOrganization } from "@/lib/auth/organization";
+import { getBillingPlanPriceId } from "@/lib/billing/config";
+import { billingCheckoutRedirects } from "@/lib/billing/redirects";
+import { envErrorResponse } from "@/lib/env/http";
 import { normalizeEmail } from "@/lib/resend/server";
 import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { getStripe } from "@/lib/stripe/server";
 import { createClient } from "@/lib/supabase/server";
 import { canonicalSiteOrigin } from "@/lib/url/site-origin";
+import type Stripe from "stripe";
 
 type CheckoutPayload = {
   email?: string;
@@ -20,27 +24,36 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const priceId =
-    process.env.STRIPE_ONBOARDING_PRICE_ID ?? process.env.STRIPE_PRICE_ID;
+  let priceId: string;
+  try {
+    priceId = getBillingPlanPriceId();
+  } catch (error) {
+    return envErrorResponse(error) ?? NextResponse.json(
+      { error: "Billing is not available right now." },
+      { status: 500 },
+    );
+  }
   const appUrl = canonicalSiteOrigin(request);
 
-  if (!priceId) {
-    return NextResponse.json(
+  let stripe: Stripe;
+  try {
+    stripe = getStripe();
+  } catch (error) {
+    return envErrorResponse(error) ?? NextResponse.json(
       { error: "Billing is not available right now." },
       { status: 500 },
     );
   }
 
-  const stripe = getStripe();
-
   if (!user?.email) {
     const checkoutEmail = normalizeEmail(payload.email);
+    const redirects = billingCheckoutRedirects(appUrl, false);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: checkoutEmail || undefined,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/signup?checkout=success`,
-      cancel_url: `${appUrl}/?checkout=cancelled`,
+      success_url: redirects.successUrl,
+      cancel_url: redirects.cancelUrl,
       metadata: {
         account_setup: "checkout_first",
       },
@@ -99,8 +112,8 @@ export async function POST(request: Request) {
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/get-started?billing=success`,
-    cancel_url: `${appUrl}/get-started?billing=cancelled`,
+    success_url: billingCheckoutRedirects(appUrl, true).successUrl,
+    cancel_url: billingCheckoutRedirects(appUrl, true).cancelUrl,
     client_reference_id: organization.id,
     metadata: {
       organization_id: organization.id,

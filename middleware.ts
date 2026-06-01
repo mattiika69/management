@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getPublicEnv } from "@/lib/env/public";
 
 function isProtectedPath(pathname: string) {
   return (
@@ -35,7 +36,7 @@ function configuredOrigins(request: NextRequest) {
     [
       originFrom(request.url),
       hostOrigin,
-      originFrom(process.env.NEXT_PUBLIC_SITE_URL),
+      originFrom(getPublicEnv("NEXT_PUBLIC_APP_URL")),
       originFrom(
         process.env.VERCEL_PROJECT_PRODUCTION_URL
           ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`

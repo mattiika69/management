@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  getResend,
+  getResendFromEmail,
+  normalizeEmail,
+  resendIdempotencyKey,
+} from "@/lib/resend/server";
 import {
   checkRateLimit,
   rateLimitKey,
@@ -45,6 +50,7 @@ async function sendInviteEmail(input: {
   text: string;
   html: string;
   inviteUrl: string;
+  idempotencyKey: string;
 }): Promise<InviteDelivery> {
   try {
     const result = await getResend().emails.send({
@@ -53,6 +59,8 @@ async function sendInviteEmail(input: {
       subject: input.subject,
       text: input.text,
       html: input.html,
+    }, {
+      idempotencyKey: input.idempotencyKey,
     });
 
     if (result.error) throw new Error(result.error.message);
@@ -298,9 +306,12 @@ export async function POST(request: Request) {
       role,
     });
 
+    const emailMessageId = randomUUID();
+    const idempotencyKey = resendIdempotencyKey("team-invitation", emailMessageId);
     const { data: emailMessage, error: emailInsertError } = await admin
       .from("email_messages")
       .insert({
+        id: emailMessageId,
         organization_id: context.tenant.id,
         tenant_id: context.tenant.id,
         created_by: context.user.id,
@@ -311,6 +322,7 @@ export async function POST(request: Request) {
         metadata: {
           source: "team_invitation",
           invitation_id: invitation.id,
+          idempotency_key: idempotencyKey,
         },
       })
       .select("id")
@@ -318,7 +330,7 @@ export async function POST(request: Request) {
 
     if (emailInsertError) throw new Error(emailInsertError.message);
 
-    const delivery = await sendInviteEmail({ email, subject, text, html, inviteUrl });
+    const delivery = await sendInviteEmail({ email, subject, text, html, inviteUrl, idempotencyKey });
 
     if (delivery.sent) {
       const { error: emailUpdateError } = await admin
@@ -331,6 +343,7 @@ export async function POST(request: Request) {
             invitation_id: invitation.id,
             delivery_provider: delivery.provider,
             provider_message_id: delivery.externalMessageId ?? null,
+            idempotency_key: idempotencyKey,
           },
         })
         .eq("id", emailMessage.id);
@@ -357,6 +370,7 @@ export async function POST(request: Request) {
           source: "team_invitation",
           invitation_id: invitation.id,
           error: message,
+          idempotency_key: idempotencyKey,
         },
       })
       .eq("id", emailMessage.id);

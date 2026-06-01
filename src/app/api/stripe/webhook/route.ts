@@ -4,6 +4,8 @@ import {
   createBillingAccountClaim,
   sendBillingSetupEmail,
 } from "@/lib/billing/account-claims";
+import { envErrorResponse } from "@/lib/env/http";
+import { requireServerEnv } from "@/lib/env/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/server";
 import { canonicalSiteOrigin } from "@/lib/url/site-origin";
@@ -278,15 +280,25 @@ async function grantCreditCheckout(
 }
 
 export async function POST(request: Request) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    return NextResponse.json(
+  let webhookSecret: string;
+  try {
+    webhookSecret = requireServerEnv("STRIPE_WEBHOOK_SECRET");
+  } catch (error) {
+    return envErrorResponse(error) ?? NextResponse.json(
       { error: "Stripe webhook is not configured." },
       { status: 500 },
     );
   }
 
-  const stripe = getStripe();
+  let stripe: Stripe;
+  try {
+    stripe = getStripe();
+  } catch (error) {
+    return envErrorResponse(error) ?? NextResponse.json(
+      { error: "Stripe webhook is not configured." },
+      { status: 500 },
+    );
+  }
   const signature = request.headers.get("stripe-signature");
   if (!signature) {
     return NextResponse.json({ error: "Stripe signature is required." }, { status: 400 });

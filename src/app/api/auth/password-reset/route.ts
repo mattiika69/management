@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { buildPasswordResetEmail } from "@/lib/auth/password-reset-email";
-import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  getResend,
+  getResendFromEmail,
+  normalizeEmail,
+  resendIdempotencyKey,
+} from "@/lib/resend/server";
 import {
   checkRateLimit,
   rateLimitKey,
@@ -106,6 +111,8 @@ export async function POST(request: Request) {
         subject,
         text,
         html,
+      }, {
+        idempotencyKey: resendIdempotencyKey("password-reset", resetUrl),
       });
     } catch {
       return {

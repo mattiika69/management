@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  getResend,
+  getResendFromEmail,
+  normalizeEmail,
+  resendIdempotencyKey,
+} from "@/lib/resend/server";
 import {
   checkRateLimit,
   rateLimitKey,
@@ -90,12 +95,15 @@ export async function POST(request: Request) {
     }
 
     try {
+      const idempotencyKey = resendIdempotencyKey("email-message", emailMessage.id);
       const result = await resend.emails.send({
         from,
         to,
         subject,
         text: text ?? "",
         ...(html ? { html } : {}),
+      }, {
+        idempotencyKey,
       });
 
       if (result.error) throw new Error(result.error.message);
@@ -105,7 +113,7 @@ export async function POST(request: Request) {
         .update({
           status: "sent",
           external_message_id: result.data?.id,
-          metadata: { source: "api", provider_message_id: result.data?.id ?? null },
+          metadata: { source: "api", provider_message_id: result.data?.id ?? null, idempotency_key: idempotencyKey },
         })
         .eq("id", emailMessage.id);
 
@@ -125,7 +133,7 @@ export async function POST(request: Request) {
         .update({
           status: "failed",
           error_message: message,
-          metadata: { source: "api", error: message },
+          metadata: { source: "api", error: message, idempotency_key: resendIdempotencyKey("email-message", emailMessage.id) },
         })
         .eq("id", emailMessage.id);
 

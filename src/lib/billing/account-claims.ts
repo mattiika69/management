@@ -1,7 +1,12 @@
 import "server-only";
 
 import { createHash, randomBytes } from "crypto";
-import { getResend, getResendFromEmail, normalizeEmail } from "@/lib/resend/server";
+import {
+  getResend,
+  getResendFromEmail,
+  normalizeEmail,
+  resendIdempotencyKey,
+} from "@/lib/resend/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -114,6 +119,8 @@ export async function sendBillingSetupEmail({
       subject,
       text,
       html,
+    }, {
+      idempotencyKey: resendIdempotencyKey("billing-setup", claimId),
     });
 
     if (result.error) {

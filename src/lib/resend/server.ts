@@ -1,5 +1,7 @@
 import "server-only";
+import { createHash } from "crypto";
 import { Resend } from "resend";
+import { getServerEnv, requireServerEnv } from "@/lib/env/server";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -8,27 +10,17 @@ function cleanHeaderText(value: string) {
 }
 
 export function getResend() {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured.");
-  }
-
-  return new Resend(apiKey);
+  return new Resend(requireServerEnv("RESEND_API_KEY"));
 }
 
 export function getResendFromEmail() {
-  const fromEmail = process.env.RESEND_FROM_EMAIL;
-
-  if (!fromEmail) {
-    throw new Error("RESEND_FROM_EMAIL is not configured.");
-  }
-
-  const fromName = process.env.RESEND_FROM_NAME?.trim();
+  const fromEmail = requireServerEnv("EMAIL_FROM");
+  const inlineName = fromEmail.match(/^\s*(.*?)\s*<[^>]+>\s*$/)?.[1]?.trim();
+  const fromName = getServerEnv("RESEND_FROM_NAME") || inlineName || "";
   const email = normalizeEmail(fromEmail);
 
   if (!email) {
-    throw new Error("RESEND_FROM_EMAIL is not a valid email address.");
+    throw new Error("EMAIL_FROM must be a valid email address or Name <email@domain>.");
   }
 
   if (!fromName) return email;
@@ -46,4 +38,13 @@ export function normalizeEmail(value: unknown) {
 export function normalizeEmailList(value: unknown) {
   if (!Array.isArray(value)) return [];
   return Array.from(new Set(value.map(normalizeEmail).filter(Boolean)));
+}
+
+export function resendIdempotencyKey(scope: string, ...parts: Array<string | null | undefined>) {
+  const hash = createHash("sha256")
+    .update(parts.filter(Boolean).join("|"))
+    .digest("hex")
+    .slice(0, 32);
+
+  return `${scope}/${hash}`;
 }

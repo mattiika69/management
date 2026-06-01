@@ -173,12 +173,12 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 Production variables currently present:
 
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Site URL: `NEXT_PUBLIC_SITE_URL=https://app.hiretrainingmanage.com`
+- Site URL: `NEXT_PUBLIC_APP_URL=https://app.hiretrainingmanage.com`; legacy alias `NEXT_PUBLIC_SITE_URL` is still supported.
 - Auth enforcement: `REQUIRE_LOGIN_AUTH`, `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`
 - Admin access: `ADMIN_EMAILS`
 - AI defaults: `CLAUDE_MODEL`, `ANTHROPIC_MAX_TOKENS`
-- Stripe subscription billing: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_ONBOARDING_PRICE_ID=price_1TddwN53gChGC5HSf6MKnjb4` ($97/month)
-- Resend app email: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`
+- Stripe subscription billing: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_BASIC=price_1TddwN53gChGC5HSf6MKnjb4` ($97/month); legacy alias `STRIPE_ONBOARDING_PRICE_ID` is still supported.
+- Resend app email: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`; preferred `EMAIL_FROM` is supported by code but still needs to be added manually in Vercel when the verified sender value is confirmed.
 - Roezan SMS: `ROEZAN_API_KEY`, `ROEZAN_API_BASE_URL`
 - Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
 - Nylas calendar: `NYLAS_CLIENT_ID`, `NYLAS_API_KEY`, `NYLAS_API_REGION`, `NYLAS_CALENDAR_ID`
@@ -199,6 +199,15 @@ Stripe subscription checkout and webhook handling are configured. Stripe credit 
 
 - `STRIPE_CREDIT_PACK_STARTER_PRICE_ID`
 - `STRIPE_CREDIT_PACK_GROWTH_PRICE_ID`
+
+The app currently has a basic `$97/month` plan. Multi-plan plan IDs are documented but not yet configured in Vercel:
+
+- `STRIPE_PRICE_PRO`
+- `STRIPE_PRICE_BUSINESS`
+
+Preferred Resend sender naming is supported in code but not yet configured in Vercel:
+
+- `EMAIL_FROM`
 
 Slack is implemented but OAuth, signed inbound events, and fallback outbound posting are blocked until these are added in Vercel:
 

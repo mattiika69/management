@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getServerEnv } from "@/lib/env/server";
 import { jsonError, requireTenantContext } from "@/lib/tenant-context";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,10 +12,7 @@ export async function GET() {
         {
           key: "onboarding",
           name: "Onboarding",
-          available: Boolean(
-            process.env.STRIPE_ONBOARDING_PRICE_ID ??
-              process.env.STRIPE_PRICE_ID,
-          ),
+          available: Boolean(getServerEnv("STRIPE_PRICE_BASIC")),
         },
       ],
     });

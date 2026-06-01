@@ -5,15 +5,14 @@ import {
   createAuthBypassClient,
   isAuthBypassEnabled,
 } from "@/lib/supabase/auth-bypass";
+import { requirePublicEnv } from "@/lib/env/public";
 
 async function createCookieClient() {
   const cookieStore = await cookies();
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-      "",
+    requirePublicEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requirePublicEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     {
       cookies: {
         getAll() {

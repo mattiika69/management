@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "verify:supabase-admin": "node scripts/ci/verify-supabase-admin.mjs",
+    "test": "npm run test:env",
+    "test:env": "node --test --experimental-strip-types tests/env-contract.test.mjs",
     "typecheck": "tsc --noEmit --incremental false",
     "lint": "eslint",
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=.ms-playwright playwright test",

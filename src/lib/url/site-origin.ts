@@ -1,4 +1,5 @@
 import "server-only";
+import { getPublicEnv } from "@/lib/env/public";
 
 function cleanOrigin(value: string | undefined) {
   return value?.trim().replace(/\/$/, "") || "";
@@ -14,7 +15,7 @@ export function isLocalhostUrl(value: string) {
 }
 
 function productionOrigin() {
-  const configuredOrigin = cleanOrigin(process.env.NEXT_PUBLIC_SITE_URL);
+  const configuredOrigin = cleanOrigin(getPublicEnv("NEXT_PUBLIC_APP_URL"));
   if (configuredOrigin && !isLocalhostUrl(configuredOrigin)) {
     return configuredOrigin;
   }

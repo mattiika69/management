@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { BillingCheckoutButton } from "@/components/billing-checkout-button";
 import { CreditCheckoutButton } from "@/components/credit-checkout-button";
 import { getCurrentOrganization } from "@/lib/auth/organization";
+import { DEFAULT_BILLING_SEAT_QUANTITY } from "@/lib/billing/contract";
 import { settingsTabs } from "@/lib/hyperoptimal/navigation";
 import { getCreditAccount } from "@/lib/hyperoptimal/server";
 import { createClient } from "@/lib/supabase/server";
@@ -56,7 +57,7 @@ export default async function BillingSettingsPage() {
 
         <section className="space-y-6">
           <p className="text-[15px] font-medium leading-6 text-[#53627a]">
-            Start a bundle-10 subscription. Base plan includes 10 seats; additional seats are billed per seat.
+            Start a bundle-{DEFAULT_BILLING_SEAT_QUANTITY} subscription. Base plan includes {DEFAULT_BILLING_SEAT_QUANTITY} seats; additional seats are billed per seat.
           </p>
 
           <div>
@@ -64,7 +65,7 @@ export default async function BillingSettingsPage() {
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-[8px] border border-[#155dfc] bg-[#eff6ff] px-5 py-4 text-center">
                 <p className="text-[15px] font-semibold text-[#101828]">Monthly</p>
-                <p className="mt-1 text-[12px] font-medium text-[#667085]">$97.00/mo (10 seats included)</p>
+                <p className="mt-1 text-[12px] font-medium text-[#667085]">$97.00/mo ({DEFAULT_BILLING_SEAT_QUANTITY} seats included)</p>
                 <p className="mt-1 text-[10px] font-medium text-[#98a2b3]">+$0.00/mo per extra seat</p>
               </div>
               <div className="rounded-[8px] border border-[#d9e1ee] bg-white px-5 py-4 text-center">
@@ -79,19 +80,19 @@ export default async function BillingSettingsPage() {
             <p className="mb-2 text-[13px] font-semibold text-[#344054]">Entitled Seats</p>
             <div className="flex items-center gap-3">
               <button type="button" className="settings-button-outline h-9 w-9 px-0">-</button>
-              <div className="settings-field grid w-[72px] place-items-center">10</div>
+              <div className="settings-field grid w-[72px] place-items-center">{DEFAULT_BILLING_SEAT_QUANTITY}</div>
               <button type="button" className="settings-button-outline h-9 w-9 px-0">+</button>
             </div>
-            <p className="mt-2 text-[11px] font-medium text-[#98a2b3]">Seat count is capped at 10 during beta.</p>
+            <p className="mt-2 text-[11px] font-medium text-[#98a2b3]">Seat count is capped at {DEFAULT_BILLING_SEAT_QUANTITY} during beta.</p>
           </div>
 
           <div className="rounded-[8px] bg-white px-4 py-4">
             <div className="flex items-center justify-between border-b border-[#e4e7ec] pb-3 text-[13px] font-medium text-[#344054]">
-              <span>Base (10 seats included)</span>
+              <span>Base ({DEFAULT_BILLING_SEAT_QUANTITY} seats included)</span>
               <span>$97.00</span>
             </div>
             <div className="flex items-center justify-between pt-3 text-[15px] font-semibold text-[#101828]">
-              <span>Total (10 seats)</span>
+              <span>Total ({DEFAULT_BILLING_SEAT_QUANTITY} seats)</span>
               <span>$97.00 / mo</span>
             </div>
           </div>

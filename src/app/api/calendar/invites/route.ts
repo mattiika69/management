@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { buildIcsInvite, createConnectedCalendarEvent, createZoomMeeting } from "@/lib/calendar/invites";
-import { getResend, getResendFromEmail, normalizeEmailList } from "@/lib/resend/server";
+import {
+  getResend,
+  getResendFromEmail,
+  normalizeEmailList,
+  resendIdempotencyKey,
+} from "@/lib/resend/server";
 import {
   checkRateLimit,
   rateLimitKey,
@@ -272,13 +277,18 @@ export async function POST(request: Request) {
           subject: title,
           text_body: text,
           html_body: html,
-          metadata: { source: "calendar_invite", calendar_invite_id: invite.id },
+          metadata: {
+            source: "calendar_invite",
+            calendar_invite_id: invite.id,
+            idempotency_key: resendIdempotencyKey("calendar-invite", invite.id, to),
+          },
         })
         .select("id")
         .single<{ id: string }>();
       if (emailInsertError) throw new Error(emailInsertError.message);
 
       try {
+        const idempotencyKey = resendIdempotencyKey("calendar-invite", invite.id, to);
         const result = await resend.emails.send({
           from,
           to,
@@ -292,6 +302,8 @@ export async function POST(request: Request) {
               contentType: "text/calendar; method=REQUEST; charset=UTF-8",
             },
           ],
+        }, {
+          idempotencyKey,
         });
 
         if (result.error) throw new Error(result.error.message);
@@ -301,7 +313,12 @@ export async function POST(request: Request) {
           .update({
             status: "sent",
             external_message_id: result.data?.id,
-            metadata: { source: "calendar_invite", calendar_invite_id: invite.id, provider_message_id: result.data?.id ?? null },
+            metadata: {
+              source: "calendar_invite",
+              calendar_invite_id: invite.id,
+              provider_message_id: result.data?.id ?? null,
+              idempotency_key: idempotencyKey,
+            },
           })
           .eq("id", emailMessage.id);
       } catch (error) {
@@ -311,7 +328,12 @@ export async function POST(request: Request) {
           .update({
             status: "failed",
             error_message: lastError,
-            metadata: { source: "calendar_invite", calendar_invite_id: invite.id, error: lastError },
+            metadata: {
+              source: "calendar_invite",
+              calendar_invite_id: invite.id,
+              error: lastError,
+              idempotency_key: resendIdempotencyKey("calendar-invite", invite.id, to),
+            },
           })
           .eq("id", emailMessage.id);
       }

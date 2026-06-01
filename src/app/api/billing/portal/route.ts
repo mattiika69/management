@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { envErrorResponse } from "@/lib/env/http";
 import { getStripe } from "@/lib/stripe/server";
 import {
   auditAction,
@@ -9,6 +10,7 @@ import {
 import { enforceSameOrigin } from "@/lib/security/request-guards";
 import { createClient } from "@/lib/supabase/server";
 import { canonicalSiteOrigin } from "@/lib/url/site-origin";
+import type Stripe from "stripe";
 
 export async function POST(request: Request) {
   const originGuard = enforceSameOrigin(request);
@@ -28,7 +30,17 @@ export async function POST(request: Request) {
     }
 
     const origin = canonicalSiteOrigin(request);
-    const session = await getStripe().billingPortal.sessions.create({
+    let stripe: Stripe;
+    try {
+      stripe = getStripe();
+    } catch (error) {
+      return envErrorResponse(error) ?? NextResponse.json(
+        { error: "Billing portal is not available right now." },
+        { status: 500 },
+      );
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
       customer: customer.stripe_customer_id,
       return_url: `${origin}/settings/billing`,
     });
