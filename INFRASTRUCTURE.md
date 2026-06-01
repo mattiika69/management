@@ -183,7 +183,7 @@ Production variables currently present:
 - Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
 - Nylas calendar: `NYLAS_CLIENT_ID`, `NYLAS_API_KEY`, `NYLAS_API_REGION`, `NYLAS_CALENDAR_ID`
 - Microsoft tenant default: `MICROSOFT_TENANT_ID=common`
-- Slack default scopes: `SLACK_BOT_SCOPES`
+- Slack app/OAuth/signing: `SLACK_APP_ID`, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_SIGNING_SECRET`, `SLACK_BOT_SCOPES`
 - Security and jobs: `INTEGRATION_SECRET_KEY`, `SCHEDULE_WORKER_SECRET`
 
 Preview currently only has `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `RESEND_FROM_NAME`.
@@ -209,12 +209,9 @@ Preferred Resend sender naming is supported in code but not yet configured in Ve
 
 - `EMAIL_FROM`
 
-Slack is implemented but OAuth, signed inbound events, and fallback outbound posting are blocked until these are added in Vercel:
+Slack OAuth and signed inbound event verification are configured in Vercel Production. Fallback outbound posting is blocked until this is added only if outbound messages must work before a tenant-specific OAuth token is stored:
 
-- `SLACK_CLIENT_ID`
-- `SLACK_CLIENT_SECRET`
-- `SLACK_SIGNING_SECRET`
-- `SLACK_BOT_TOKEN` if outbound messages should work before a tenant-specific token is stored
+- `SLACK_BOT_TOKEN`
 
 Google Calendar, Microsoft Calendar, and Zoom OAuth are implemented but blocked until these are added in Vercel:
 
@@ -251,7 +248,7 @@ Production auth must stay enforced before customer launch:
 ## APIs We Need To Finish Configuring
 
 - Stripe credit-pack price IDs for starter/growth one-time credit purchases
-- Slack app credentials, scopes, event subscription URL, and interaction URL
+- Slack event subscription URL, slash command URL, and interaction URL in the Slack app dashboard
 - Telegram bot token, bot username, webhook secret, and webhook registration
 - Google Calendar OAuth app credentials and redirect URL registration
 - Microsoft Calendar OAuth app credentials and redirect URL registration
