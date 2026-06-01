@@ -54,6 +54,8 @@ function isUnsafeMethod(method: string) {
 function isExternalApiCallback(pathname: string) {
   return (
     pathname.endsWith("/webhook") ||
+    pathname === "/api/slack/commands" ||
+    pathname === "/api/slack/events" ||
     pathname === "/api/integrations/slack/commands" ||
     pathname === "/api/integrations/slack/events" ||
     pathname === "/api/integrations/slack/interactions" ||

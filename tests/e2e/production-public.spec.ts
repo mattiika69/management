@@ -95,6 +95,16 @@ test.describe("production public launch boundaries", () => {
     });
     expect([401, 503]).toContain(slackEvents.status());
 
+    const slackEventsAlias = await request.post("/api/slack/events", {
+      data: {},
+    });
+    expect([401, 503]).toContain(slackEventsAlias.status());
+
+    const slackCommandsAlias = await request.post("/api/slack/commands", {
+      form: {},
+    });
+    expect([401, 503]).toContain(slackCommandsAlias.status());
+
     const telegramWebhook = await request.post("/api/integrations/telegram/webhook", {
       data: {},
     });
