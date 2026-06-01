@@ -18,11 +18,11 @@ port = 54323
 
 [auth]
 enabled = true
-site_url = "https://app.hiretrainmanage.com"
+site_url = "https://app.hiretrainingmanage.com"
 additional_redirect_urls = [
-  "https://app.hiretrainmanage.com/auth/callback",
-  "https://app.hiretrainmanage.com/update-password",
-  "https://app.hiretrainmanage.com/reset-password",
+  "https://app.hiretrainingmanage.com/auth/callback",
+  "https://app.hiretrainingmanage.com/update-password",
+  "https://app.hiretrainingmanage.com/reset-password",
   "https://management-mattiika69.vercel.app/auth/callback",
   "https://management-mattiika69.vercel.app/update-password",
   "https://management-mattiika69.vercel.app/reset-password",

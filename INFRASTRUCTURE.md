@@ -21,7 +21,7 @@ standard.
 | --- | --- | --- |
 | GitHub | Connected | `https://github.com/mattiika69/management.git`, branch `main` |
 | Supabase | Connected | Project ref `sszrrmvuahpwceegymry`, URL `https://sszrrmvuahpwceegymry.supabase.co` |
-| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://app.hiretrainmanage.com`, Vercel fallback `https://management-mattiika69.vercel.app`, legacy alias `https://management-swart-iota.vercel.app` |
+| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://app.hiretrainingmanage.com`, Vercel fallback `https://management-mattiika69.vercel.app`, legacy alias `https://management-swart-iota.vercel.app` |
 
 Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Manual `vercel deploy` is fallback-only.
 
@@ -173,10 +173,11 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 Production variables currently present:
 
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Site URL: `NEXT_PUBLIC_SITE_URL=https://app.hiretrainmanage.com`
+- Site URL: `NEXT_PUBLIC_SITE_URL=https://app.hiretrainingmanage.com`
 - Auth enforcement: `REQUIRE_LOGIN_AUTH`, `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`
 - Admin access: `ADMIN_EMAILS`
 - AI defaults: `CLAUDE_MODEL`, `ANTHROPIC_MAX_TOKENS`
+- Stripe subscription billing: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_ONBOARDING_PRICE_ID`
 - Resend app email: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`
 - Roezan SMS: `ROEZAN_API_KEY`, `ROEZAN_API_BASE_URL`
 - Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
@@ -194,12 +195,9 @@ AI generation is implemented but live Claude calls are blocked until this is add
 
 - `ANTHROPIC_API_KEY`
 
-Stripe billing is implemented but blocked until these are added in Vercel:
+Stripe subscription checkout and webhook handling are configured. Stripe credit packs are still blocked until separate credit-pack prices are added in Vercel:
 
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_ONBOARDING_PRICE_ID` or legacy fallback `STRIPE_PRICE_ID`
-- `STRIPE_CREDIT_PACK_STARTER_PRICE_ID` or legacy fallback `STRIPE_PRICE_ID`
+- `STRIPE_CREDIT_PACK_STARTER_PRICE_ID`
 - `STRIPE_CREDIT_PACK_GROWTH_PRICE_ID`
 
 Slack is implemented but OAuth, signed inbound events, and fallback outbound posting are blocked until these are added in Vercel:
@@ -243,7 +241,7 @@ Production auth must stay enforced before customer launch:
 
 ## APIs We Need To Finish Configuring
 
-- Stripe live/test keys, webhook secret, price ID, and webhook endpoint registration
+- Stripe credit-pack price IDs for starter/growth one-time credit purchases
 - Slack app credentials, scopes, event subscription URL, and interaction URL
 - Telegram bot token, bot username, webhook secret, and webhook registration
 - Google Calendar OAuth app credentials and redirect URL registration
