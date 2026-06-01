@@ -21,7 +21,7 @@ standard.
 | --- | --- | --- |
 | GitHub | Connected | `https://github.com/mattiika69/management.git`, branch `main` |
 | Supabase | Connected | Project ref `sszrrmvuahpwceegymry`, URL `https://sszrrmvuahpwceegymry.supabase.co` |
-| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://management-mattiika69.vercel.app`, alias `https://management-swart-iota.vercel.app` |
+| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://app.hiretrainmanage.com`, Vercel fallback `https://management-mattiika69.vercel.app`, legacy alias `https://management-swart-iota.vercel.app` |
 
 Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Manual `vercel deploy` is fallback-only.
 
@@ -170,47 +170,60 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 
 ## Environment Variables Present In Vercel
 
-- Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Site URL: `NEXT_PUBLIC_SITE_URL`
-- Auth bypass: `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_EMAIL`, `AUTH_BYPASS_TENANT_ID`, `AUTH_BYPASS_USER_ID`
-- Claude: `ANTHROPIC_API_KEY`, `CLAUDE_MODEL`
-- Resend: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
-- Roezan: `ROEZAN_API_KEY`
-- Integration encryption: `INTEGRATION_SECRET_KEY` is recommended for provider token encryption. The server can fall back to the service-role secret, but a dedicated key is preferred before launch.
+Production variables currently present:
+
+- Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Site URL: `NEXT_PUBLIC_SITE_URL=https://app.hiretrainmanage.com`
+- Auth enforcement: `REQUIRE_LOGIN_AUTH`, `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`
+- Admin access: `ADMIN_EMAILS`
+- AI defaults: `CLAUDE_MODEL`, `ANTHROPIC_MAX_TOKENS`
+- Resend app email: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`
+- Roezan SMS: `ROEZAN_API_KEY`, `ROEZAN_API_BASE_URL`
+- Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
+- Nylas calendar: `NYLAS_CLIENT_ID`, `NYLAS_API_KEY`, `NYLAS_API_REGION`, `NYLAS_CALENDAR_ID`
+- Microsoft tenant default: `MICROSOFT_TENANT_ID=common`
+- Slack default scopes: `SLACK_BOT_SCOPES`
+- Security and jobs: `INTEGRATION_SECRET_KEY`, `SCHEDULE_WORKER_SECRET`
+
+Preview currently only has `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `RESEND_FROM_NAME`.
+Development currently has no Vercel environment variables.
 
 ## Environment Variables Still Needed
+
+AI generation is implemented but live Claude calls are blocked until this is added in Vercel:
+
+- `ANTHROPIC_API_KEY`
 
 Stripe billing is implemented but blocked until these are added in Vercel:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_ONBOARDING_PRICE_ID`
-- `STRIPE_CREDIT_PACK_STARTER_PRICE_ID`
+- `STRIPE_ONBOARDING_PRICE_ID` or legacy fallback `STRIPE_PRICE_ID`
+- `STRIPE_CREDIT_PACK_STARTER_PRICE_ID` or legacy fallback `STRIPE_PRICE_ID`
 - `STRIPE_CREDIT_PACK_GROWTH_PRICE_ID`
 
-Slack is implemented but blocked until these are added in Vercel:
+Slack is implemented but OAuth, signed inbound events, and fallback outbound posting are blocked until these are added in Vercel:
 
 - `SLACK_CLIENT_ID`
 - `SLACK_CLIENT_SECRET`
 - `SLACK_SIGNING_SECRET`
-- `SLACK_BOT_SCOPES`
+- `SLACK_BOT_TOKEN` if outbound messages should work before a tenant-specific token is stored
 
-Telegram is implemented but blocked until these are added in Vercel:
-
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_BOT_USERNAME`
-- `TELEGRAM_WEBHOOK_SECRET`
-
-Calendar and Zoom OAuth are implemented but blocked until these are added in Vercel:
+Google Calendar, Microsoft Calendar, and Zoom OAuth are implemented but blocked until these are added in Vercel:
 
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `MICROSOFT_CLIENT_ID`
 - `MICROSOFT_CLIENT_SECRET`
-- `MICROSOFT_TENANT_ID` optional, defaults to `common`
 - `ZOOM_CLIENT_ID`
 - `ZOOM_CLIENT_SECRET`
-- `INTEGRATION_SECRET_KEY`
+
+Production auth bypass identity variables should stay unset unless a short-lived preview-only bypass is explicitly needed:
+
+- `AUTH_BYPASS_EMAIL`
+- `AUTH_BYPASS_TENANT_ID`
+- `AUTH_BYPASS_USER_ID`
+- `AUTH_BYPASS_NAME`
 
 Production auth must stay enforced before customer launch:
 
