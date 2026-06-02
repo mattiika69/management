@@ -15,6 +15,7 @@ import {
   postTelegramMessage,
   verifyTelegramRequest,
 } from "@/lib/integrations/telegram";
+import { extractTelegramStartCode } from "@/lib/integrations/telegram-link-command";
 import { normalizeTelegramUsername } from "@/lib/integrations/telegram-username";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -49,10 +50,9 @@ async function connectTelegramCode(
   telegramUsername: string | undefined,
   text: string | undefined,
 ) {
-  const match = text?.match(/^\/start\s+([A-F0-9]+)$/i);
-  if (!match || !telegramUserId) return null;
+  const rawCode = extractTelegramStartCode(text);
+  if (!rawCode || !telegramUserId) return null;
 
-  const rawCode = match[1].toUpperCase();
   const now = new Date().toISOString();
   const { data: code, error } = await supabase
     .from("telegram_link_codes")

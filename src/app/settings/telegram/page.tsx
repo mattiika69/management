@@ -15,6 +15,21 @@ type Connection = {
   } | null;
 };
 
+const telegramSetupSteps = [
+  {
+    title: "Generate a link code",
+    body: "Create a one-time command from this page for the organization you are currently using.",
+  },
+  {
+    title: "Add the bot to the chat",
+    body: "Use the command in a private chat, group, supergroup, or channel. For channels, add the bot as an admin if it needs to post.",
+  },
+  {
+    title: "Keep permissions matched",
+    body: "Only linked users can change app data, and the agent keeps the same organization permissions as the web app.",
+  },
+];
+
 export default async function TelegramSettingsPage() {
   const supabase = await createClient();
   const {
@@ -53,9 +68,24 @@ export default async function TelegramSettingsPage() {
             <div>
               <h2 className="text-[18px] font-bold text-[#101828]">Telegram</h2>
               <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
-                Connect Telegram so the AI Agent can receive approved workspace commands from connected chats.
+                Connect Telegram so the AI Agent can help in private chats, groups, supergroups, and channels linked
+                to this workspace.
               </p>
             </div>
+          </div>
+
+          <div className="mt-6 grid gap-5 border-t border-[#e4e7ec] pt-5 md:grid-cols-3">
+            {telegramSetupSteps.map((step, index) => (
+              <div key={step.title}>
+                <div className="flex items-center gap-2">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#101828] text-[11px] font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <h3 className="text-[13px] font-bold text-[#101828]">{step.title}</h3>
+                </div>
+                <p className="mt-2 text-[12px] font-medium leading-5 text-[#667085]">{step.body}</p>
+              </div>
+            ))}
           </div>
 
           <div className="mt-6">
