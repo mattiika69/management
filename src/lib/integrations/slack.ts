@@ -95,10 +95,10 @@ export async function postSlackMessage(
   tokenOverride?: string | null,
   options: { threadTs?: string | null } = {},
 ) {
-  const token = tokenOverride || process.env.SLACK_BOT_TOKEN;
+  const token = tokenOverride?.trim();
 
   if (!token) {
-    throw new Error("SLACK_BOT_TOKEN is not configured.");
+    throw new Error("Slack OAuth bot token is not available for this workspace.");
   }
 
   const response = await fetch("https://slack.com/api/chat.postMessage", {

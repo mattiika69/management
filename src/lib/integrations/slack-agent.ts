@@ -112,9 +112,7 @@ async function resolveSlackChannel(
       },
     });
     const botToken =
-      (await loadIntegrationSecret(supabase, workspaceConnection.organization_id, "slack", "bot_token")) ??
-      process.env.SLACK_BOT_TOKEN ??
-      null;
+      (await loadIntegrationSecret(supabase, workspaceConnection.organization_id, "slack", "bot_token")) ?? null;
 
     return { mapping: null, connection, botToken };
   }
@@ -134,9 +132,7 @@ async function resolveSlackChannel(
   });
 
   const botToken =
-    (await loadIntegrationSecret(supabase, mapping.organization_id, "slack", "bot_token")) ??
-    process.env.SLACK_BOT_TOKEN ??
-    null;
+    (await loadIntegrationSecret(supabase, mapping.organization_id, "slack", "bot_token")) ?? null;
 
   return { mapping, connection, botToken };
 }

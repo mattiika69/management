@@ -28,7 +28,6 @@ Required app/platform keys:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `AI_MODEL` (aliases: `CLAUDE_MODEL`, `ANTHROPIC_MODEL`)
 - `AI_PROVIDER_KEY` through either `VERCEL_OIDC_TOKEN` or `ANTHROPIC_API_KEY`
-- `SLACK_BOT_TOKEN`
 - `SLACK_SIGNING_SECRET`
 - `SLACK_CLIENT_ID`
 - `SLACK_CLIENT_SECRET`
@@ -43,6 +42,9 @@ Optional/manual production setup:
 
 No secrets should be committed. Put real values in Vercel/Supabase provider
 configuration only.
+
+Slack bot tokens are created by the OAuth install flow and stored server-side per
+workspace. Do not configure a global Slack bot token environment variable.
 
 ## Slack URLs
 

@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     event.channel,
     result.text,
     event.thread_ts ?? event.ts,
-    result.botToken ?? process.env.SLACK_BOT_TOKEN ?? null,
+    result.botToken ?? null,
   );
 
   return NextResponse.json({ ok: true, handled: result.ok, command: result.command });

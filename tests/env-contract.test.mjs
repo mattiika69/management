@@ -60,7 +60,6 @@ test("validates public env separately from server-only env", () => {
     EMAIL_FROM: "team@example.com",
     AI_MODEL: "claude-sonnet-4-5",
     ANTHROPIC_API_KEY: "anthropic",
-    SLACK_BOT_TOKEN: "xoxb",
     SLACK_SIGNING_SECRET: "slack-signing",
     SLACK_CLIENT_ID: "slack-client",
     SLACK_CLIENT_SECRET: "slack-secret",

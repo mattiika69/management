@@ -65,9 +65,10 @@ export async function POST(request: Request) {
 
   const result = await handleHyperoptimalCommand(supabase, connection, text);
   const botToken =
-    (await loadIntegrationSecret(supabase, connection.organization_id, "slack", "bot_token")) ??
-    process.env.SLACK_BOT_TOKEN ??
-    null;
+    (await loadIntegrationSecret(supabase, connection.organization_id, "slack", "bot_token")) ?? null;
+  if (!botToken) {
+    return NextResponse.json({ text: "Reconnect Slack from Settings > Slack before using this command." });
+  }
   const response = await postSlackMessage(channelId, result.text, botToken);
 
   await saveIntegrationMessage(supabase, {
