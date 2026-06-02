@@ -1,4 +1,17 @@
+import { createHmac } from "crypto";
 import { expect, test } from "@playwright/test";
+
+function signSlackBody(secret: string, rawBody: string) {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = `v0=${createHmac("sha256", secret)
+    .update(`v0:${timestamp}:${rawBody}`)
+    .digest("hex")}`;
+
+  return {
+    timestamp,
+    signature,
+  };
+}
 
 test.describe("production public launch boundaries", () => {
   test("keeps public routes safe for anonymous traffic", async ({
@@ -99,6 +112,22 @@ test.describe("production public launch boundaries", () => {
       data: {},
     });
     expect([401, 503]).toContain(slackEventsAlias.status());
+
+    if (process.env.SLACK_SIGNING_SECRET) {
+      const challenge = "codex-slack-url-verification";
+      const rawBody = JSON.stringify({ type: "url_verification", challenge });
+      const { timestamp, signature } = signSlackBody(process.env.SLACK_SIGNING_SECRET, rawBody);
+      const slackVerification = await request.post("/api/slack/events", {
+        data: rawBody,
+        headers: {
+          "Content-Type": "application/json",
+          "x-slack-request-timestamp": timestamp,
+          "x-slack-signature": signature,
+        },
+      });
+      expect(slackVerification.status()).toBe(200);
+      await expect(slackVerification.text()).resolves.toBe(challenge);
+    }
 
     const slackCommandsAlias = await request.post("/api/slack/commands", {
       form: {},

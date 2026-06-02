@@ -177,7 +177,7 @@ Production variables currently present:
 - Auth enforcement: `REQUIRE_LOGIN_AUTH`, `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`
 - Admin access: `ADMIN_EMAILS`
 - AI defaults: `CLAUDE_MODEL`, `ANTHROPIC_MAX_TOKENS`
-- Stripe subscription billing: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_BASIC=price_1TddwN53gChGC5HSf6MKnjb4` ($97/month); legacy alias `STRIPE_ONBOARDING_PRICE_ID` is still supported.
+- Stripe subscription billing: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_BASIC=price_1TdcFr53gChGC5HSLqor4CDl` ($1/month); legacy alias `STRIPE_ONBOARDING_PRICE_ID` is still supported.
 - Resend app email: `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_FROM_NAME`; preferred `EMAIL_FROM` is supported by code but still needs to be added manually in Vercel when the verified sender value is confirmed.
 - Roezan SMS: `ROEZAN_API_KEY`, `ROEZAN_API_BASE_URL`
 - Telegram: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`
@@ -200,7 +200,7 @@ Stripe subscription checkout and webhook handling are configured. Stripe credit 
 - `STRIPE_CREDIT_PACK_STARTER_PRICE_ID`
 - `STRIPE_CREDIT_PACK_GROWTH_PRICE_ID`
 
-The app currently has a basic `$97/month` plan. Multi-plan plan IDs are documented but not yet configured in Vercel:
+The app currently has a basic `$1/month` plan. Multi-plan plan IDs are documented but not yet configured in Vercel:
 
 - `STRIPE_PRICE_PRO`
 - `STRIPE_PRICE_BUSINESS`

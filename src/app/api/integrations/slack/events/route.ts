@@ -62,7 +62,9 @@ export async function POST(request: Request) {
   }
 
   if (payload.type === "url_verification" && payload.challenge) {
-    return NextResponse.json({ challenge: payload.challenge });
+    return new NextResponse(payload.challenge, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   const event = payload.event;

@@ -65,7 +65,7 @@ export default async function BillingSettingsPage() {
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-[8px] border border-[#155dfc] bg-[#eff6ff] px-5 py-4 text-center">
                 <p className="text-[15px] font-semibold text-[#101828]">Monthly</p>
-                <p className="mt-1 text-[12px] font-medium text-[#667085]">$97.00/mo ({DEFAULT_BILLING_SEAT_QUANTITY} seats included)</p>
+                <p className="mt-1 text-[12px] font-medium text-[#667085]">$1.00/mo ({DEFAULT_BILLING_SEAT_QUANTITY} seats included)</p>
                 <p className="mt-1 text-[10px] font-medium text-[#98a2b3]">+$0.00/mo per extra seat</p>
               </div>
               <div className="rounded-[8px] border border-[#d9e1ee] bg-white px-5 py-4 text-center">
@@ -89,11 +89,11 @@ export default async function BillingSettingsPage() {
           <div className="rounded-[8px] bg-white px-4 py-4">
             <div className="flex items-center justify-between border-b border-[#e4e7ec] pb-3 text-[13px] font-medium text-[#344054]">
               <span>Base ({DEFAULT_BILLING_SEAT_QUANTITY} seats included)</span>
-              <span>$97.00</span>
+              <span>$1.00</span>
             </div>
             <div className="flex items-center justify-between pt-3 text-[15px] font-semibold text-[#101828]">
               <span>Total ({DEFAULT_BILLING_SEAT_QUANTITY} seats)</span>
-              <span>$97.00 / mo</span>
+              <span>$1.00 / mo</span>
             </div>
           </div>
 
