@@ -7,7 +7,6 @@ import { AppSidebar } from "@/components/app-sidebar";
 const APP_ROUTE_PREFIXES = [
   "/management",
   "/meetings",
-  "/learn",
   "/settings",
 ];
 

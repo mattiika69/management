@@ -47,7 +47,6 @@ function activeGroupIdFor(pathname: string, search: string) {
   const activeItem = SIDEBAR_ITEMS.find((item) => isActiveItem(pathname, search, item.href));
   if (activeItem) return activeItem.groupId;
   if (pathname === "/settings" || pathname.startsWith("/settings/")) return "settings";
-  if (pathname === "/learn" || pathname.startsWith("/learn/")) return "training";
   if (pathname === "/management/training" || pathname.startsWith("/management/training/")) return "training";
   if (
     pathname === "/management/hiring" ||
@@ -261,7 +260,7 @@ export function AppSidebar() {
         <div className="ho-side-brand-row">
           <Link href="/" className="ho-side-brand">
             <span className="ho-brand-mark" aria-hidden="true">H</span>
-            <span className="truncate">HyperOptimal</span>
+            <span className="truncate">HireTrainManage</span>
           </Link>
           <button
             type="button"

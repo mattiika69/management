@@ -155,7 +155,7 @@ export function UpdatePasswordForm() {
   return (
     <form onSubmit={updatePassword} className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-slate-950">HyperOptimal</h1>
+        <h1 className="text-2xl font-bold text-slate-950">HireTrainManage</h1>
         <p className="mt-2 text-sm text-slate-500">Set your new password</p>
       </div>
 
