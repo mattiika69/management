@@ -6,8 +6,6 @@ function isProtectedPath(pathname: string) {
   return (
     pathname === "/admin" ||
     pathname.startsWith("/admin/") ||
-    pathname === "/learn" ||
-    pathname.startsWith("/learn/") ||
     pathname === "/management" ||
     pathname.startsWith("/management/") ||
     pathname === "/meetings" ||
@@ -15,6 +13,30 @@ function isProtectedPath(pathname: string) {
     pathname === "/settings" ||
     pathname.startsWith("/settings/")
   );
+}
+
+function removedPageRedirect(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const redirectTarget =
+    pathname === "/learn" || pathname.startsWith("/learn/")
+      ? "/management/training"
+      : pathname === "/ai-company-document" ||
+          pathname.startsWith("/ai-company-document/") ||
+          pathname === "/settings/agent" ||
+          pathname.startsWith("/settings/agent/") ||
+          pathname === "/settings/learning" ||
+          pathname.startsWith("/settings/learning/") ||
+          pathname === "/settings/ai-context-docs" ||
+          pathname.startsWith("/settings/ai-context-docs/")
+        ? "/settings/account"
+        : "";
+
+  if (!redirectTarget) return null;
+
+  const url = request.nextUrl.clone();
+  url.pathname = redirectTarget;
+  url.search = "";
+  return NextResponse.redirect(url);
 }
 
 function originFrom(value: string | null | undefined) {
@@ -116,6 +138,11 @@ export async function middleware(request: NextRequest) {
     return originGuard;
   }
 
+  const removedRedirect = removedPageRedirect(request);
+  if (removedRedirect) {
+    return removedRedirect;
+  }
+
   if (!isProtectedPath(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
@@ -172,6 +199,7 @@ export const config = {
   matcher: [
     "/api/:path*",
     "/admin/:path*",
+    "/ai-company-document/:path*",
     "/learn/:path*",
     "/management/:path*",
     "/meetings/:path*",
