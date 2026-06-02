@@ -35,8 +35,6 @@ export const SERVER_REQUIRED_ENV = [
 ] as const;
 
 export const SERVER_MANUAL_SETUP_ENV = [
-  "STRIPE_PRICE_PRO",
-  "STRIPE_PRICE_BUSINESS",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
 ] as const;

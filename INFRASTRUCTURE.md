@@ -201,7 +201,7 @@ Stripe subscription checkout and webhook handling are configured. Stripe credit 
 - `STRIPE_CREDIT_PACK_STARTER_PRICE_ID`
 - `STRIPE_CREDIT_PACK_GROWTH_PRICE_ID`
 
-The app currently has a basic `$1/month` plan. Multi-plan plan IDs are documented but not yet configured in Vercel:
+The app currently has a basic `$1/month` plan. Pro and Business Stripe price IDs are optional future multi-plan configuration, not required right now:
 
 - `STRIPE_PRICE_PRO`
 - `STRIPE_PRICE_BUSINESS`

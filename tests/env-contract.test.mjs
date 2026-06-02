@@ -73,15 +73,13 @@ test("validates public env separately from server-only env", () => {
   });
 });
 
-test("reports pro and business Stripe prices as manual provider setup", () => {
+test("reports only currently needed manual provider setup", () => {
   const report = providerSetupReport({ STRIPE_PRICE_BASIC: "price_basic" });
   const manualMissing = report
     .filter((item) => item.manual && !item.configured)
     .map((item) => item.name);
 
   assert.deepEqual(manualMissing, [
-    "STRIPE_PRICE_PRO",
-    "STRIPE_PRICE_BUSINESS",
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
   ]);

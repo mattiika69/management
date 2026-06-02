@@ -92,8 +92,6 @@ Set these environment variables in Vercel Production:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_BASIC`
-- `STRIPE_PRICE_PRO`
-- `STRIPE_PRICE_BUSINESS`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `RESEND_API_KEY`
 - `EMAIL_FROM`
@@ -119,6 +117,7 @@ being normalized:
 
 Additional integration variables:
 
+- `STRIPE_PRICE_PRO` and `STRIPE_PRICE_BUSINESS` are optional future multi-plan price IDs.
 - `ROEZAN_API_BASE_URL`
 - `CLAUDE_MODEL`
 - `ANTHROPIC_API_KEY`
