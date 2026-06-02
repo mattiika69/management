@@ -15,6 +15,7 @@ type LoginPayload = {
   password?: string;
   redirect?: string;
   next?: string;
+  keepLoggedIn?: boolean;
 };
 
 function loginErrorMessage(message: string) {
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
   const email = normalizeEmail(payload.email);
   const password = typeof payload.password === "string" ? payload.password : "";
   const redirectTo = safeRelativePath(payload.redirect ?? payload.next, "/");
+  const keepLoggedIn = payload.keepLoggedIn !== false;
 
   if (!email) {
     return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
@@ -58,7 +60,7 @@ export async function POST(request: Request) {
     return rateLimitResponse(limit.retryAfterSeconds);
   }
 
-  const supabase = await createSessionClient();
+  const supabase = await createSessionClient({ keepLoggedIn });
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {

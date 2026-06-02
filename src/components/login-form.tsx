@@ -55,12 +55,13 @@ export function LoginForm({
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim().toLowerCase();
     const password = String(formData.get("password") ?? "");
+    const keepLoggedIn = formData.get("keepLoggedIn") === "on";
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, redirect: nextPath }),
+        body: JSON.stringify({ email, password, redirect: nextPath, keepLoggedIn }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
@@ -145,6 +146,16 @@ export function LoginForm({
             </svg>
           </button>
         </span>
+      </label>
+
+      <label className="mb-6 flex items-center gap-3 text-sm font-medium text-slate-700">
+        <input
+          name="keepLoggedIn"
+          type="checkbox"
+          defaultChecked
+          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/30"
+        />
+        <span>Keep me logged in</span>
       </label>
 
       <button
