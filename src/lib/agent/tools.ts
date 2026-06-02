@@ -113,7 +113,7 @@ async function searchConfig(context: AgentContext, config: RecordConfig, query: 
 
   const { data, error } = await builder;
   if (error) throw new Error(error.message);
-  return data as Array<Record<string, unknown>>;
+  return (data ?? []) as unknown as Array<Record<string, unknown>>;
 }
 
 async function searchAppData(context: AgentContext, input: AgentToolInput): Promise<AgentToolResult> {
