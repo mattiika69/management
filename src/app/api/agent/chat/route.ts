@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { handleAgentConversation } from "@/lib/agent/conversation";
+import { createWebAgentContext } from "@/lib/agent/platform-context";
+import { runAgent } from "@/lib/agent/runner";
 import { createClient } from "@/lib/supabase/server";
 import {
-  auditAction,
   jsonError,
   requireTenantAdmin,
   requireTenantContext,
@@ -27,37 +27,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
-    const result = await handleAgentConversation({
+    const agentContext = await createWebAgentContext({
       supabase: context.supabase,
       organizationId: context.tenant.id,
+      organizationName: context.tenant.name,
       actorUserId: context.user.id,
-      provider: "web",
-      message,
-      sourceLabel: "App",
-      sourceUserId: context.user.id,
+      role: context.role,
     });
-
-    if (result.savedLearning) {
-      await auditAction(context, "agent.learning.saved", {
-        targetTable: "learning_items",
-        targetId: result.savedLearning.id,
-      });
-    }
+    const result = await runAgent({ context: agentContext, message });
 
     return NextResponse.json({
       response: result.text,
       status: result.status,
-      savedLearning: result.savedLearning
-        ? {
-            id: result.savedLearning.id,
-            title: result.savedLearning.title,
-            body: result.savedLearning.body,
-            category: result.savedLearning.category,
-            source_provider: result.savedLearning.source_provider,
-            source_label: result.savedLearning.source_label,
-            updated_at: result.savedLearning.updated_at,
-          }
-        : null,
+      toolRuns: result.toolRuns ?? [],
     });
   } catch (error) {
     return jsonError(error);

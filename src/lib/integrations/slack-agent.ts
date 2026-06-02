@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  findSlackConnectionByTeam,
   loadIntegrationSecret,
   saveIntegrationMessage,
   upsertIntegrationConnection,
@@ -92,7 +93,30 @@ async function resolveSlackChannel(
 
   if (error) throw new Error(error.message);
   if (!mapping) {
-    return { error: buildUnconfiguredMessage(input.teamId, input.channelId) };
+    const workspaceConnection = await findSlackConnectionByTeam(supabase, input.teamId);
+    if (!workspaceConnection) {
+      return { error: buildUnconfiguredMessage(input.teamId, input.channelId) };
+    }
+
+    const connection: IntegrationConnection = await upsertIntegrationConnection(supabase, {
+      organizationId: workspaceConnection.organization_id,
+      provider: "slack",
+      externalTeamId: input.teamId,
+      externalChannelId: input.channelId,
+      externalUserId: workspaceConnection.external_user_id,
+      displayName: input.channelId,
+      createdBy: workspaceConnection.created_by,
+      config: {
+        slack_channel_mapping_id: null,
+        source: "workspace_installation",
+      },
+    });
+    const botToken =
+      (await loadIntegrationSecret(supabase, workspaceConnection.organization_id, "slack", "bot_token")) ??
+      process.env.SLACK_BOT_TOKEN ??
+      null;
+
+    return { mapping: null, connection, botToken };
   }
 
   const connection: IntegrationConnection = await upsertIntegrationConnection(supabase, {

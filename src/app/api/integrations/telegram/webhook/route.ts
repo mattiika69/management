@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
 import {
+  upsertPlatformAccount,
+  upsertPlatformInstallation,
+} from "@/lib/agent/platform-context";
+import {
   findIntegrationConnection,
   hasProcessedIntegrationEvent,
   saveIntegrationMessage,
@@ -66,6 +70,23 @@ async function connectTelegramCode(
   }
 
   const displayUsername = normalizeTelegramUsername(telegramUsername);
+  await upsertPlatformInstallation(supabase, {
+    organizationId: code.organization_id,
+    platform: "telegram",
+    externalTeamId: null,
+    externalChannelId: chatId,
+    installingUserId: code.user_id,
+    config: { telegram_username: displayUsername },
+  });
+  await upsertPlatformAccount(supabase, {
+    organizationId: code.organization_id,
+    platform: "telegram",
+    externalTeamId: null,
+    externalUserId: telegramUserId,
+    appUserId: code.user_id,
+    displayName: displayUsername || `Telegram ${telegramUserId}`,
+    metadata: { source: "telegram_link_code" },
+  });
   const connection = await upsertIntegrationConnection(supabase, {
     organizationId: code.organization_id,
     provider: "telegram",

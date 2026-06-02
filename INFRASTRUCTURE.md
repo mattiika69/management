@@ -194,6 +194,7 @@ Development currently has no Vercel environment variables.
 AI generation is implemented but live Claude calls are blocked until this is added in Vercel:
 
 - `ANTHROPIC_API_KEY`
+- `AI_MODEL` is preferred for the shared agent model name; current `CLAUDE_MODEL` is supported as an alias.
 
 Stripe subscription checkout and webhook handling are configured. Stripe credit packs are still blocked until separate credit-pack prices are added in Vercel:
 
@@ -213,6 +214,15 @@ Slack OAuth and signed inbound event verification are configured in Vercel Produ
 
 - `SLACK_BOT_TOKEN`
 
+The Slack Event Subscriptions URL must use a reachable host. This endpoint has been signed-smoke-tested:
+
+- `https://management-mattiika69.vercel.app/api/slack/events`
+
+These hosts are not ready for Slack verification yet:
+
+- `https://app.scalingmetrics.com/api/slack/events` is outside this Vercel account and returns `DEPLOYMENT_NOT_FOUND` with an expired certificate.
+- `https://app.hiretrainingmanage.com/api/slack/events` and `https://app.hiretrainmanage.com/api/slack/events` need DNS records before they resolve.
+
 Google Calendar, Microsoft Calendar, and Zoom OAuth are implemented but blocked until these are added in Vercel:
 
 - `GOOGLE_CLIENT_ID`
@@ -221,6 +231,11 @@ Google Calendar, Microsoft Calendar, and Zoom OAuth are implemented but blocked 
 - `MICROSOFT_CLIENT_SECRET`
 - `ZOOM_CLIENT_ID`
 - `ZOOM_CLIENT_SECRET`
+
+Agent Redis-backed distributed rate limiting is documented but not configured yet:
+
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 
 Production auth bypass identity variables should stay unset unless a short-lived preview-only bypass is explicitly needed:
 

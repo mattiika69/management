@@ -58,6 +58,15 @@ test("validates public env separately from server-only env", () => {
     STRIPE_PRICE_BASIC: "price",
     RESEND_API_KEY: "resend",
     EMAIL_FROM: "team@example.com",
+    AI_MODEL: "claude-sonnet-4-5",
+    ANTHROPIC_API_KEY: "anthropic",
+    SLACK_BOT_TOKEN: "xoxb",
+    SLACK_SIGNING_SECRET: "slack-signing",
+    SLACK_CLIENT_ID: "slack-client",
+    SLACK_CLIENT_SECRET: "slack-secret",
+    TELEGRAM_BOT_TOKEN: "telegram-token",
+    TELEGRAM_BOT_USERNAME: "telegram_bot",
+    TELEGRAM_WEBHOOK_SECRET: "telegram-secret",
   }), {
     missing: [],
     invalid: [],
@@ -70,7 +79,12 @@ test("reports pro and business Stripe prices as manual provider setup", () => {
     .filter((item) => item.manual && !item.configured)
     .map((item) => item.name);
 
-  assert.deepEqual(manualMissing, ["STRIPE_PRICE_PRO", "STRIPE_PRICE_BUSINESS"]);
+  assert.deepEqual(manualMissing, [
+    "STRIPE_PRICE_PRO",
+    "STRIPE_PRICE_BUSINESS",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN",
+  ]);
   assert.equal(BILLING_PLAN_PRICE_ENV.basic, "STRIPE_PRICE_BASIC");
 });
 

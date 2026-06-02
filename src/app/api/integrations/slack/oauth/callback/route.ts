@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentOrganization } from "@/lib/auth/organization";
 import {
+  upsertPlatformAccount,
+  upsertPlatformInstallation,
+} from "@/lib/agent/platform-context";
+import {
   saveIntegrationSecret,
   upsertIntegrationConnection,
 } from "@/lib/integrations/connections";
@@ -108,6 +112,32 @@ export async function GET(request: Request) {
         secretName: "incoming_webhook_url",
         secretValue: oauth.incoming_webhook.url,
         createdBy: user.id,
+      });
+    }
+
+    await upsertPlatformInstallation(admin, {
+      organizationId: organization.id,
+      platform: "slack",
+      externalTeamId: teamId,
+      externalChannelId: channelId,
+      botUserId: oauth.bot_user_id ?? null,
+      installingUserId: user.id,
+      scopes: oauth.scope?.split(",").map((scope) => scope.trim()).filter(Boolean) ?? [],
+      config: {
+        slack_team_name: oauth.team?.name ?? null,
+        slack_channel_name: channelName ?? null,
+        connection_id: connection.id,
+      },
+    });
+    if (oauth.authed_user?.id) {
+      await upsertPlatformAccount(admin, {
+        organizationId: organization.id,
+        platform: "slack",
+        externalTeamId: teamId,
+        externalUserId: oauth.authed_user.id,
+        appUserId: user.id,
+        displayName: user.email ?? null,
+        metadata: { source: "slack_oauth" },
       });
     }
 

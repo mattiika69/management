@@ -70,6 +70,9 @@ HyperOptimal Management. Users connect Slack from Settings through OAuth; the
 callback stores the selected workspace/channel and bot token server-side.
 Slack requests use `/api/slack/events` plus `/api/slack/commands`.
 
+The shared web/Slack/Telegram conversational agent setup and capability matrix
+are documented in [`docs/AGENT_PLATFORM_SETUP.md`](docs/AGENT_PLATFORM_SETUP.md).
+
 ## Telegram Bot
 
 This app has a one-off private Telegram bot setup documented in
@@ -94,6 +97,15 @@ Set these environment variables in Vercel Production:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `RESEND_API_KEY`
 - `EMAIL_FROM`
+- `AI_MODEL`
+- `AI_PROVIDER_KEY` through `VERCEL_OIDC_TOKEN` or `ANTHROPIC_API_KEY`
+- `SLACK_BOT_TOKEN`
+- `SLACK_CLIENT_ID`
+- `SLACK_CLIENT_SECRET`
+- `SLACK_SIGNING_SECRET`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_BOT_USERNAME`
+- `TELEGRAM_WEBHOOK_SECRET`
 
 The app also supports these compatibility aliases while older provider setup is
 being normalized:
@@ -109,6 +121,9 @@ Additional integration variables:
 
 - `ROEZAN_API_BASE_URL`
 - `CLAUDE_MODEL`
+- `ANTHROPIC_API_KEY`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 - `INTEGRATION_SECRET_KEY`
 - `SCHEDULE_WORKER_SECRET`
 - `SLACK_APP_ID`
