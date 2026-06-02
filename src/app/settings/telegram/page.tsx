@@ -68,7 +68,7 @@ export default async function TelegramSettingsPage() {
             <div>
               <h2 className="text-[18px] font-bold text-[#101828]">Telegram</h2>
               <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
-                Connect Telegram so the AI Agent can help in private chats, groups, supergroups, and channels linked
+                Connect Telegram so the workspace assistant can help in private chats, groups, supergroups, and channels linked
                 to this workspace.
               </p>
             </div>
@@ -117,7 +117,7 @@ export default async function TelegramSettingsPage() {
                     </span>
                   </div>
                   <p className="mt-2 text-[12px] font-medium text-[#667085]">
-                    Messages from this chat can work with the AI Agent.
+                    Messages from this chat can work with the workspace assistant.
                   </p>
                 </div>
                 <TelegramUsernameForm

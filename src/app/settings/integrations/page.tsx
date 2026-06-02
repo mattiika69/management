@@ -136,7 +136,7 @@ export default async function IntegrationsSettingsPage() {
         <ConnectCard
           id="slack"
           title="Slack"
-          description="Connect Slack so the AI Agent can receive approved workspace commands from team channels."
+          description="Connect Slack so the workspace assistant can receive approved workspace commands from team channels."
         >
           {slackReady ? (
             <a href="/api/integrations/slack/oauth/start?returnTo=/settings/integrations" className="settings-button-dark">
@@ -156,7 +156,7 @@ export default async function IntegrationsSettingsPage() {
             <ConnectCard
               id="telegram-connect"
               title="Telegram"
-              description="Connect Telegram so the AI Agent can receive approved workspace commands from connected chats."
+              description="Connect Telegram so the workspace assistant can receive approved workspace commands from connected chats."
             >
               <span className="settings-button-outline">
                 Connect with an owner

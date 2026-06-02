@@ -68,7 +68,7 @@ export default async function SlackSettingsPage() {
               <div>
                 <h2 className="text-[18px] font-bold text-[#101828]">Slack</h2>
                 <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
-                  Connect Slack so the AI Agent can help in public channels, private channels where it has been invited,
+                  Connect Slack so the workspace assistant can help in public channels, private channels where it has been invited,
                   direct messages, mentions, and threads.
                 </p>
               </div>
@@ -118,7 +118,7 @@ export default async function SlackSettingsPage() {
               <div className="px-4 py-8">
                 <p className="text-[13px] font-bold text-[#101828]">No Slack workspace connected yet.</p>
                 <p className="mt-2 max-w-[620px] text-[13px] font-medium leading-6 text-[#667085]">
-                  Connect Slack, then invite the app to any private channel where the team should use the agent.
+                  Connect Slack, then invite the app to any private channel where the team should use the workspace assistant.
                 </p>
               </div>
             )}
