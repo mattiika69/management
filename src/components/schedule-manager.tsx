@@ -40,7 +40,6 @@ export function ScheduleManager({
         workflowKey: form.get("workflowKey"),
         cadence: form.get("cadence"),
         timezone: form.get("timezone"),
-        targetProviders: form.getAll("targetProviders"),
         messageTemplate: form.get("messageTemplate"),
       }),
     });
@@ -114,15 +113,6 @@ export function ScheduleManager({
             className="settings-field mt-2 w-full"
           />
         </label>
-        <fieldset className="mt-4 grid gap-2 text-sm text-[#34342f]">
-          <legend className="font-medium">Targets</legend>
-          <label className="flex gap-2">
-            <input type="checkbox" name="targetProviders" value="slack" /> Slack
-          </label>
-          <label className="flex gap-2">
-            <input type="checkbox" name="targetProviders" value="telegram" /> Telegram
-          </label>
-        </fieldset>
         <label className="mt-4 block text-sm font-medium text-[#34342f]">
           Message
           <textarea

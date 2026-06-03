@@ -287,8 +287,10 @@ async function loadIntegrationStatuses(admin: SupabaseClient): Promise<Integrati
 
 function integrationStatusForTenant(tenantId: string, rows: IntegrationStatusRows) {
   const labels: string[] = [];
-  if (rows.slack.some((row) => row.tenant_id === tenantId && row.status !== "revoked")) labels.push("Slack");
-  if (rows.telegram.some((row) => row.tenant_id === tenantId)) labels.push("Telegram");
+  const hasMessagingConnection =
+    rows.slack.some((row) => row.tenant_id === tenantId && row.status !== "revoked") ||
+    rows.telegram.some((row) => row.tenant_id === tenantId);
+  if (hasMessagingConnection) labels.push("Messaging");
   if (rows.calendars.some((row) => row.tenant_id === tenantId && row.status !== "paused")) labels.push("Calendar");
   if (rows.zoom.some((row) => row.tenant_id === tenantId && row.status !== "paused")) labels.push("Zoom");
   return labels.length ? labels.join(", ") : "None";

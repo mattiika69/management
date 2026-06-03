@@ -35,7 +35,7 @@ Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from 
 - Stripe billing: database tables and checkout route exist.
 - V1 credit billing: generated workspace assets can spend credits; Stripe credit checkout and webhook ledger writes exist.
 - Data persistence: AI context, management, screening, meetings, training, learning, AI outputs, team, billing, integration logs, email logs, and SMS logs are designed for cloud persistence.
-- Page shell: app pages use the shared sidebar and Settings tabs, with Profile, AI Context, Team, Billing, Integrations, Sending, Scheduling, Slack, Telegram, Agent, Learn, and Help under Settings.
+- Page shell: app pages use the shared sidebar with Settings as a single parent item; Settings subnavigation lives in page-level tabs for Account, Team, Calendars, Zoom, Billing, Integrations, Scheduling, Archive, and Usage.
 - Calendar and Zoom connections: Google Calendar, Outlook Calendar, and Zoom OAuth routes exist; provider tokens are stored in encrypted service-only records, calendar invites can send through Resend with `.ics` attachments, and Zoom recording metadata can sync into Supabase.
 
 ## Organization, User, And RLS Architecture Source Of Truth

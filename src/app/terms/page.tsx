@@ -24,9 +24,9 @@ export default function TermsPage() {
       <section>
         <h2 className="text-2xl font-semibold text-[#171717]">Communications</h2>
         <p className="mt-3">
-          Users are responsible for ensuring that email, SMS, Slack, Telegram,
-          and other communications comply with applicable consent, privacy,
-          anti-spam, carrier, and platform rules.
+          Users are responsible for ensuring that email, SMS, and other
+          communications comply with applicable consent, privacy, anti-spam,
+          carrier, and platform rules.
         </p>
       </section>
 

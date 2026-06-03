@@ -52,7 +52,7 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     id: "settings",
     label: "Settings",
-    href: "/settings/account",
+    href: "/settings",
     itemIds: [],
   },
 ];
