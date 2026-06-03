@@ -60,11 +60,10 @@ Do not use `https://app.scalingmetrics.com/api/slack/events`; that host is not
 attached to this Vercel project and currently returns `DEPLOYMENT_NOT_FOUND`
 with an expired certificate.
 
-The custom domains are attached in Vercel but still need DNS:
+The live custom app domain is:
 
 ```text
-A app.hiretrainingmanage.com 76.76.21.21
-A app.hiretrainmanage.com 76.76.21.21
+https://app.hiretrainmanage.ai
 ```
 
 Slack OAuth redirect URL:

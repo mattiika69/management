@@ -21,7 +21,7 @@ standard.
 | --- | --- | --- |
 | GitHub | Connected | `https://github.com/mattiika69/management.git`, branch `main` |
 | Supabase | Connected | Project ref `sszrrmvuahpwceegymry`, URL `https://sszrrmvuahpwceegymry.supabase.co` |
-| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://app.hiretrainingmanage.com`, Vercel fallback `https://management-mattiika69.vercel.app`, legacy alias `https://management-swart-iota.vercel.app` |
+| Vercel | Connected | Project `management`, project id `prj_Bjw1QhimWgfBSiMriA5EDGsFMKyj`, production URL `https://app.hiretrainmanage.ai`, Vercel fallback `https://management-mattiika69.vercel.app`, legacy alias `https://management-swart-iota.vercel.app` |
 
 Deploy rule: push to GitHub `main` from `mattiika69`; Vercel should deploy from the Git integration. Manual `vercel deploy` is fallback-only.
 
@@ -173,7 +173,7 @@ Tables should use the shared `touch_updated_at()` trigger for `updated_at`.
 Production variables currently present:
 
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Site URL: `NEXT_PUBLIC_APP_URL=https://app.hiretrainingmanage.com`; legacy alias `NEXT_PUBLIC_SITE_URL` is still supported.
+- Site URL: `NEXT_PUBLIC_APP_URL=https://app.hiretrainmanage.ai`; legacy alias `NEXT_PUBLIC_SITE_URL` is still supported.
 - Auth enforcement: `REQUIRE_LOGIN_AUTH`, `DISABLE_LOGIN_AUTH`, `AUTH_BYPASS_ENABLED`
 - Admin access: `ADMIN_EMAILS`
 - AI defaults: `CLAUDE_MODEL`, `ANTHROPIC_MAX_TOKENS`
@@ -221,7 +221,7 @@ The Slack Event Subscriptions URL must use a reachable host. This endpoint has b
 These hosts are not ready for Slack verification yet:
 
 - `https://app.scalingmetrics.com/api/slack/events` is outside this Vercel account and returns `DEPLOYMENT_NOT_FOUND` with an expired certificate.
-- `https://app.hiretrainingmanage.com/api/slack/events` and `https://app.hiretrainmanage.com/api/slack/events` need DNS records before they resolve.
+- `https://app.hiretrainingmanage.com/api/slack/events` and `https://app.hiretrainmanage.com/api/slack/events` need DNS records before they resolve and must not be used for app auth links until DNS is configured.
 
 Google Calendar, Microsoft Calendar, and Zoom OAuth are implemented but blocked until these are added in Vercel:
 

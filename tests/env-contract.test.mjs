@@ -23,7 +23,7 @@ test("names missing server environment variables without exposing values", () =>
 
 test("supports deployed aliases while documenting the requested env names", () => {
   const env = {
-    NEXT_PUBLIC_SITE_URL: "https://app.hiretrainingmanage.com",
+    NEXT_PUBLIC_SITE_URL: "https://app.hiretrainmanage.ai",
     NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable",
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_test",
