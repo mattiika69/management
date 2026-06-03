@@ -102,7 +102,7 @@ export function SignupForm({
   return (
     <form onSubmit={signUp} className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-slate-950">HireTrainManage</h1>
+        <h1 className="text-2xl font-bold text-slate-950">HyperOptimal Management</h1>
         <p className="mt-2 text-sm text-slate-500">Create your account</p>
       </div>
 

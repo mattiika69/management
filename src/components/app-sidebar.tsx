@@ -260,7 +260,7 @@ export function AppSidebar() {
         <div className="ho-side-brand-row">
           <Link href="/" className="ho-side-brand">
             <span className="ho-brand-mark" aria-hidden="true">H</span>
-            <span className="truncate">HireTrainManage</span>
+            <span className="truncate">HyperOptimal Management</span>
           </Link>
           <button
             type="button"
