@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 
+const LOGIN_REQUEST_TIMEOUT_MS = 15_000;
+
 function safeNextPath(next: string) {
   return next.startsWith("/") && !next.startsWith("//") && !next.includes("://") ? next : "/";
 }
@@ -57,16 +59,21 @@ export function LoginForm({
     const password = String(formData.get("password") ?? "");
     const keepLoggedIn = formData.get("keepLoggedIn") === "on";
 
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), LOGIN_REQUEST_TIMEOUT_MS);
+
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({ email, password, redirect: nextPath, keepLoggedIn }),
       });
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
         redirectTo?: string;
       };
+      window.clearTimeout(timeout);
 
       if (!response.ok) {
         setMessageType("error");
@@ -76,9 +83,14 @@ export function LoginForm({
       }
 
       window.location.assign(safeNextPath(payload.redirectTo || nextPath));
-    } catch {
+    } catch (error) {
+      window.clearTimeout(timeout);
       setMessageType("error");
-      setMessage("Authentication provider is temporarily unavailable. Please retry in a minute.");
+      setMessage(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Sign-in is taking longer than expected. Please refresh and try again."
+          : "Authentication provider is temporarily unavailable. Please retry in a minute.",
+      );
       setLoading(false);
     }
   }

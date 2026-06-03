@@ -18,6 +18,20 @@ type LoginPayload = {
   keepLoggedIn?: boolean;
 };
 
+const AUTH_PROVIDER_TIMEOUT_MS = 15_000;
+const AUTH_PROVIDER_TIMEOUT_ERROR = "AUTH_PROVIDER_TIMEOUT";
+
+function withTimeout<T>(promise: Promise<T>, ms: number) {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(AUTH_PROVIDER_TIMEOUT_ERROR)), ms);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeout) clearTimeout(timeout);
+  });
+}
+
 function loginErrorMessage(message: string) {
   const lower = message.toLowerCase();
   if (lower.includes("invalid login credentials")) {
@@ -61,7 +75,29 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createSessionClient({ keepLoggedIn });
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const signInResult = await withTimeout(
+    supabase.auth.signInWithPassword({ email, password }),
+    AUTH_PROVIDER_TIMEOUT_MS,
+  ).catch((error: unknown) => {
+    if (error instanceof Error && error.message === AUTH_PROVIDER_TIMEOUT_ERROR) {
+      console.error("Login auth provider timed out", {
+        timeoutMs: AUTH_PROVIDER_TIMEOUT_MS,
+      });
+
+      return null;
+    }
+
+    throw error;
+  });
+
+  if (!signInResult) {
+    return NextResponse.json(
+      { error: "Sign-in is taking longer than expected. Please retry in a minute." },
+      { status: 504 },
+    );
+  }
+
+  const { error } = signInResult;
 
   if (error) {
     return NextResponse.json({ error: loginErrorMessage(error.message) }, { status: 401 });
